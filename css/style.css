@@ -1,0 +1,1201 @@
+/* Reset et base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: #333;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Écrans */
+.screen {
+    display: none;
+    visibility: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.screen.active {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Écran de titre */
+#title-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.title-container h1 {
+    font-size: 3rem;
+    color: #fff;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.title-container h2 {
+    font-size: 1.5rem;
+    color: #ccc;
+    margin-bottom: 40px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Boutons */
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn.primary {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+}
+
+.btn.secondary {
+    background: linear-gradient(45deg, #74b9ff, #0984e3);
+    color: white;
+    box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3);
+}
+
+.btn.secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(116, 185, 255, 0.4);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* En-tête du jeu */
+.game-header {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.guild-info h2 {
+    color: #2d3436;
+    margin-bottom: 10px;
+}
+
+.rank-info {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9rem;
+}
+
+.rank, .progress {
+    background: #f8f9fa;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.bonuses-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.bonuses-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2d3436;
+}
+
+.bonuses-list {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bonus-item {
+    background: linear-gradient(45deg, #00b894, #00cec9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: help;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.bonus-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 184, 148, 0.3);
+}
+
+.bonus-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2d3436;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    margin-bottom: 5px;
+}
+
+.bonus-item:hover .bonus-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.bonus-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #2d3436;
+}
+
+.resources {
+    display: flex;
+    gap: 20px;
+}
+
+.resource {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.resource-icon {
+    font-size: 1.2rem;
+}
+
+/* Zone principale */
+.game-main {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+/* Section des troupes */
+.troops-section {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Section avant combat */
+.pre-combat-section {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.pre-combat-section h3 {
+    color: #2d3436;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.pre-combat-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.shop-preview, .combat-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.shop-preview h4, .combat-info h4 {
+    color: #2d3436;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.combat-preview {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.troops-section h3 {
+    color: #2d3436;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.troops-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.troops-available, .troops-selected {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.troops-available h4, .troops-selected h4 {
+    color: #2d3436;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.troops-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    min-height: 100px;
+}
+
+/* Cartes d'unités */
+.unit-card {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.unit-card:hover {
+    border-color: #74b9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.unit-card.selected {
+    border-color: #ff6b6b;
+    background: #fff5f5;
+}
+
+.unit-card.used {
+    border-color: #d63031;
+    background: #ffe8e8;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.unit-card.used .unit-used {
+    background: #d63031;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    margin-top: 5px;
+}
+
+.unit-card .unit-icon {
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.unit-card .unit-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.unit-card .unit-stats {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.unit-card .unit-type {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0.7rem;
+    background: #74b9ff;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Synergies */
+.team-synergies {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.team-synergies h5 {
+    color: #2d3436;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+/* Styles pour les synergies dans la section de préparation au combat */
+.team-synergies .synergy-item {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    opacity: 1;
+    transform: none;
+}
+
+.synergy-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.synergy-description {
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+.no-synergies {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Jauge de dégâts pour les boss */
+.boss-damage-gauge {
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.boss-damage-gauge h4 {
+    color: #856404;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.damage-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.damage-text {
+    text-align: center;
+    font-weight: 600;
+    color: #856404;
+    font-size: 1.1rem;
+}
+
+/* Section des actions */
+.actions-section {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    z-index: 1001;
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    color: #2d3436;
+    margin: 0;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    color: #ff6b6b;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+/* Recrutement */
+.recruit-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.recruit-option {
+    background: #f8f9fa;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.recruit-option:hover {
+    border-color: #74b9ff;
+    transform: translateY(-2px);
+}
+
+.recruit-option.selected {
+    border-color: #ff6b6b;
+    background: #fff5f5;
+}
+
+/* Combat */
+.combat-info {
+    text-align: center;
+}
+
+.combat-objective {
+    margin-bottom: 20px;
+}
+
+.combat-objective h4 {
+    color: #2d3436;
+    margin-bottom: 15px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #ddd;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.combat-log {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    text-align: left;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.combat-log .log-entry {
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.combat-log .damage {
+    background: #ffe6e6;
+    color: #d63031;
+}
+
+.combat-log .synergy {
+    background: #e8f5e8;
+    color: #00b894;
+}
+
+/* Magasin */
+.shop-items {
+    display: grid;
+    gap: 20px;
+}
+
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.shop-item {
+    background: #f8f9fa;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.shop-item:hover {
+    border-color: #74b9ff;
+    transform: translateY(-2px);
+}
+
+.shop-item .item-price {
+    font-weight: 600;
+    color: #ff6b6b;
+    margin-top: 10px;
+}
+
+.shop-pack {
+    border-top: 2px solid #ddd;
+    padding-top: 20px;
+}
+
+.shop-pack h4 {
+    color: #2d3436;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.pack-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+/* Tutoriel */
+.tutorial-navigation {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+}
+
+#tutorial-content {
+    min-height: 200px;
+    line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .title-container h1 {
+        font-size: 2rem;
+    }
+    
+    .title-container h2 {
+        font-size: 1.2rem;
+    }
+    
+    .game-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .troops-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .pack-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        margin: 20px;
+        max-width: calc(100% - 40px);
+    }
+}
+
+@media (max-width: 480px) {
+    .btn {
+        min-width: 150px;
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+    
+    .troops-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
+    
+    .unit-card {
+        padding: 8px;
+    }
+    
+    .unit-card .unit-icon {
+        font-size: 1.5rem;
+    }
+    
+    .unit-card .unit-name {
+        font-size: 0.8rem;
+    }
+    
+    .unit-card .unit-stats {
+        font-size: 0.7rem;
+    }
+} 
+
+/* Animations de combat */
+.combat-animation-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.combat-animation {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    min-width: 500px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.close-button {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: rgba(231, 76, 60, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10001;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.close-button:hover {
+    background: rgba(231, 76, 60, 1);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Compteur principal */
+.main-counter {
+    background: linear-gradient(45deg, #e74c3c, #c0392b);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+.damage-display {
+    font-size: 3rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.multiplier-symbol {
+    color: #f39c12;
+    margin: 0 10px;
+    font-size: 2.5rem;
+}
+
+.final-result {
+    font-size: 1.5rem;
+    color: #ecf0f1;
+    font-weight: bold;
+}
+
+/* Slider des unités */
+.units-slider {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.units-slider h3 {
+    margin-bottom: 15px;
+    color: #3498db;
+}
+
+.unit-slide {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    margin: 10px 0;
+    background: rgba(52, 152, 219, 0.2);
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: all 0.6s ease;
+}
+
+.unit-slide.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.unit-slide-info {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.unit-slide-icon {
+    font-size: 2rem;
+    margin-right: 15px;
+}
+
+.unit-slide-details {
+    text-align: left;
+}
+
+.unit-slide-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.unit-slide-types {
+    font-size: 0.9rem;
+    color: #bdc3c7;
+}
+
+.unit-slide-stats {
+    text-align: right;
+    font-weight: bold;
+}
+
+.unit-slide-damage {
+    color: #e74c3c;
+    font-size: 1.2rem;
+}
+
+.unit-slide-multiplier {
+    color: #f39c12;
+    font-size: 1rem;
+}
+
+/* Sections synergies et bonus */
+.synergies-section, .bonuses-section {
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    border-left: 4px solid;
+}
+
+.synergies-section {
+    border-left-color: #9b59b6;
+}
+
+.bonuses-section {
+    border-left-color: #27ae60;
+}
+
+.synergies-section h3 {
+    color: #9b59b6;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.bonuses-section h3 {
+    color: #27ae60;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+/* Styles pour les synergies et bonus dans l'animation de combat */
+.combat-animation .synergy-item, 
+.combat-animation .bonus-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    margin: 8px 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.5s ease;
+    border-left: 3px solid;
+}
+
+.combat-animation .synergy-item {
+    border-left-color: #9b59b6;
+}
+
+.combat-animation .bonus-item {
+    border-left-color: #27ae60;
+}
+
+.combat-animation .synergy-item.active, 
+.combat-animation .bonus-item.active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Styles pour les noms et effets dans l'animation de combat */
+.combat-animation .synergy-name, 
+.combat-animation .bonus-name {
+    font-weight: bold;
+    flex: 1;
+    font-size: 0.95rem;
+}
+
+.combat-animation .synergy-effect, 
+.combat-animation .bonus-effect {
+    color: #f39c12;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+/* Barre de progression */
+.combat-progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #34495e;
+    border-radius: 5px;
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.combat-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e74c3c, #f39c12);
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.close-hint {
+    text-align: center;
+    margin-top: 15px;
+    color: #bdc3c7;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+.close-hint small {
+    font-size: 0.85rem;
+}
+
+/* Image de l'ennemi dans l'animation de combat */
+.enemy-animation-preview {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.enemy-image-animation {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 15px;
+    border: 4px solid #e74c3c;
+    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+    transition: all 0.3s ease;
+}
+
+.enemy-image-animation:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4);
+}
+
+
+
+/* Animation de victoire */
+.victory-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+    color: #f1c40f;
+    z-index: 10001;
+    opacity: 0;
+    display: none;
+    animation: victoryPulse 2s ease-in-out;
+}
+
+@keyframes victoryPulse {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes victoryParticle {
+    0% {
+        opacity: 0;
+        transform: scale(0) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1) rotate(180deg);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0) rotate(360deg) translateY(-100px);
+    }
+}
+
+/* Styles pour les informations de combat */
+.enemy-preview {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.enemy-image {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 3px solid #e74c3c;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.enemy-image:hover {
+    transform: scale(1.05);
+}
+
+.enemy-preview-modal {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.enemy-image-modal {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 15px;
+    border: 4px solid #e74c3c;
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+    transition: transform 0.3s ease;
+}
+
+.enemy-image-modal:hover {
+    transform: scale(1.05);
+}
+
+.objective-target {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.boss-mechanic {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.boss-mechanic strong {
+    color: #f1c40f;
+}
+
+/* Styles pour la liste des troupes */
+.all-troops-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.troop-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    margin: 8px 0;
+    background: linear-gradient(135deg, #ecf0f1 0%, #bdc3c7 100%);
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.troop-list-item:hover {
+    background: linear-gradient(135deg, #d5dbdb 0%, #a4b0b7 100%);
+    transition: background 0.3s ease;
+}
+
+.troop-list-name {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 1rem;
+}
+
+.troop-list-count {
+    background: #3498db;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    min-width: 30px;
+    text-align: center;
+}
+
+.troop-list-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    color: #7f8c8d;
+}
+
+.troop-list-stats span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Animations pour les notifications */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+} 

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionnaire de Guilde d'Aventuriers</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Écran de titre -->
+    <div id="title-screen" class="screen active">
+        <div class="title-container">
+            <h1>Gestionnaire de Guilde</h1>
+            <h2>d'Aventuriers</h2>
+            <div class="menu-buttons">
+                <button id="new-game-btn" class="btn primary">Nouvelle Partie</button>
+                <button id="load-game-btn" class="btn secondary">Charger Partie</button>
+                <button id="tutorial-btn" class="btn secondary">Tutoriel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Écran principal du jeu -->
+    <div id="game-screen" class="screen">
+        <!-- En-tête avec informations de la guilde -->
+        <header class="game-header">
+            <div class="guild-info">
+                <h2>Guilde d'Aventuriers</h2>
+                <div class="rank-info">
+                    <span class="rank">Rang: <span id="current-rank">F-</span></span>
+                    <span class="progress">Progression: <span id="rank-progress">0/100</span></span>
+                </div>
+                <div class="bonuses-info">
+                    <span class="bonuses-label">Bonus: </span>
+                    <div id="active-bonuses" class="bonuses-list"></div>
+                </div>
+            </div>
+            <div class="resources">
+                <div class="resource">
+                    <span class="resource-icon">💰</span>
+                    <span id="gold-amount">100</span>
+                </div>
+                
+            </div>
+        </header>
+
+        <!-- Zone principale du jeu -->
+        <main class="game-main">
+            <!-- Section avant combat (magasin) -->
+            <section id="pre-combat-section" class="pre-combat-section" style="display: none;">
+                <h3>Préparation au Combat</h3>
+                <div class="pre-combat-container">
+                    <div class="shop-preview">
+                        <h4>Magasin de la Guilde</h4>
+                        <div id="pre-combat-shop" class="shop-grid"></div>
+                    </div>
+                    <div class="combat-info">
+                        <h4>Prochain Combat</h4>
+                        <div id="next-combat-info" class="combat-preview">
+                            <div class="enemy-preview">
+                                <img id="enemy-image" src="assets/gobelin.jpg" alt="Ennemi" class="enemy-image">
+                            </div>
+                            <div id="combat-objective-display">
+                                <div class="objective-target">
+                                    <span id="combat-target-display">0</span> points : <span id="combat-enemy-name">Troupes de gobelin</span>
+                                </div>
+                                <div id="boss-mechanic-display" class="boss-mechanic" style="display: none;">
+                                    <strong>Boss :</strong> <span id="boss-name">Nom du boss</span>
+                                    <br><strong>Mécanique :</strong> <span id="boss-mechanic-text">Mécanique du boss</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section des troupes (pendant le combat) -->
+            <section id="combat-section" class="troops-section">
+                <h3>Mes Troupes</h3>
+                <div class="troops-container">
+                    <div class="troops-available">
+                        <h4>Troupes Disponibles</h4>
+                        <div id="available-troops" class="troops-grid"></div>
+                    </div>
+                    <div class="troops-selected">
+                        <!-- Jauge de dégâts pour les combats de boss -->
+                        <div id="boss-damage-gauge" class="boss-damage-gauge" style="display: none;">
+                            <h4>Dégâts Infligés au Boss</h4>
+                            <div class="damage-progress">
+                                <div class="progress-bar">
+                                    <div id="boss-damage-fill" class="progress-fill"></div>
+                                </div>
+                                <div class="damage-text">
+                                    <span id="boss-damage-current">0</span> / <span id="boss-damage-target">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h4>Troupes Sélectionnées</h4>
+                        <div id="selected-troops" class="troops-grid"></div>
+                        <div class="team-synergies">
+                            <h5>Synergies d'Équipe</h5>
+                            <div id="synergies-display"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section des actions -->
+            <section class="actions-section">
+                <div class="action-buttons">
+                    <button id="start-combat-btn" class="btn primary">Lancer Combat</button>
+                    <button id="view-troops-btn" class="btn secondary">Voir mes troupes</button>
+                    <button id="save-btn" class="btn secondary">Sauvegarder</button>
+                    <button id="menu-btn" class="btn secondary">Menu</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal de recrutement -->
+    <div id="recruit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Recrutement</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="recruit-options" class="recruit-options"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de combat -->
+    <div id="combat-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Combat en cours...</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="combat-info">
+                    <div class="enemy-preview-modal">
+                        <img id="enemy-image-modal" src="assets/gobelin.jpg" alt="Ennemi" class="enemy-image-modal">
+                    </div>
+                    <div class="combat-objective">
+                        <h4>Objectif: <span id="combat-target">0</span> dégâts</h4>
+                        <div class="progress-bar">
+                            <div id="combat-progress" class="progress-fill"></div>
+                        </div>
+                    </div>
+                    <div class="combat-log" id="combat-log"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Modal de tutoriel -->
+    <div id="tutorial-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tutoriel</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="tutorial-content"></div>
+                <div class="tutorial-navigation">
+                    <button id="tutorial-prev" class="btn secondary">Précédent</button>
+                    <button id="tutorial-next" class="btn primary">Suivant</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal des troupes -->
+    <div id="troops-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Mes Troupes</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="all-troops-list" class="all-troops-list">
+                    <!-- Les troupes seront listées ici -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay pour les modals -->
+    <div id="modal-overlay" class="modal-overlay"></div>
+
+    <!-- Conteneur d'animation de combat -->
+    <div id="combat-animation-container" class="combat-animation-container">
+        <div class="combat-animation">
+            <button id="close-combat-animation" class="close-button">×</button>
+            <h2>Tour de Combat</h2>
+            
+            <!-- Image de l'ennemi -->
+            <div class="enemy-animation-preview">
+                <img id="enemy-image-animation" src="assets/gobelin.jpg" alt="Ennemi" class="enemy-image-animation">
+            </div>
+            
+            <!-- Compteur principal -->
+            <div class="main-counter">
+                <div class="damage-display">
+                    <span id="total-damage-counter">0</span>
+                    <span class="multiplier-symbol">×</span>
+                    <span id="total-multiplier-counter">1</span>
+                </div>
+                <div class="final-result" id="final-result">= 0 dégâts</div>
+            </div>
+            
+            <!-- Section bonus -->
+            <div class="bonuses-section">
+                <h3>Bonus d'équipement</h3>
+                <div id="bonuses-animation-content"></div>
+            </div>
+            
+            <!-- Section synergies -->
+            <div class="synergies-section">
+                <h3>Synergies actives</h3>
+                <div id="synergies-animation-content"></div>
+            </div>
+            
+            <!-- Slider des unités -->
+            <div class="units-slider">
+                <h3>Unités participantes</h3>
+                <div id="units-slider-content"></div>
+            </div>
+            
+            <!-- Barre de progression -->
+            <div class="combat-progress-bar">
+                <div class="combat-progress-fill"></div>
+            </div>
+            
+            <!-- Indication de fermeture -->
+            <div class="close-hint">
+                <small>Cliquez sur ✕ pour fermer</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Animation de victoire -->
+    <div id="victory-animation" class="victory-animation">🎉</div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html> 

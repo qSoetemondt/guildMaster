@@ -1,0 +1,16 @@
+{
+  "name": "guild-master",
+  "version": "1.0.0",
+  "description": "Jeu de gestion de guilde d'aventuriers",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["game", "guild", "management", "rpg"],
+  "author": "GuildMaster Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+} 
