@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestionnaire de Guilde d'Aventuriers</title>
+    <title>Guild Master</title>
+    <link rel="icon" type="image/png" href="assets/guildMaster.png">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <!-- Écran de titre -->
     <div id="title-screen" class="screen active">
         <div class="title-container">
-            <h1>Gestionnaire de Guilde</h1>
-            <h2>d'Aventuriers</h2>
+            <img src="assets/guildMaster.png" alt="Guild Master" class="logo">
+            <h3 class="version-number">Version 0.1</h3>
             <div class="menu-buttons">
                 <button id="new-game-btn" class="btn primary">Nouvelle Partie</button>
                 <button id="load-game-btn" class="btn secondary">Charger Partie</button>
                 <button id="tutorial-btn" class="btn secondary">Tutoriel</button>
+                <!-- <button id="simulation-btn" class="btn secondary">🎯 Simulateur d'Équilibrage</button> -->
             </div>
         </div>
     </div>
@@ -25,10 +27,9 @@
         <!-- En-tête avec informations de la guilde -->
         <header class="game-header">
             <div class="guild-info">
-                <h2>Guilde d'Aventuriers</h2>
-                <div class="rank-info">
-                    <span class="rank">Rang: <span id="current-rank">F-</span></span>
-                    <span class="progress">Progression: <span id="rank-progress">0/100</span></span>
+                <div class="guild-header">
+                    <input type="text" id="guild-name-input" class="guild-name-input" value="Guilde d'Aventuriers" maxlength="30">
+                    <span class="guild-rank">Rang <span id="current-rank">F-</span></span>
                 </div>
                 <div class="bonuses-info">
                     <span class="bonuses-label">Bonus: </span>
@@ -40,7 +41,6 @@
                     <span class="resource-icon">💰</span>
                     <span id="gold-amount">100</span>
                 </div>
-                
             </div>
         </header>
 
@@ -53,6 +53,9 @@
                     <div class="shop-preview">
                         <h4>Magasin de la Guilde</h4>
                         <div id="pre-combat-shop" class="shop-grid"></div>
+                    </div>
+                    <div class="consumables-preview">
+                        <div id="consumables-display" class="consumables-grid"></div>
                     </div>
                     <div class="combat-info">
                         <h4>Prochain Combat</h4>
@@ -83,18 +86,7 @@
                         <div id="available-troops" class="troops-grid"></div>
                     </div>
                     <div class="troops-selected">
-                        <!-- Jauge de dégâts pour les combats de boss -->
-                        <div id="boss-damage-gauge" class="boss-damage-gauge" style="display: none;">
-                            <h4>Dégâts Infligés au Boss</h4>
-                            <div class="damage-progress">
-                                <div class="progress-bar">
-                                    <div id="boss-damage-fill" class="progress-fill"></div>
-                                </div>
-                                <div class="damage-text">
-                                    <span id="boss-damage-current">0</span> / <span id="boss-damage-target">0</span>
-                                </div>
-                            </div>
-                        </div>
+                        
                         
                         <h4>Troupes Sélectionnées</h4>
                         <div id="selected-troops" class="troops-grid"></div>
@@ -189,6 +181,45 @@
         </div>
     </div>
 
+    <!-- Modal nouvelle partie -->
+    <div id="new-game-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nouvelle Partie</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="new-game-form">
+                    <label for="new-guild-name">Nom de votre guilde :</label>
+                    <input type="text" id="new-guild-name" class="new-guild-name-input" placeholder="Entrez le nom de votre guilde" maxlength="30" value="Guilde d'Aventuriers">
+                    <div class="new-game-actions">
+                        <button id="confirm-new-game" class="btn primary">Commencer la partie</button>
+                        <button id="cancel-new-game" class="btn secondary">Annuler</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Beta Test -->
+    <div id="beta-test-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎮 BETA TEST - GuildMaster</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="beta-test-content" class="beta-test-content">
+                    <!-- Le contenu sera chargé depuis le fichier betatest.txt -->
+                </div>
+                <div class="beta-test-actions">
+                    <button id="accept-beta-test" class="btn primary">J'ai compris, commencer !</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
     <!-- Overlay pour les modals -->
     <div id="modal-overlay" class="modal-overlay"></div>
 
@@ -213,22 +244,49 @@
                 <div class="final-result" id="final-result">= 0 dégâts</div>
             </div>
             
-            <!-- Section bonus -->
-            <div class="bonuses-section">
-                <h3>Bonus d'équipement</h3>
-                <div id="bonuses-animation-content"></div>
+            <!-- Contenu principal en colonnes (desktop) -->
+            <div class="combat-content-desktop">
+                <!-- Colonne gauche : Bonus et Synergies -->
+                <div class="combat-left-column">
+                    <div class="bonuses-section">
+                        <h3>Bonus d'équipement</h3>
+                        <div id="bonuses-animation-content"></div>
+                    </div>
+                    
+                    <div class="synergies-section">
+                        <h3>Synergies actives</h3>
+                        <div id="synergies-animation-content"></div>
+                    </div>
+                </div>
+                
+                <!-- Colonne droite : Unités -->
+                <div class="combat-right-column">
+                    <div class="units-section">
+                        <h3>Unités participantes</h3>
+                        <div id="units-slider-content"></div>
+                    </div>
+                </div>
             </div>
             
-            <!-- Section synergies -->
-            <div class="synergies-section">
-                <h3>Synergies actives</h3>
-                <div id="synergies-animation-content"></div>
-            </div>
-            
-            <!-- Slider des unités -->
-            <div class="units-slider">
-                <h3>Unités participantes</h3>
-                <div id="units-slider-content"></div>
+            <!-- Contenu mobile (affichage actuel) -->
+            <div class="combat-content-mobile">
+                <!-- Section bonus -->
+                <div class="bonuses-section">
+                    <h3>Bonus d'équipement</h3>
+                    <div id="bonuses-animation-content-mobile"></div>
+                </div>
+                
+                <!-- Section synergies -->
+                <div class="synergies-section">
+                    <h3>Synergies actives</h3>
+                    <div id="synergies-animation-content-mobile"></div>
+                </div>
+                
+                <!-- Slider des unités -->
+                <div class="units-slider">
+                    <h3>Unités participantes</h3>
+                    <div id="units-slider-content-mobile"></div>
+                </div>
             </div>
             
             <!-- Barre de progression -->
@@ -236,10 +294,7 @@
                 <div class="combat-progress-fill"></div>
             </div>
             
-            <!-- Indication de fermeture -->
-            <div class="close-hint">
-                <small>Cliquez sur ✕ pour fermer</small>
-            </div>
+            
         </div>
     </div>
 

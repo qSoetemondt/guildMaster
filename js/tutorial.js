@@ -4,6 +4,12 @@ class TutorialSystem {
         this.currentStep = 0;
         this.tutorialSteps = this.defineTutorialSteps();
         this.isActive = false;
+        this.hideModalFunction = null;
+    }
+
+    // Définir la fonction pour fermer les modals
+    setHideModalFunction(hideModalFn) {
+        this.hideModalFunction = hideModalFn;
     }
 
     // Définir les étapes du tutoriel
@@ -20,7 +26,7 @@ class TutorialSystem {
                     <ul>
                         <li>Recruter des unités variées (corps à corps, distance, magique)</li>
                         <li>Former des équipes avec des synergies</li>
-                        <li>Combattre des ennemis pour gagner de l'or et de la réputation</li>
+                        <li>Combattre des ennemis pour gagner de l'or</li>
                         <li>Améliorer votre guilde via le magasin</li>
                         <li>Atteindre le rang S en affrontant des boss</li>
                     </ul>
@@ -45,13 +51,13 @@ class TutorialSystem {
             {
                 title: 'Recrutement d\'Unités',
                 content: `
-                    <p>Le recrutement coûte 50💰 et vous propose 3 unités aléatoires.</p>
-                    
+                    <p>Vous pouvez recruter des unités dans le magasin.</p>
+
                     <p><strong>Types d'unités :</strong></p>
                     <ul>
-                        <li><strong>Corps à corps :</strong> Épéiste, Lancier, Barbare, Viking...</li>
-                        <li><strong>Distance :</strong> Archer, Magicien Rouge, Magicien Bleu, Fronde...</li>
-                        <li><strong>Magique :</strong> Mage, Sorcier, Mage Suprême...</li>
+                        <li><strong>Corps à corps :</strong> Épéiste, Lancier...</li>
+                        <li><strong>Distance :</strong> Archer, Magicien Rouge...</li>
+                        <li><strong>D'autres unités sont disponibles a vous de les découvrir</strong></li>
                     </ul>
                     
                     <p><strong>Raretés :</strong></p>
@@ -92,11 +98,7 @@ class TutorialSystem {
                         <li><strong>2+ Distance :</strong> +2 multiplicateur pour toutes les unités distance</li>
                     </ul>
                     
-                    <p><strong>Synergies mixtes :</strong></p>
-                    <ul>
-                        <li><strong>2+ Corps à corps + 1+ Distance :</strong> Les unités distance gagnent +15 dégâts et +1 multi</li>
-                        <li><strong>2+ Distance + 1+ Corps à corps :</strong> Les unités corps à corps gagnent +5 dégâts et +3 multi</li>
-                    </ul>
+                    <p><strong>D'autres synergies sont disponibles a vous de les découvrir</strong></p>
                 `,
                 action: 'highlight',
                 target: '#synergies-display'
@@ -123,12 +125,7 @@ class TutorialSystem {
                     <p>Quand vous êtes proche du rang supérieur, vous affrontez un boss !</p>
                     
                     <p><strong>Mécaniques spéciales :</strong></p>
-                    <ul>
-                        <li><strong>Golem de Pierre :</strong> Les unités à distance font 50% moins de dégâts</li>
-                        <li><strong>Seigneur des Ombres :</strong> Les unités corps à corps voient leur multiplicateur réduit de 50%</li>
-                        <li><strong>Dragon Ancien :</strong> Les unités magiques font 30% moins de dégâts</li>
-                        <li><strong>Démon Suprême :</strong> Toutes les unités font 25% moins de dégâts</li>
-                    </ul>
+                    <p>Les boss sont plus puissants et ont des mécaniques spéciales a vous de les découvrir</p>
                     
                     <p>Adaptez votre stratégie en conséquence !</p>
                 `,
@@ -143,7 +140,6 @@ class TutorialSystem {
                     <ul>
                         <li><strong>6 items aléatoires :</strong> Unités ou bonus d'équipement</li>
                         <li><strong>Pack aléatoire :</strong> 3 choix, vous en sélectionnez 1</li>
-                        <li><strong>Bonus :</strong> Améliorent temporairement vos unités sélectionnées</li>
                     </ul>
                     
                     <p><strong>Types de bonus :</strong></p>
@@ -167,14 +163,9 @@ class TutorialSystem {
                         <li>Gagné en combattant</li>
                         <li>Utilisé pour recruter (50💰) et acheter au magasin</li>
                         <li>Bonus de 50💰 lors des promotions de rang</li>
+                        <li>Bonus d'économie. Plus vous avez d'or, plus vous gagnez d'or</li>
                     </ul>
                     
-                    <p><strong>⭐ Réputation :</strong></p>
-                    <ul>
-                        <li>Gagnée en combattant</li>
-                        <li>Indique votre prestige dans le monde</li>
-                        <li>Bonus de 10 points lors des promotions</li>
-                    </ul>
                 `,
                 action: 'highlight',
                 target: '.resources'
@@ -182,11 +173,11 @@ class TutorialSystem {
             {
                 title: 'Sauvegarde et Progression',
                 content: `
-                    <p>Votre progression est sauvegardée automatiquement dans votre navigateur.</p>
+                    <p>Votre progression est sauvegardée dans votre navigateur. N'oubliez pas de la sauvegarder régulièrement </p>
+                    <p>Ne videz pas votre navigateur, vous risquez de perdre votre progression</p>
                     
                     <p><strong>Fonctionnalités :</strong></p>
                     <ul>
-                        <li><strong>Sauvegarde automatique :</strong> Vos actions sont sauvegardées</li>
                         <li><strong>Sauvegarde manuelle :</strong> Bouton "Sauvegarder" pour forcer la sauvegarde</li>
                         <li><strong>Chargement :</strong> Reprenez votre partie depuis le menu principal</li>
                         <li><strong>Nouvelle partie :</strong> Recommencez depuis le début</li>
@@ -214,6 +205,8 @@ class TutorialSystem {
         const prevBtn = document.getElementById('tutorial-prev');
         const nextBtn = document.getElementById('tutorial-next');
 
+        console.log(`Affichage de l'étape ${this.currentStep + 1}/${this.tutorialSteps.length}: ${step.title}`);
+
         // Mettre à jour le contenu
         content.innerHTML = `
             <h4 style="color: #2d3436; margin-bottom: 15px;">${step.title}</h4>
@@ -234,6 +227,7 @@ class TutorialSystem {
 
     // Passer à l'étape suivante
     nextStep() {
+        console.log(`Tentative de passage à l'étape suivante. Étape actuelle: ${this.currentStep}, Total: ${this.tutorialSteps.length}`);
         if (this.currentStep < this.tutorialSteps.length - 1) {
             this.currentStep++;
             this.showCurrentStep();
@@ -244,6 +238,7 @@ class TutorialSystem {
 
     // Passer à l'étape précédente
     prevStep() {
+        console.log(`Tentative de passage à l'étape précédente. Étape actuelle: ${this.currentStep}`);
         if (this.currentStep > 0) {
             this.currentStep--;
             this.showCurrentStep();
@@ -254,11 +249,15 @@ class TutorialSystem {
     endTutorial() {
         this.isActive = false;
         this.removeHighlight();
-        hideModal('tutorial-modal');
+        if (this.hideModalFunction) {
+            this.hideModalFunction('tutorial-modal');
+        }
         // gameState.showNotification('Tutoriel terminé ! Bonne chance !', 'success');
         
         // Marquer le tutoriel comme vu
-        gameState.isFirstTime = false;
+        if (gameState) {
+            gameState.isFirstTime = false;
+        }
     }
 
     // Mettre en surbrillance un élément
@@ -307,22 +306,39 @@ class TutorialSystem {
 // Instance globale du système de tutoriel
 const tutorialSystem = new TutorialSystem();
 
-// Fonction pour initialiser le tutoriel (appelée depuis game.js)
-function initTutorial() {
+// Fonction pour initialiser le tutoriel (appelée depuis main.js)
+export function initTutorialSystem(hideModalFn) {
+    if (hideModalFn) {
+        tutorialSystem.setHideModalFunction(hideModalFn);
+    }
+    
     tutorialSystem.startTutorial();
     
-    // Ajouter les événements de navigation
-    document.getElementById('tutorial-prev').addEventListener('click', () => {
-        tutorialSystem.prevStep();
-    });
+    // Supprimer les anciens événements s'ils existent
+    const prevBtn = document.getElementById('tutorial-prev');
+    const nextBtn = document.getElementById('tutorial-next');
     
-    document.getElementById('tutorial-next').addEventListener('click', () => {
-        tutorialSystem.nextStep();
-    });
+    if (prevBtn) {
+        // Cloner et remplacer le bouton pour supprimer les anciens événements
+        const newPrevBtn = prevBtn.cloneNode(true);
+        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+        newPrevBtn.addEventListener('click', () => {
+            tutorialSystem.prevStep();
+        });
+    }
+    
+    if (nextBtn) {
+        // Cloner et remplacer le bouton pour supprimer les anciens événements
+        const newNextBtn = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        newNextBtn.addEventListener('click', () => {
+            tutorialSystem.nextStep();
+        });
+    }
 }
 
 // Fonction pour afficher des conseils contextuels
-function showContextualTip(elementId) {
+export function showContextualTip(elementId) {
     const tip = tutorialSystem.getContextualTip(elementId);
     if (tip) {
         // gameState.showNotification(tip, 'info');
@@ -330,7 +346,7 @@ function showContextualTip(elementId) {
 }
 
 // Ajouter des tooltips aux éléments importants
-function addTooltips() {
+export function addTooltips() {
     const tooltipElements = [
         'recruit-btn',
         'start-combat-btn', 
@@ -342,13 +358,16 @@ function addTooltips() {
         const element = document.getElementById(elementId);
         if (element) {
             element.addEventListener('mouseenter', () => {
-                if (gameState.isFirstTime) {
+                if (gameState && gameState.isFirstTime) {
                     showContextualTip(elementId);
                 }
             });
         }
     });
 }
+
+// Exporter l'instance du système de tutoriel
+export { tutorialSystem };
 
 // Initialiser les tooltips quand le DOM est chargé
 document.addEventListener('DOMContentLoaded', () => {

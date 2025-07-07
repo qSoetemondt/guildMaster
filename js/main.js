@@ -1,7 +1,22 @@
 import { GameState } from './modules/GameState.js';
+import { tutorialSystem, initTutorialSystem } from './tutorial.js';
+import { SimulationEngine } from './modules/SimulationEngine.js';
+import { SimulationUI } from './modules/SimulationUI.js';
+import { testSimulation, testSingleGame } from './modules/SimulationTest.js';
 
 // Instance globale du jeu
 let gameState = new GameState();
+
+// Instance du simulateur d'équilibrage
+let simulationEngine = new SimulationEngine();
+let simulationUI = new SimulationUI(simulationEngine);
+
+// Rendre le gameState accessible globalement pour les notifications
+window.gameState = gameState;
+
+// Rendre les tests de simulation accessibles globalement
+window.testSimulation = testSimulation;
+window.testSingleGame = testSingleGame;
 
 // Gestion des écrans
 function showScreen(screenId) {
@@ -51,20 +66,49 @@ function hideModal(modalId) {
     }
 }
 
+// Rendre les fonctions de modal accessibles globalement
+window.showModal = showModal;
+window.hideModal = hideModal;
+
 // Fonctions utilitaires
 function getRandomUnit() {
     const units = [
-        { name: 'Épéiste', type: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, icon: '⚔️' },
-        { name: 'Archer', type: ['Distance', 'Physique'], damage: 4, multiplier: 3, icon: '🏹' },
-        { name: 'Magicien Rouge', type: ['Distance', 'Magique'], damage: 6, multiplier: 2, icon: '🔴' },
-        { name: 'Magicien Bleu', type: ['Distance', 'Magique'], damage: 3, multiplier: 4, icon: '🔵' },
-        { name: 'Lancier', type: ['Corps à corps', 'Physique'], damage: 4, multiplier: 3, icon: '🔱' },
-        { name: 'Barbare', type: ['Corps à corps', 'Physique'], damage: 7, multiplier: 1, icon: '🪓' },
-        { name: 'Viking', type: ['Corps à corps', 'Physique'], damage: 6, multiplier: 2, icon: '🛡️' },
-        { name: 'Fronde', type: ['Distance', 'Physique'], damage: 2, multiplier: 5, icon: '🪨' }
+        { name: 'Épéiste', type: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, icon: '⚔️', rarity: 'common' },
+        { name: 'Archer', type: ['Distance', 'Physique'], damage: 4, multiplier: 3, icon: '🏹', rarity: 'common' },
+        { name: 'Magicien Rouge', type: ['Distance', 'Magique'], damage: 6, multiplier: 2, icon: '🔴', rarity: 'uncommon' },
+        { name: 'Magicien Bleu', type: ['Distance', 'Magique'], damage: 3, multiplier: 4, icon: '🔵', rarity: 'uncommon' },
+        { name: 'Lancier', type: ['Corps à corps', 'Physique'], damage: 4, multiplier: 3, icon: '🔱', rarity: 'common' },
+        { name: 'Paysan', type: ['Corps à corps', 'Physique'], damage: 2, multiplier: 1, icon: '👨‍🌾', rarity: 'common' },
+        { name: 'Barbare', type: ['Corps à corps', 'Physique'], damage: 7, multiplier: 1, icon: '🪓', rarity: 'uncommon' },
+        { name: 'Viking', type: ['Corps à corps', 'Physique'], damage: 6, multiplier: 2, icon: '🛡️', rarity: 'uncommon' },
+        { name: 'Fronde', type: ['Distance', 'Physique'], damage: 2, multiplier: 5, icon: '🪨', rarity: 'rare' }
     ];
     
     return units[Math.floor(Math.random() * units.length)];
+}
+
+// Fonction pour obtenir l'icône de rareté
+function getRarityIcon(rarity) {
+    const icons = {
+        common: '⚪',
+        uncommon: '🟢',
+        rare: '🔵',
+        epic: '🟣',
+        legendary: '🟡'
+    };
+    return icons[rarity] || '⚪';
+}
+
+// Fonction pour obtenir la couleur de rareté
+function getRarityColor(rarity) {
+    const colors = {
+        common: '#666666',
+        uncommon: '#00b894',
+        rare: '#74b9ff',
+        epic: '#a29bfe',
+        legendary: '#fdcb6e'
+    };
+    return colors[rarity] || '#666666';
 }
 
 // Initialisation du recrutement
@@ -78,13 +122,19 @@ function initRecruitment() {
     for (let i = 0; i < 3; i++) {
         const unit = getRandomUnit();
         const option = document.createElement('div');
-        option.className = 'recruit-option';
+        
+        // Ajouter la classe de rareté
+        const rarityClass = unit.rarity ? `rarity-${unit.rarity}` : '';
+        option.className = `recruit-option ${rarityClass}`;
         
         option.innerHTML = `
             <div style="font-size: 2rem; margin-bottom: 10px;">${unit.icon}</div>
             <div style="font-weight: 600; margin-bottom: 5px;">${unit.name}</div>
             <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">${unit.type}</div>
             <div style="font-size: 0.8rem; margin-bottom: 10px;">${unit.damage} dmg ×${unit.multiplier}</div>
+            ${unit.rarity ? `<div style="margin-top: 10px; font-weight: 600; color: ${getRarityColor(unit.rarity)}; font-size: 0.8rem;">
+                ${getRarityIcon(unit.rarity)} ${unit.rarity.toUpperCase()}
+            </div>` : ''}
         `;
         
         option.addEventListener('click', () => {
@@ -112,39 +162,124 @@ function initRecruitment() {
 
 // Initialisation du tutoriel
 function initTutorial() {
-    const content = document.getElementById('tutorial-content');
-    if (!content) return;
+    console.log('Initialisation du tutoriel...');
+    console.log('tutorialSystem disponible:', !!tutorialSystem);
     
-    content.innerHTML = `
-        <h4 style="color: #2d3436; margin-bottom: 15px;">Bienvenue dans le Gestionnaire de Guilde !</h4>
-        <p>Vous êtes le gestionnaire d'une guilde d'aventuriers dans un univers médiéval. 
-        Votre objectif est de recruter des troupes, les envoyer au combat, et faire progresser 
-        votre guilde jusqu'au rang S.</p>
+    // Utiliser le système de tutoriel complet depuis tutorial.js
+    if (tutorialSystem) {
+        console.log('Utilisation du système de tutoriel complet');
+        initTutorialSystem(hideModal);
+    } else {
+        // Fallback si le système de tutoriel n'est pas chargé
+        const content = document.getElementById('tutorial-content');
+        if (!content) return;
         
-        <p><strong>Objectifs :</strong></p>
-        <ul>
-            <li>Recruter des unités variées (corps à corps, distance, magique)</li>
-            <li>Former des équipes avec des synergies</li>
-            <li>Combattre des ennemis pour gagner de l'or et de la réputation</li>
-            <li>Améliorer votre guilde via le magasin</li>
-            <li>Atteindre le rang S en affrontant des boss</li>
-        </ul>
-    `;
-    
-    // Navigation du tutoriel
-    document.getElementById('tutorial-next').addEventListener('click', () => {
-        hideModal('tutorial-modal');
-        gameState.showNotification('Tutoriel terminé ! Bonne chance !', 'success');
-    });
-    
-    document.getElementById('tutorial-prev').addEventListener('click', () => {
-        hideModal('tutorial-modal');
-    });
+        content.innerHTML = `
+            <h4 style="color: #2d3436; margin-bottom: 15px;">Bienvenue dans le Gestionnaire de Guilde !</h4>
+            <p>Vous êtes le gestionnaire d'une guilde d'aventuriers dans un univers médiéval. 
+            Votre objectif est de recruter des troupes, les envoyer au combat, et faire progresser 
+            votre guilde jusqu'au rang S.</p>
+            
+            <p><strong>Objectifs :</strong></p>
+            <ul>
+                <li>Recruter des unités variées (corps à corps, distance, magique)</li>
+                <li>Former des équipes avec des synergies</li>
+                <li>Combattre des ennemis pour gagner de l'or et de la réputation</li>
+                <li>Améliorer votre guilde via le magasin</li>
+                <li>Atteindre le rang S en affrontant des boss</li>
+            </ul>
+        `;
+        
+        // Navigation du tutoriel
+        document.getElementById('tutorial-next').addEventListener('click', () => {
+            hideModal('tutorial-modal');
+            gameState.showNotification('Tutoriel terminé ! Bonne chance !', 'success');
+        });
+        
+        document.getElementById('tutorial-prev').addEventListener('click', () => {
+            hideModal('tutorial-modal');
+        });
+    }
+}
+
+// Charger le contenu de la modal beta test
+async function loadBetaTestContent() {
+    try {
+        const response = await fetch('betatest.txt');
+        const content = await response.text();
+        const betaContent = document.getElementById('beta-test-content');
+        if (betaContent) {
+            betaContent.innerHTML = content;
+        }
+    } catch (error) {
+        console.error('Erreur lors du chargement du contenu beta test:', error);
+        // Fallback si le fichier n'est pas trouvé
+        const betaContent = document.getElementById('beta-test-content');
+        if (betaContent) {
+            betaContent.innerHTML = `
+🎮 BETA TEST - GuildMaster
+
+Bonjour à tous !
+
+Merci de participer à cette phase de test de GuildMaster ! Votre aide est précieuse pour améliorer le jeu avant sa sortie officielle.
+
+⚠️ IMPORTANT - Phase de test en cours
+
+Le jeu est actuellement en version bêta non équilibrée. Cela signifie que :
+- Les mécaniques de combat peuvent être déséquilibrées
+- Certaines unités peuvent être trop fortes ou trop faibles
+- L'économie du jeu n'est pas encore optimisée
+- Des bugs peuvent survenir
+
+💾 Système de sauvegarde
+
+Votre progression est sauvegardée automatiquement dans votre navigateur. IMPORTANT :
+- Ne videz pas les données de navigation (cache, cookies, etc.)
+- Ne passez pas en navigation privée
+- Utilisez le même navigateur pour continuer votre partie
+- Le bouton "Sauvegarder" permet de forcer une sauvegarde manuelle
+
+🤐 Confidentialité
+
+Pour préserver l'effet de surprise pour les autres joueurs, merci de ne pas partager l'URL du jeu en dehors de ce groupe de testeurs. Gardons la magie intacte pour le lancement !
+
+💬 Vos retours sont essentiels
+
+Je suis ouvert à tous vos retours :
+- Bugs rencontrés
+- Suggestions d'amélioration
+- Équilibrage des unités/synergies
+- Interface utilisateur
+- Nouvelles fonctionnalités
+- Tout ce qui vous passe par la tête !
+
+N'hésitez pas à me faire part de vos impressions, même les plus détaillées. Chaque retour compte pour faire de GuildMaster le meilleur jeu possible !
+
+🎯 Objectif de cette bêta
+
+Tester en profondeur toutes les mécaniques et identifier les points d'amélioration avant la version finale.
+
+Merci encore pour votre participation ! 
+
+À vos claviers, testeurs ! 🚀
+            `;
+        }
+    }
 }
 
 // Initialisation du jeu
 function initGame() {
     console.log('Initialisation du jeu...');
+    
+    // Charger le contenu de la modal beta test
+    loadBetaTestContent();
+    
+    // Afficher la modal beta test au chargement (seulement si pas déjà vue)
+    if (!localStorage.getItem('betaTestSeen')) {
+        setTimeout(() => {
+            showModal('beta-test-modal');
+        }, 500);
+    }
     
     // S'assurer que l'animation de victoire est masquée au chargement
     const victoryAnimation = document.getElementById('victory-animation');
@@ -157,12 +292,19 @@ function initGame() {
     const newGameBtn = document.getElementById('new-game-btn');
     const loadGameBtn = document.getElementById('load-game-btn');
     const tutorialBtn = document.getElementById('tutorial-btn');
+    const simulationBtn = document.getElementById('simulation-btn');
     
     if (newGameBtn) {
         newGameBtn.addEventListener('click', () => {
             console.log('Nouvelle partie cliquée');
-            gameState.newGame();
-            showScreen('game-screen');
+            showModal('new-game-modal');
+            
+            // Focus sur le champ de nom de guilde
+            const newGuildNameInput = document.getElementById('new-guild-name');
+            if (newGuildNameInput) {
+                newGuildNameInput.focus();
+                newGuildNameInput.select();
+            }
         });
     }
     
@@ -186,6 +328,13 @@ function initGame() {
         });
     }
 
+    if (simulationBtn) {
+        simulationBtn.addEventListener('click', () => {
+            console.log('Simulateur d\'équilibrage cliqué');
+            simulationUI.show();
+        });
+    }
+
     // Événements du jeu
     const startCombatBtn = document.getElementById('start-combat-btn');
     const viewTroopsBtn = document.getElementById('view-troops-btn');
@@ -199,7 +348,7 @@ function initGame() {
             // Si pas de combat en cours, en démarrer un nouveau
             if (!gameState.currentCombat.isActive) {
                 gameState.startNewCombat();
-                gameState.showNotification('Combat commencé ! Sélectionnez des troupes et cliquez sur "Attaquer".', 'info');
+                
                 return;
             }
             
@@ -209,20 +358,8 @@ function initGame() {
                 return;
             }
             
-            const result = gameState.executeCombatTurn();
+            gameState.executeCombatTurn();
             
-            if (result.success) {
-                gameState.showNotification(`Tour ${gameState.currentCombat.round}: ${result.damage} dégâts infligés !`, 'success');
-                
-                // Afficher les résultats dans une notification temporaire
-                setTimeout(() => {
-                    if (gameState.currentCombat.isActive) {
-                        gameState.showNotification(`Progression: ${result.total}/${gameState.currentCombat.targetDamage} dégâts. Sélectionnez de nouvelles troupes pour le prochain tour.`, 'info');
-                    }
-                }, 1000);
-            } else {
-                gameState.showNotification(result.message, 'error');
-            }
         });
     }
     
@@ -270,9 +407,67 @@ function initGame() {
         });
     }
 
+    // Événement pour le nom de guilde modifiable
+    const guildNameInput = document.getElementById('guild-name-input');
+    if (guildNameInput) {
+        guildNameInput.addEventListener('blur', () => {
+            gameState.updateGuildName(guildNameInput.value);
+        });
+        
+        guildNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                guildNameInput.blur();
+            }
+        });
+    }
+    
+    // Événements pour la modal nouvelle partie
+    const confirmNewGameBtn = document.getElementById('confirm-new-game');
+    const cancelNewGameBtn = document.getElementById('cancel-new-game');
+    const newGuildNameInput = document.getElementById('new-guild-name');
+    
+    if (confirmNewGameBtn) {
+        confirmNewGameBtn.addEventListener('click', () => {
+            const guildName = newGuildNameInput ? newGuildNameInput.value.trim() : 'Guilde d\'Aventuriers';
+            if (guildName) {
+                gameState.newGame();
+                gameState.updateGuildName(guildName);
+                hideModal('new-game-modal');
+                showScreen('game-screen');
+                gameState.showNotification(`Nouvelle partie créée : ${guildName}`, 'success');
+            } else {
+                gameState.showNotification('Veuillez entrer un nom de guilde', 'error');
+            }
+        });
+    }
+    
+    if (cancelNewGameBtn) {
+        cancelNewGameBtn.addEventListener('click', () => {
+            hideModal('new-game-modal');
+        });
+    }
+    
+    if (newGuildNameInput) {
+        newGuildNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                confirmNewGameBtn.click();
+            }
+        });
+    }
+    
     // Vérifier s'il y a une sauvegarde au démarrage
     if (localStorage.getItem('guildMasterSave') && loadGameBtn) {
         loadGameBtn.textContent = 'Charger Partie ✓';
+    }
+    
+    // Événement pour le bouton beta test
+    const acceptBetaTestBtn = document.getElementById('accept-beta-test');
+    if (acceptBetaTestBtn) {
+        acceptBetaTestBtn.addEventListener('click', () => {
+            hideModal('beta-test-modal');
+            // Marquer que l'utilisateur a vu la modal beta test
+            localStorage.setItem('betaTestSeen', 'true');
+        });
     }
     
     console.log('Jeu initialisé avec succès');

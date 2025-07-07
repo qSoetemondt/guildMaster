@@ -5,6 +5,7 @@ export class GameState {
         this.rankProgress = 0;
         this.rankTarget = 100;
         this.gold = 100;
+        this.guildName = 'Guilde d\'Aventuriers'; // Nom de la guilde modifiable
         this.availableTroops = [];
         this.selectedTroops = [];
         this.combatTroops = []; // Troupes tirées pour le combat
@@ -12,6 +13,24 @@ export class GameState {
         this.combatHistory = [];
         this.isFirstTime = true;
         this.unlockedBonuses = []; // Bonus débloqués via le magasin
+        
+        // Statistiques de partie
+        this.gameStats = {
+            combatsPlayed: 0,
+            combatsWon: 0,
+            combatsLost: 0,
+            goldSpent: 0,
+            goldEarned: 0,
+            unitsPurchased: 0,
+            bonusesPurchased: 0,
+            unitsUsed: {}, // {unitName: count}
+            maxDamageInTurn: 0,
+            bestTurnDamage: 0,
+            bestTurnRound: 0,
+            totalDamageDealt: 0,
+            highestRank: 'F-',
+            startTime: Date.now()
+        };
         
         // État du combat actuel
         this.currentCombat = {
@@ -27,6 +46,116 @@ export class GameState {
         
         // Initialiser le magasin
         this.currentShopItems = null;
+        this.currentShopPurchasedBonuses = []; // Bonus achetés dans la session actuelle du magasin
+        this.shopRefreshCount = 0; // Nombre de rafraîchissements effectués
+        this.shopRefreshCost = 10; // Coût initial du rafraîchissement
+        // Initialiser les listes d'achats de la session de magasin
+        this.currentShopPurchasedUnits = [];
+        this.currentShopPurchasedConsumables = [];
+        
+        // Système de consomables
+        this.consumables = []; // Inventaire des consomables
+        this.transformedBaseUnits = {}; // Garder une trace des unités de base transformées
+        
+        // Système de niveaux de synergies
+        this.synergyLevels = {
+            'Formation Corps à Corps': 1,
+            'Formation Distance': 1,
+            'Formation Magique': 1,
+            'Horde Corps à Corps': 1,
+            'Volée de Flèches': 1,
+            'Tempête Magique': 1,
+            'Tactique Mixte': 1,
+            'Force Physique': 1
+        };
+        this.CONSUMABLES_TYPES = {
+            refreshShop: {
+                name: 'Relance Boutique',
+                description: 'Relance le magasin gratuitement',
+                icon: '🔄',
+                price: Math.ceil(10 * 1.75), // 18
+                effect: 'refreshShop'
+            },
+            transformSword: {
+                name: 'Épée de Transformation',
+                description: 'Transforme une unité en Épéiste',
+                icon: '⚔️',
+                price: Math.ceil(15 * 1.75), // 27
+                effect: 'transformUnit',
+                targetUnit: 'Épéiste'
+            },
+            transformArcher: {
+                name: 'Arc de Transformation',
+                description: 'Transforme une unité en Archer',
+                icon: '🏹',
+                price: Math.ceil(15 * 1.75), // 27
+                effect: 'transformUnit',
+                targetUnit: 'Archer'
+            },
+            transformLancier: {
+                name: 'Lance de Transformation',
+                description: 'Transforme une unité en Lancier',
+                icon: '🔱',
+                price: Math.ceil(15 * 1.75), // 27
+                effect: 'transformUnit',
+                targetUnit: 'Lancier'
+            },
+            transformPaysan: {
+                name: 'Paysan de Transformation',
+                description: 'Transforme une unité en Paysan',
+                icon: '👨‍🌾',
+                price: Math.ceil(5 * 1.75), // 9
+                effect: 'transformUnit',
+                targetUnit: 'Paysan'
+            },
+            transformMagicienBleu: {
+                name: 'Magicien Bleu de Transformation',
+                description: 'Transforme une unité en Magicien Bleu',
+                icon: '🔵',
+                price: Math.ceil(15 * 1.75), // 27
+                effect: 'transformUnit',
+                targetUnit: 'Magicien Bleu'
+            },
+            transformMagicienRouge: {
+                name: 'Magicien Rouge de Transformation',
+                description: 'Transforme une unité en Magicien Rouge',
+                icon: '🔴',
+                price: Math.ceil(15 * 1.75), // 27
+                effect: 'transformUnit',
+                targetUnit: 'Magicien Rouge'
+            },
+            transformBarbare: {
+                name: 'Barbare de Transformation',
+                description: 'Transforme une unité en Barbare',
+                icon: '👨‍🚒',
+                price: Math.ceil(25 * 1.75), // 44
+                effect: 'transformUnit',
+                targetUnit: 'Barbare'
+            },
+            transformSorcier: {
+                name: 'Sorcier de Transformation',
+                description: 'Transforme une unité en Sorcier',
+                icon: '🔮',
+                price: Math.ceil(50 * 1.75), // 88
+                effect: 'transformUnit',
+                targetUnit: 'Sorcier'
+            },
+            transformFronde: {
+                name: 'Fronde de Transformation',
+                description: 'Transforme une unité en Fronde',
+                icon: '🪨',
+                price: Math.ceil(50 * 1.75), // 88
+                effect: 'transformUnit',
+                targetUnit: 'Fronde'
+            },
+            upgradeSynergy: {
+                name: 'Cristal de Synergie',
+                description: 'Améliore le niveau d\'une synergie d\'équipe de +1',
+                icon: '💎',
+                price: Math.ceil(30 * 1.75), // 53
+                effect: 'upgradeSynergy'
+            }
+        };
         
         // Progression des rangs
         this.RANKS = ['F-', 'F', 'F+', 'E-', 'E', 'E+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S'];
@@ -36,10 +165,12 @@ export class GameState {
         
         // Définition des unités de base
         this.BASE_UNITS = [
-            { name: 'Épéiste', type: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, icon: '⚔️' },
-            { name: 'Archer', type: ['Distance', 'Physique'], damage: 4, multiplier: 3, icon: '🏹' },
-            { name: 'Magicien Bleu', type: ['Distance', 'Magique'], damage: 3, multiplier: 4, icon: '🔵' },
-            { name: 'Lancier', type: ['Corps à corps', 'Physique'], damage: 4, multiplier: 3, icon: '🔱' }
+            { name: 'Épéiste', type: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, icon: '⚔️', rarity: 'common' },
+            { name: 'Archer', type: ['Distance', 'Physique'], damage: 4, multiplier: 3, icon: '🏹', rarity: 'common' },
+            { name: 'Magicien Bleu', type: ['Distance', 'Magique'], damage: 3, multiplier: 4, icon: '🔵', rarity: 'uncommon' },
+            { name: 'Lancier', type: ['Corps à corps', 'Physique'], damage: 4, multiplier: 3, icon: '🔱', rarity: 'common' },
+            { name: 'Paysan', type: ['Corps à corps', 'Physique'], damage: 2, multiplier: 1, icon: '👨‍🌾', rarity: 'common' },
+            { name: 'Soigneur', type: ['Soigneur', 'Magique'], damage: 1, multiplier: 1, icon: '💚', rarity: 'common' }
         ];
         
 
@@ -52,6 +183,38 @@ export class GameState {
             { name: 'Titan', mechanic: 'Les multiplicateurs sont réduits de moitié', targetDamage: 6000, icon: '🏔️' },
             { name: 'Démon', mechanic: 'Les unités magiques font +50% de dégâts', targetDamage: 5500, icon: '👹' }
         ];
+        
+        // Fonction pour calculer les dégâts cibles selon le rang majeur
+        this.calculateTargetDamageByRank = function(rank) {
+            const rankIndex = this.RANKS.indexOf(rank);
+            if (rankIndex === -1) return 2000; // Valeur par défaut
+            
+            // Déterminer le rang majeur (F, E, D, C, B, A, S)
+            let majorRank = 'F';
+            if (rankIndex >= 3 && rankIndex <= 5) majorRank = 'E';      // E-, E, E+
+            else if (rankIndex >= 6 && rankIndex <= 8) majorRank = 'D'; // D-, D, D+
+            else if (rankIndex >= 9 && rankIndex <= 11) majorRank = 'C'; // C-, C, C+
+            else if (rankIndex >= 12 && rankIndex <= 14) majorRank = 'B'; // B-, B, B+
+            else if (rankIndex >= 15 && rankIndex <= 17) majorRank = 'A'; // A-, A, A+
+            else if (rankIndex === 18) majorRank = 'S';                   // S
+            
+            // Multiplicateur selon le rang majeur
+            const multipliers = {
+                'F': 1,    // F reste comme maintenant
+                'E': 2,    // E multiplié par 2
+                'D': 4,    // D par 4
+                'C': 8,    // C par 8
+                'B': 16,   // B par 16
+                'A': 32,   // A par 32
+                'S': 64    // S par 64
+            };
+            
+            const baseDamage = 2000 + (rankIndex * 500);
+            return baseDamage * multipliers[majorRank];
+        };
+        
+        // Boss sélectionné pour l'affichage (mémorisé pour éviter les changements)
+        this.displayBoss = null;
         
         // Tirer les premières troupes pour le combat
         this.drawCombatTroops();
@@ -91,6 +254,9 @@ export class GameState {
             // Réinitialiser les troupes utilisées pour le nouveau rang
             this.usedTroopsThisRank = [];
             
+            // Réinitialiser le boss d'affichage pour le nouveau rang
+            this.displayBoss = null;
+            
             // Tirer de nouvelles troupes pour le nouveau rang
             this.drawCombatTroops();
             
@@ -101,29 +267,32 @@ export class GameState {
 
     // Démarrer un nouveau combat
     startNewCombat() {
+        // Nettoyer l'affichage du malus de boss avant de commencer un nouveau combat
+        this.cleanBossMalusDisplay();
+        
         const isBossFight = this.BOSS_RANKS.includes(this.rank);
         console.log(`Rang actuel: ${this.rank}, Boss ranks: ${this.BOSS_RANKS}, Is boss fight: ${isBossFight}`);
         
         if (isBossFight) {
-            // Combat de boss
-            const randomBoss = this.BOSSES[Math.floor(Math.random() * this.BOSSES.length)];
+            // Combat de boss - utiliser le boss d'affichage s'il existe, sinon en sélectionner un
+            const selectedBoss = this.displayBoss || this.BOSSES[Math.floor(Math.random() * this.BOSSES.length)];
             this.currentCombat = {
-                targetDamage: randomBoss.targetDamage,
+                targetDamage: selectedBoss.targetDamage,
                 totalDamage: 0,
                 round: 0,
                 maxRounds: 5,
                 isActive: true,
                 isBossFight: true,
-                bossName: randomBoss.name,
-                bossMechanic: randomBoss.mechanic
+                bossName: selectedBoss.name,
+                bossMechanic: selectedBoss.mechanic
             };
             
-            console.log(`Combat de boss démarré: ${randomBoss.name}`);
-            this.showNotification(`BOSS: ${randomBoss.name} ! ${randomBoss.mechanic}`, 'error');
+            console.log(`Combat de boss démarré: ${selectedBoss.name}`);
+            this.showNotification(`BOSS: ${selectedBoss.name} ! ${selectedBoss.mechanic}`, 'error');
         } else {
             // Combat normal
             this.currentCombat = {
-                targetDamage: 2000 + (this.RANKS.indexOf(this.rank) * 500), // Augmenté x10 pour le nouveau système
+                targetDamage: this.calculateTargetDamageByRank(this.rank),
                 totalDamage: 0,
                 round: 0,
                 maxRounds: 5,
@@ -136,6 +305,9 @@ export class GameState {
             console.log(`Combat normal démarré, objectif: ${this.currentCombat.targetDamage}`);
            
         }
+        
+        // Réinitialiser le boss d'affichage quand on commence un combat
+        this.displayBoss = null;
         
         // Toujours tirer de nouvelles troupes pour un nouveau combat
         this.drawCombatTroops();
@@ -163,6 +335,20 @@ export class GameState {
         this.currentCombat.totalDamage += turnDamage;
         this.currentCombat.round++;
         
+        // Tracker les statistiques
+        this.gameStats.totalDamageDealt += turnDamage;
+        
+        // Tracker les unités utilisées
+        troopsUsed.forEach(troop => {
+            this.gameStats.unitsUsed[troop.name] = (this.gameStats.unitsUsed[troop.name] || 0) + 1;
+        });
+        
+        // Tracker le meilleur tour de dégâts
+        if (turnDamage > this.gameStats.bestTurnDamage) {
+            this.gameStats.bestTurnDamage = turnDamage;
+            this.gameStats.bestTurnRound = this.currentCombat.round;
+        }
+        
         // Retirer les troupes utilisées
         this.selectedTroops = [];
         
@@ -176,10 +362,12 @@ export class GameState {
             
             // Vérifier si le combat est terminé
             if (this.currentCombat.totalDamage >= this.currentCombat.targetDamage) {
+                console.log('Victoire ! Appel de endCombat(true)');
                 setTimeout(() => {
                     this.endCombat(true);
                 }, 1000);
             } else if (this.currentCombat.round >= this.currentCombat.maxRounds) {
+                console.log('Défaite ! Appel de endCombat(false)');
                 setTimeout(() => {
                     this.endCombat(false);
                 }, 1000);
@@ -221,6 +409,34 @@ export class GameState {
                 }
             });
             
+            // Appliquer les mécaniques de boss si c'est un combat de boss
+            if (this.currentCombat.isBossFight) {
+                const mechanic = this.currentCombat.bossMechanic;
+                
+                if (mechanic.includes('corps à corps') && this.hasTroopType(troop, 'Corps à corps')) {
+                    if (mechanic.includes('-50%')) {
+                        unitDamage = Math.floor(unitDamage * 0.5);
+                    }
+                    if (mechanic.includes('-2')) {
+                        unitDamage = Math.max(0, unitDamage - 2);
+                    }
+                }
+                
+                if (mechanic.includes('distance') && this.hasTroopType(troop, 'Distance')) {
+                    if (mechanic.includes('-30%')) {
+                        unitDamage = Math.floor(unitDamage * 0.7);
+                    }
+                }
+                
+                if (mechanic.includes('multiplicateurs')) {
+                    unitMultiplier = Math.floor(unitMultiplier * 0.5);
+                }
+                
+                if (mechanic.includes('magiques') && this.hasTroopType(troop, 'Magique')) {
+                    unitDamage = Math.floor(unitDamage * 1.5);
+                }
+            }
+            
             // Accumuler les dégâts et multiplicateurs
             totalDamage += unitDamage;
             totalMultiplier += unitMultiplier;
@@ -234,13 +450,6 @@ export class GameState {
         
         // Calculer le total final
         let finalDamage = totalDamage * totalMultiplier;
-        
-        // Appliquer les mécaniques de boss si nécessaire
-        if (this.currentCombat.isBossFight) {
-            // Pour les boss, on applique les mécaniques sur le total final
-            // On peut ajuster le total en fonction des mécaniques
-            // Pour l'instant, on garde le calcul simple
-        }
         
         return Math.round(finalDamage);
     }
@@ -323,6 +532,16 @@ export class GameState {
         unitsContent.innerHTML = '';
         synergiesContent.innerHTML = '';
         bonusesContent.innerHTML = '';
+        
+        // Réinitialiser aussi les conteneurs mobile
+        const unitsContentMobile = document.getElementById('units-slider-content-mobile');
+        const synergiesContentMobile = document.getElementById('synergies-animation-content-mobile');
+        const bonusesContentMobile = document.getElementById('bonuses-animation-content-mobile');
+        
+        if (unitsContentMobile) unitsContentMobile.innerHTML = '';
+        if (synergiesContentMobile) synergiesContentMobile.innerHTML = '';
+        if (bonusesContentMobile) bonusesContentMobile.innerHTML = '';
+        
         progressFill.style.width = '0%';
         
         // Variables pour le compteur principal
@@ -339,6 +558,100 @@ export class GameState {
         const equipmentBonuses = this.calculateEquipmentBonuses();
         console.log('Bonus d\'équipement calculés:', equipmentBonuses); // Debug
         console.log('Bonus débloqués:', this.unlockedBonuses); // Debug
+        
+        // PHASE 0: Afficher le malus de boss en premier si c'est un combat de boss (seulement au premier round)
+        if (this.currentCombat.isBossFight && this.currentCombat.round === 1) {
+            await this.sleep(500);
+            
+            // Vérifier si le malus de boss existe déjà
+            const existingBossMalus = document.querySelector('.boss-malus-container');
+            if (existingBossMalus) {
+                existingBossMalus.remove();
+            }
+            
+            // Créer un encart spécial pour le malus de boss
+            const bossMalusContainer = document.createElement('div');
+            bossMalusContainer.className = 'boss-malus-container';
+            bossMalusContainer.style.cssText = `
+                background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+                border: 3px solid #c44569;
+                border-radius: 12px;
+                padding: 15px;
+                margin: 15px 0;
+                box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+                color: white;
+                text-align: center;
+                position: relative;
+                overflow: hidden;
+            `;
+            
+            // Ajouter un effet de brillance
+            const shine = document.createElement('div');
+            shine.style.cssText = `
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 200%;
+                height: 200%;
+                background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+                transform: rotate(45deg);
+                animation: shine 2s infinite;
+            `;
+            bossMalusContainer.appendChild(shine);
+            
+            const bossMalusContent = document.createElement('div');
+            bossMalusContent.style.cssText = `
+                position: relative;
+                z-index: 1;
+            `;
+            
+            const bossTitle = document.createElement('div');
+            bossTitle.style.cssText = `
+                font-size: 1.2rem;
+                font-weight: bold;
+                margin-bottom: 8px;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            `;
+            bossTitle.textContent = '⚠️ MALUS DE BOSS ⚠️';
+            
+            const bossName = document.createElement('div');
+            bossName.style.cssText = `
+                font-size: 1.1rem;
+                font-weight: bold;
+                margin-bottom: 8px;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            `;
+            bossName.textContent = this.currentCombat.bossName;
+            
+            const bossEffect = document.createElement('div');
+            bossEffect.style.cssText = `
+                font-size: 1rem;
+                font-style: italic;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            `;
+            bossEffect.textContent = this.currentCombat.bossMechanic;
+            
+            bossMalusContent.appendChild(bossTitle);
+            bossMalusContent.appendChild(bossName);
+            bossMalusContent.appendChild(bossEffect);
+            bossMalusContainer.appendChild(bossMalusContent);
+            
+            // Insérer le malus de boss en premier dans le conteneur d'animation
+            const animationContainer = document.querySelector('.combat-animation');
+            if (animationContainer) {
+                const mainCounter = animationContainer.querySelector('.main-counter');
+                if (mainCounter) {
+                    animationContainer.insertBefore(bossMalusContainer, mainCounter);
+                } else {
+                    animationContainer.appendChild(bossMalusContainer);
+                }
+            }
+            
+            await this.sleep(200);
+            bossMalusContainer.style.animation = 'bossMalusAppear 0.5s ease-out';
+            
+            await this.sleep(800);
+        }
         
         // PHASE 1: Afficher les bonus d'équipement actifs
         if (equipmentBonuses.length > 0) {
@@ -361,12 +674,45 @@ export class GameState {
                     bonusText += `(${bonus.target})`;
                 }
                 
+                // Calculer le nombre d'occurrences de ce bonus
+                const bonusCount = this.unlockedBonuses.filter(id => {
+                    const bonusDescriptions = this.getBonusDescriptions();
+                    const bonusDesc = bonusDescriptions[id];
+                    return bonusDesc && bonusDesc.name === bonus.name;
+                }).length;
+                
+                console.log(`Bonus ${bonus.name}: ${bonusCount} occurrences`); // Debug
+                
+                // Déterminer la rareté du bonus en fonction du nom
+                let rarity = 'common';
+                if (['Épée Aiguisée', 'Arc Renforcé', 'Grimoire Magique', 'Bonus Or', 'Bonus Corps à Corps', 'Bonus Distance', 'Bonus Magique'].includes(bonus.name)) {
+                    rarity = 'common';
+                } else if (['Amulette de Force', 'Cristal de Précision', 'Orbe Mystique', 'Potion de Force', 'Élixir de Puissance'].includes(bonus.name)) {
+                    rarity = 'uncommon';
+                } else if (['Armure Légendaire', 'Arc Divin', 'Baguette Suprême'].includes(bonus.name)) {
+                    rarity = 'rare';
+                } else if (['Relique Ancienne'].includes(bonus.name)) {
+                    rarity = 'legendary';
+                }
+                
+                const rarityIcon = this.getRarityIcon(rarity);
+                const countDisplay = bonusCount > 1 ? ` <span class="bonus-count">×${bonusCount}</span>` : '';
+                
+                // Ajouter la classe de rareté à l'élément
+                bonusElement.className = `bonus-item rarity-${rarity}`;
+                
                 bonusElement.innerHTML = `
-                    <div class="bonus-name">${bonus.name}</div>
+                    <div class="bonus-name">${rarityIcon} ${bonus.name}${countDisplay}</div>
                     <div class="bonus-effect">${bonusText}</div>
                 `;
                 
+                // Ajouter aux conteneurs desktop et mobile
                 bonusesContent.appendChild(bonusElement);
+                const bonusesContentMobile = document.getElementById('bonuses-animation-content-mobile');
+                if (bonusesContentMobile) {
+                    const mobileBonusElement = bonusElement.cloneNode(true);
+                    bonusesContentMobile.appendChild(mobileBonusElement);
+                }
                 
                 await this.sleep(200);
                 bonusElement.classList.add('active');
@@ -376,7 +722,13 @@ export class GameState {
             const noBonusElement = document.createElement('div');
             noBonusElement.className = 'bonus-item active';
             noBonusElement.innerHTML = '<div class="bonus-name">Aucun bonus d\'équipement</div>';
+            
             bonusesContent.appendChild(noBonusElement);
+            const bonusesContentMobile = document.getElementById('bonuses-animation-content-mobile');
+            if (bonusesContentMobile) {
+                const mobileNoBonusElement = noBonusElement.cloneNode(true);
+                bonusesContentMobile.appendChild(mobileNoBonusElement);
+            }
         }
         
         await this.sleep(500);
@@ -396,7 +748,13 @@ export class GameState {
                     <div class="synergy-effect">${synergy.description}</div>
                 `;
                 
+                // Ajouter aux conteneurs desktop et mobile
                 synergiesContent.appendChild(synergyElement);
+                const synergiesContentMobile = document.getElementById('synergies-animation-content-mobile');
+                if (synergiesContentMobile) {
+                    const mobileSynergyElement = synergyElement.cloneNode(true);
+                    synergiesContentMobile.appendChild(mobileSynergyElement);
+                }
                 
                 // Accumuler les bonus de synergie pour les appliquer aux troupes
                 if (synergy.bonus.damage) {
@@ -414,7 +772,13 @@ export class GameState {
             const noSynergyElement = document.createElement('div');
             noSynergyElement.className = 'synergy-item active';
             noSynergyElement.innerHTML = '<div class="synergy-name">Aucune synergie active</div>';
+            
             synergiesContent.appendChild(noSynergyElement);
+            const synergiesContentMobile = document.getElementById('synergies-animation-content-mobile');
+            if (synergiesContentMobile) {
+                const mobileNoSynergyElement = noSynergyElement.cloneNode(true);
+                synergiesContentMobile.appendChild(mobileNoSynergyElement);
+            }
         }
         
         await this.sleep(500);
@@ -423,27 +787,7 @@ export class GameState {
         for (let i = 0; i < troopsUsed.length; i++) {
             const troop = troopsUsed[i];
             
-            // Calculer les dégâts de base de cette unité
-            let unitDamage = troop.damage;
-            let unitMultiplier = troop.multiplier;
-            
-            // Appliquer les bonus d'équipement sur cette unité
-            equipmentBonuses.forEach(bonus => {
-                if (bonus.target === 'all' || this.hasTroopType(troop, bonus.target)) {
-                    if (bonus.damage) unitDamage += bonus.damage;
-                    if (bonus.multiplier) unitMultiplier += bonus.multiplier;
-                }
-            });
-            
-            // Appliquer les synergies sur cette unité
-            synergies.forEach(synergy => {
-                if (synergy.bonus.target === 'all' || this.hasTroopType(troop, synergy.bonus.target)) {
-                    if (synergy.bonus.damage) unitDamage += synergy.bonus.damage;
-                    if (synergy.bonus.multiplier) unitMultiplier += synergy.bonus.multiplier;
-                }
-            });
-            
-            // Créer l'élément d'unité
+            // Créer l'élément d'unité avec stats de base
             const unitElement = document.createElement('div');
             unitElement.className = 'unit-slide';
             
@@ -457,25 +801,137 @@ export class GameState {
                         <div class="unit-slide-types">${typeDisplay}</div>
                     </div>
                 </div>
-                <div class="unit-slide-stats">
-                    <div class="unit-slide-damage">+${unitDamage}</div>
-                    <div class="unit-slide-multiplier">×${unitMultiplier}</div>
+                <div class="unit-stats-animated">
+                    <div class="unit-stat-item">
+                        <div class="unit-stat-value" id="unit-${i}-damage">${troop.damage}</div>
+                        <div class="unit-stat-label">Dégâts</div>
+                    </div>
+                    <div class="unit-stat-item">
+                        <div class="unit-stat-value" id="unit-${i}-multiplier">${troop.multiplier}</div>
+                        <div class="unit-stat-label">Multiplicateur</div>
+                    </div>
                 </div>
             `;
             
+            // Ajouter aux conteneurs desktop et mobile
             unitsContent.appendChild(unitElement);
+            const unitsContentMobile = document.getElementById('units-slider-content-mobile');
+            if (unitsContentMobile) {
+                // Pour mobile, utiliser l'ancien format
+                const mobileUnitElement = document.createElement('div');
+                mobileUnitElement.className = 'unit-slide';
+                mobileUnitElement.innerHTML = `
+                    <div class="unit-slide-info">
+                        <div class="unit-slide-icon">${troop.icon}</div>
+                        <div class="unit-slide-details">
+                            <div class="unit-slide-name">${troop.name}</div>
+                            <div class="unit-slide-types">${typeDisplay}</div>
+                        </div>
+                    </div>
+                    <div class="unit-slide-stats">
+                        <div class="unit-slide-damage">+${troop.damage}</div>
+                        <div class="unit-slide-multiplier">×${troop.multiplier}</div>
+                    </div>
+                `;
+                unitsContentMobile.appendChild(mobileUnitElement);
+            }
             
             // Animer l'unité
             await this.sleep(300);
             unitElement.classList.add('active');
             
-
+            // Variables pour suivre les stats actuelles
+            let currentDamage = troop.damage;
+            let currentMultiplier = troop.multiplier;
             
-            // Accumuler les dégâts et multiplicateurs
-            totalDamage += unitDamage;
-            totalMultiplier += unitMultiplier;
+            // Appliquer les bonus d'équipement avec animations (desktop uniquement)
+            for (const bonus of equipmentBonuses) {
+                if (bonus.target === 'all' || this.hasTroopType(troop, bonus.target)) {
+                    if (bonus.damage) {
+                        await this.sleep(150);
+                        currentDamage += bonus.damage;
+                        this.updateUnitStat(unitElement, 'damage', currentDamage);
+                        this.showBonusAnimation(unitElement, `+${bonus.damage}`, 'damage');
+                    }
+                    if (bonus.multiplier) {
+                        await this.sleep(150);
+                        currentMultiplier += bonus.multiplier;
+                        this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
+                        this.showBonusAnimation(unitElement, `+${bonus.multiplier}`, 'multiplier');
+                    }
+                }
+            }
             
-            // Mettre à jour le compteur principal (seulement quand les troupes sont ajoutées)
+            // Appliquer les synergies avec animations (desktop uniquement)
+            for (const synergy of synergies) {
+                if (synergy.bonus.target === 'all' || this.hasTroopType(troop, synergy.bonus.target)) {
+                    if (synergy.bonus.damage) {
+                        await this.sleep(150);
+                        currentDamage += synergy.bonus.damage;
+                        this.updateUnitStat(unitElement, 'damage', currentDamage);
+                        this.showBonusAnimation(unitElement, `+${synergy.bonus.damage}`, 'damage');
+                    }
+                    if (synergy.bonus.multiplier) {
+                        await this.sleep(150);
+                        currentMultiplier += synergy.bonus.multiplier;
+                        this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
+                        this.showBonusAnimation(unitElement, `+${synergy.bonus.multiplier}`, 'multiplier');
+                    }
+                }
+            }
+            
+            // Appliquer les malus de boss avec animations (desktop uniquement)
+            if (this.currentCombat.isBossFight) {
+                const originalDamage = currentDamage;
+                const originalMultiplier = currentMultiplier;
+                
+                // Appliquer les mécaniques de boss
+                const mechanic = this.currentCombat.bossMechanic;
+                
+                if (mechanic.includes('corps à corps') && this.hasTroopType(troop, 'Corps à corps')) {
+                    if (mechanic.includes('-50%')) {
+                        await this.sleep(200);
+                        currentDamage = Math.floor(currentDamage * 0.5);
+                        this.updateUnitStat(unitElement, 'damage', currentDamage);
+                        this.showMalusAnimation(unitElement, '-50%', 'damage');
+                    }
+                    if (mechanic.includes('-2')) {
+                        await this.sleep(200);
+                        currentDamage = Math.max(0, currentDamage - 2);
+                        this.updateUnitStat(unitElement, 'damage', currentDamage);
+                        this.showMalusAnimation(unitElement, '-2', 'damage');
+                    }
+                }
+                
+                if (mechanic.includes('distance') && this.hasTroopType(troop, 'Distance')) {
+                    if (mechanic.includes('-30%')) {
+                        await this.sleep(200);
+                        currentDamage = Math.floor(currentDamage * 0.7);
+                        this.updateUnitStat(unitElement, 'damage', currentDamage);
+                        this.showMalusAnimation(unitElement, '-30%', 'damage');
+                    }
+                }
+                
+                if (mechanic.includes('multiplicateurs')) {
+                    await this.sleep(200);
+                    currentMultiplier = Math.floor(currentMultiplier * 0.5);
+                    this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
+                    this.showMalusAnimation(unitElement, '-50%', 'multiplier');
+                }
+                
+                if (mechanic.includes('magiques') && this.hasTroopType(troop, 'Magique')) {
+            await this.sleep(200);
+                    currentDamage = Math.floor(currentDamage * 1.5);
+                    this.updateUnitStat(unitElement, 'damage', currentDamage);
+                    this.showBonusAnimation(unitElement, '+50%', 'damage');
+                }
+            }
+            
+            // Accumuler les dégâts et multiplicateurs finaux
+            totalDamage += currentDamage;
+            totalMultiplier += currentMultiplier;
+            
+            // Mettre à jour le compteur principal
             damageCounter.textContent = totalDamage;
             multiplierCounter.textContent = totalMultiplier;
             finalResult.textContent = `= ${Math.round(totalDamage * totalMultiplier)} dégâts`;
@@ -487,35 +943,8 @@ export class GameState {
             await this.sleep(500);
         }
         
-        // PHASE 4: Appliquer les mécaniques de boss si applicable
-        if (this.currentCombat.isBossFight) {
-            await this.sleep(500);
-            
-            const bossElement = document.createElement('div');
-            bossElement.className = 'bonus-item';
-            bossElement.innerHTML = `
-                <div class="bonus-name">Mécanique de boss</div>
-                <div class="bonus-effect">${this.currentCombat.bossMechanic}</div>
-            `;
-            bonusesContent.appendChild(bossElement);
-            
-            await this.sleep(200);
-            bossElement.classList.add('active');
-            
-            // Recalculer le total final avec les mécaniques de boss
-            let finalDamage = totalDamage * totalMultiplier;
-            
-            // Appliquer les mécaniques de boss sur le total final
-            for (const troop of troopsUsed) {
-                const troopDamage = troop.damage * troop.multiplier;
-                const bossModifiedDamage = this.applyBossMechanics(troopDamage, troop);
-                finalDamage += (bossModifiedDamage - troopDamage);
-            }
-            
-            finalResult.textContent = `= ${Math.round(finalDamage)} dégâts`;
-            
-            await this.sleep(400);
-        }
+        // PHASE 4: Finalisation (les mécaniques de boss sont déjà appliquées dans les calculs précédents)
+        await this.sleep(500);
         
         // Animation finale
         await this.sleep(1000);
@@ -531,51 +960,156 @@ export class GameState {
     
     // Animation de victoire
     playVictoryAnimation() {
-        const victoryElement = document.getElementById('victory-animation');
-        if (!victoryElement) return;
+        // Créer l'élément de victoire principal
+        const victoryElement = document.createElement('div');
+        victoryElement.className = 'victory-animation';
+        victoryElement.textContent = '🎉 VICTOIRE ! 🎉';
+        document.body.appendChild(victoryElement);
         
-        // S'assurer que l'animation est masquée au début
-        victoryElement.style.display = 'block';
-        victoryElement.style.opacity = '0';
+        // Créer le conteneur de particules
+        const particlesContainer = document.createElement('div');
+        particlesContainer.className = 'victory-particles';
+        document.body.appendChild(particlesContainer);
         
-        // Forcer un reflow pour s'assurer que l'animation se déclenche
-        victoryElement.offsetHeight;
-        
-        // Déclencher l'animation
-        victoryElement.style.opacity = '1';
-        
-        // Ajouter des effets de particules
-        for (let i = 0; i < 10; i++) {
+        // Créer des particules
+        for (let i = 0; i < 20; i++) {
             setTimeout(() => {
                 const particle = document.createElement('div');
-                particle.style.position = 'fixed';
-                particle.style.left = Math.random() * window.innerWidth + 'px';
-                particle.style.top = Math.random() * window.innerHeight + 'px';
-                particle.style.fontSize = '2rem';
-                particle.style.color = ['#f1c40f', '#e74c3c', '#3498db', '#2ecc71'][Math.floor(Math.random() * 4)];
-                particle.style.zIndex = '10002';
-                particle.style.pointerEvents = 'none';
-                particle.style.animation = 'victoryParticle 1.5s ease-out forwards';
-                particle.textContent = ['⭐', '🎉', '🏆', '💎', '🔥'][Math.floor(Math.random() * 5)];
-                document.body.appendChild(particle);
+                particle.className = 'victory-particle';
                 
+                // Position aléatoire autour du centre
+                const angle = (Math.PI * 2 * i) / 20;
+                const distance = 100 + Math.random() * 100;
+                const x = Math.cos(angle) * distance;
+                const y = Math.sin(angle) * distance;
+                
+                particle.style.setProperty('--x', `${x}px`);
+                particle.style.setProperty('--y', `${y}px`);
+                particle.style.left = '50%';
+                particle.style.top = '50%';
+                
+                particlesContainer.appendChild(particle);
+                
+                // Supprimer la particule après l'animation
                 setTimeout(() => {
                     if (particle.parentNode) {
-                        document.body.removeChild(particle);
+                        particle.parentNode.removeChild(particle);
                     }
                 }, 1500);
-            }, i * 100);
+            }, i * 50);
         }
         
+        // Supprimer les éléments après l'animation
         setTimeout(() => {
-            victoryElement.style.display = 'none';
-            victoryElement.style.opacity = '0';
+            if (victoryElement.parentNode) {
+                victoryElement.parentNode.removeChild(victoryElement);
+            }
+            if (particlesContainer.parentNode) {
+                particlesContainer.parentNode.removeChild(particlesContainer);
+            }
         }, 2000);
     }
     
     // Fonction utilitaire pour les délais
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    // Afficher une animation de bonus sur une unité
+    showBonusAnimation(unitElement, bonusText, type) {
+        // Trouver l'élément de stat spécifique
+        const damageElement = unitElement.querySelector('.unit-stat-item:first-child');
+        const multiplierElement = unitElement.querySelector('.unit-stat-item:last-child');
+        
+        let targetElement = null;
+        if (type === 'damage' && damageElement) {
+            targetElement = damageElement;
+        } else if (type === 'multiplier' && multiplierElement) {
+            targetElement = multiplierElement;
+        }
+        
+        if (targetElement) {
+            const bonusElement = document.createElement('div');
+            bonusElement.className = `bonus-animation ${type}`;
+            bonusElement.textContent = bonusText;
+            bonusElement.style.position = 'absolute';
+            bonusElement.style.top = '-25px';
+            bonusElement.style.left = '50%';
+            bonusElement.style.transform = 'translateX(-50%)';
+            
+            targetElement.style.position = 'relative';
+            targetElement.appendChild(bonusElement);
+            
+            // Ajouter l'effet de brillance à l'unité
+            unitElement.classList.add('bonus-applied');
+            setTimeout(() => {
+                unitElement.classList.remove('bonus-applied');
+            }, 500);
+            
+            // Supprimer l'élément après l'animation
+            setTimeout(() => {
+                if (bonusElement.parentNode) {
+                    bonusElement.parentNode.removeChild(bonusElement);
+                }
+            }, 1000);
+        }
+    }
+    
+    // Afficher une animation de malus sur une unité
+    showMalusAnimation(unitElement, malusText, type) {
+        // Trouver l'élément de stat spécifique
+        const damageElement = unitElement.querySelector('.unit-stat-item:first-child');
+        const multiplierElement = unitElement.querySelector('.unit-stat-item:last-child');
+        
+        let targetElement = null;
+        if (type === 'damage' && damageElement) {
+            targetElement = damageElement;
+        } else if (type === 'multiplier' && multiplierElement) {
+            targetElement = multiplierElement;
+        }
+        
+        if (targetElement) {
+            const malusElement = document.createElement('div');
+            malusElement.className = `malus-animation ${type}`;
+            malusElement.textContent = malusText;
+            malusElement.style.position = 'absolute';
+            malusElement.style.top = '-25px';
+            malusElement.style.left = '50%';
+            malusElement.style.transform = 'translateX(-50%)';
+            
+            targetElement.style.position = 'relative';
+            targetElement.appendChild(malusElement);
+            
+            // Ajouter l'effet de tremblement à l'unité
+            unitElement.classList.add('malus-applied');
+            setTimeout(() => {
+                unitElement.classList.remove('malus-applied');
+            }, 500);
+            
+            // Supprimer l'élément après l'animation
+            setTimeout(() => {
+                if (malusElement.parentNode) {
+                    malusElement.parentNode.removeChild(malusElement);
+                }
+            }, 1000);
+        }
+    }
+    
+    // Mettre à jour les stats d'une unité avec animation
+    updateUnitStat(unitElement, statType, newValue) {
+        // Trouver l'élément de stat spécifique
+        const damageElement = unitElement.querySelector('.unit-stat-item:first-child .unit-stat-value');
+        const multiplierElement = unitElement.querySelector('.unit-stat-item:last-child .unit-stat-value');
+        
+        if (statType === 'damage' && damageElement) {
+            damageElement.textContent = newValue;
+            damageElement.classList.add('updated');
+            setTimeout(() => damageElement.classList.remove('updated'), 500);
+        } else if (statType === 'multiplier' && multiplierElement) {
+            multiplierElement.textContent = newValue;
+            multiplierElement.classList.add('updated');
+            setTimeout(() => multiplierElement.classList.remove('updated'), 500);
+        }
     }
     
 
@@ -597,20 +1131,13 @@ export class GameState {
             if (mechanic.includes('-30%')) {
                 return Math.floor(damage * 0.7);
             }
-            if (mechanic.includes('-2')) {
-                return Math.max(0, damage - 2);
-            }
-        }
-        
-        if (mechanic.includes('-20%')) {
-            return Math.floor(damage * 0.8);
         }
         
         if (mechanic.includes('multiplicateurs')) {
             return Math.floor(damage * 0.5);
         }
         
-        if (mechanic.includes('magiques') && troop.name.includes('Magicien')) {
+        if (mechanic.includes('magiques') && this.hasTroopType(troop, 'Magique')) {
             return Math.floor(damage * 1.5);
         }
         
@@ -619,10 +1146,28 @@ export class GameState {
 
     // Terminer le combat
     endCombat(victory) {
+        console.log(`endCombat appelé avec victory=${victory}`);
         if (!this.currentCombat.isActive) return;
 
         this.currentCombat.isActive = false;
         this.currentCombat.round = 0;
+
+        // Tracker les statistiques de combat
+        this.gameStats.combatsPlayed++;
+        if (victory) {
+            this.gameStats.combatsWon++;
+        } else {
+            this.gameStats.combatsLost++;
+            // Afficher le récapitulatif de partie en cas de défaite
+            this.showGameSummary();
+        }
+
+        // Mettre à jour le rang le plus élevé
+        const currentRankIndex = this.RANKS.indexOf(this.rank);
+        const highestRankIndex = this.RANKS.indexOf(this.gameStats.highestRank);
+        if (currentRankIndex > highestRankIndex) {
+            this.gameStats.highestRank = this.rank;
+        }
 
         if (victory) {
             // Récompense de base augmentée
@@ -633,6 +1178,10 @@ export class GameState {
             const wealthBonus = this.calculateWealthBonus();
             this.addGold(wealthBonus);
             
+            // Calculer les bonus d'or des bonus d'équipement
+            const equipmentGoldBonus = this.calculateEquipmentGoldBonus();
+            this.addGold(equipmentGoldBonus);
+            
             // Notification des récompenses
             // this.showNotification(`Victoire ! +${baseReward} or +${wealthBonus} or (bonus richesse)`, 'success');
             
@@ -641,6 +1190,16 @@ export class GameState {
             
             // Appliquer les bonus de base après combat
             this.applyCombatBonuses();
+            
+            // S'assurer que la modal de combat est affichée
+            const combatModal = document.getElementById('combat-modal');
+            if (combatModal) {
+                combatModal.style.display = 'block';
+                combatModal.classList.add('active');
+            }
+            
+            // Afficher l'encadré de victoire avec le détail des récompenses
+            this.showVictorySummary(baseReward, wealthBonus, equipmentGoldBonus);
         } else {
             this.showNotification('Défaite !', 'error');
         }
@@ -650,18 +1209,244 @@ export class GameState {
         this.selectedTroops = [];
         this.usedTroopsThisRank = [];
 
+        // Réinitialiser le magasin pour qu'il se régénère
+        this.currentShopItems = null;
+        this.currentShopPurchasedBonuses = []; // Réinitialiser les bonus achetés dans cette session
+        
+        // Réinitialiser le coût de rafraîchissement après chaque combat
+        this.shopRefreshCount = 0;
+        this.shopRefreshCost = 10;
+
+        // Nettoyer l'affichage du malus de boss
+        this.cleanBossMalusDisplay();
+
         this.updateUI();
         
         // Tirer de nouvelles troupes pour le prochain combat
         this.drawCombatTroops();
         
-        // Fermer la modal de combat après un délai
-        setTimeout(() => {
-            const combatModal = document.getElementById('combat-modal');
-            if (combatModal) {
-                combatModal.style.display = 'none';
+        // Ne pas fermer automatiquement la modal de combat en cas de victoire
+        // L'utilisateur devra la fermer manuellement
+        if (!victory) {
+            // Fermer automatiquement seulement en cas de défaite
+            setTimeout(() => {
+                const combatModal = document.getElementById('combat-modal');
+                if (combatModal) {
+                    combatModal.style.display = 'none';
+                }
+            }, 3000);
+        }
+    }
+
+    // Nettoyer l'affichage du malus de boss
+    cleanBossMalusDisplay() {
+        // Nettoyer le malus de boss dans l'animation de combat
+        const bossMalusContainer = document.querySelector('.boss-malus-container');
+        if (bossMalusContainer) {
+            bossMalusContainer.remove();
+        }
+        
+        // Nettoyer le malus de boss dans la modal de combat
+        const bossMalusModal = document.querySelector('.boss-malus-modal');
+        if (bossMalusModal) {
+            bossMalusModal.remove();
+        }
+        
+        // Nettoyer le malus de boss dans la progression du combat
+        const bossMechanic = document.querySelector('.boss-mechanic');
+        if (bossMechanic) {
+            bossMechanic.remove();
+        }
+        
+        // Nettoyer les éléments de malus de boss dans le log de combat
+        const combatLog = document.getElementById('combat-log');
+        if (combatLog) {
+            const bossMalusInLog = combatLog.querySelector('.boss-malus-modal');
+            if (bossMalusInLog) {
+                bossMalusInLog.remove();
             }
-        }, 2000);
+        }
+        
+        console.log('Affichage du malus de boss nettoyé');
+    }
+
+    // Afficher l'encadré de victoire
+    showVictorySummary(baseReward, wealthBonus, equipmentGoldBonus) {
+        const totalGold = baseReward + wealthBonus + equipmentGoldBonus;
+        
+        // Créer l'encadré de victoire
+        const victoryBox = document.createElement('div');
+        victoryBox.className = 'victory-summary-box';
+        victoryBox.innerHTML = `
+            <div class="victory-summary-content">
+                <h3>🎉 Victoire !</h3>
+                <div class="victory-rewards">
+                    <div class="reward-details">
+                        <div class="reward-line">
+                            <span>Or pour la victoire :</span>
+                            <span class="reward-amount">+${baseReward} or</span>
+                        </div>
+                        ${wealthBonus > 0 ? `
+                        <div class="reward-line">
+                            <span>Bonus économie :</span>
+                            <span class="reward-amount">+${wealthBonus} or</span>
+                        </div>
+                        ` : ''}
+                        ${equipmentGoldBonus > 0 ? `
+                        <div class="reward-line">
+                            <span>Bonus équipement :</span>
+                            <span class="reward-amount">+${equipmentGoldBonus} or</span>
+                        </div>
+                        ` : ''}
+                        <div class="reward-total">
+                            <span><strong>Total :</strong></span>
+                            <span class="reward-amount total"><strong>+${totalGold} or</strong></span>
+                        </div>
+                    </div>
+                    <p class="rank-progression">Vous passez au rang : <strong>${this.rank}</strong></p>
+                </div>
+                <div class="victory-actions">
+                    <button class="btn primary victory-continue-btn">Continuer vers le magasin</button>
+                </div>
+            </div>
+        `;
+        
+        // Ajouter l'encadré à la modal de combat
+        const combatModal = document.getElementById('combat-modal');
+        if (combatModal) {
+            const modalBody = combatModal.querySelector('.modal-body');
+            if (modalBody) {
+                // Supprimer l'ancien encadré de victoire s'il existe
+                const oldVictoryBox = modalBody.querySelector('.victory-summary-box');
+                if (oldVictoryBox) {
+                    oldVictoryBox.remove();
+                }
+                
+                // Ajouter le nouvel encadré
+                modalBody.appendChild(victoryBox);
+                
+                // Animation d'apparition
+                setTimeout(() => {
+                    victoryBox.classList.add('show');
+                }, 100);
+                
+                // Ajouter l'événement pour le bouton "Continuer"
+                const continueBtn = victoryBox.querySelector('.victory-continue-btn');
+                if (continueBtn) {
+                    continueBtn.addEventListener('click', () => {
+                        // Fermer la modal de combat
+                        const combatModal = document.getElementById('combat-modal');
+                        if (combatModal) {
+                            combatModal.style.display = 'none';
+                        }
+                        
+                        // Ouvrir le magasin
+                        setTimeout(() => {
+                            const shopModal = document.getElementById('shop-modal');
+                            if (shopModal) {
+                                shopModal.style.display = 'block';
+                                shopModal.classList.add('active');
+                                // Initialiser le magasin si la fonction existe
+                                if (typeof initShop === 'function') {
+                                    initShop();
+                                }
+                            }
+                        }, 500);
+                    });
+                }
+                
+                console.log('Encadré de victoire ajouté à la modal de combat');
+            } else {
+                console.error('Modal body non trouvé dans la modal de combat');
+            }
+        } else {
+            console.error('Modal de combat non trouvée');
+        }
+    }
+
+    // Afficher le récapitulatif de partie
+    showGameSummary() {
+        const gameTime = Math.floor((Date.now() - this.gameStats.startTime) / 1000 / 60); // en minutes
+        
+        // Trouver l'unité la plus utilisée
+        let mostUsedUnit = 'Aucune';
+        let mostUsedCount = 0;
+        Object.entries(this.gameStats.unitsUsed).forEach(([unitName, count]) => {
+            if (count > mostUsedCount) {
+                mostUsedUnit = unitName;
+                mostUsedCount = count;
+            }
+        });
+
+        // Créer la modal de récapitulatif
+        const summaryModal = document.createElement('div');
+        summaryModal.className = 'modal active';
+        summaryModal.id = 'game-summary-modal';
+        summaryModal.innerHTML = `
+            <div class="modal-overlay"></div>
+            <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                <div class="modal-header">
+                    <h3>📊 Récapitulatif de Partie</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+                </div>
+                <div class="modal-body">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div class="summary-section">
+                            <h4>⚔️ Combats</h4>
+                            <p><strong>Combats joués:</strong> ${this.gameStats.combatsPlayed}</p>
+                            <p><strong>Victoires:</strong> ${this.gameStats.combatsWon}</p>
+                            <p><strong>Défaites:</strong> ${this.gameStats.combatsLost}</p>
+                            <p><strong>Taux de victoire:</strong> ${this.gameStats.combatsPlayed > 0 ? Math.round((this.gameStats.combatsWon / this.gameStats.combatsPlayed) * 100) : 0}%</p>
+                        </div>
+                        <div class="summary-section">
+                            <h4>💰 Économie</h4>
+                            <p><strong>Or gagné:</strong> ${this.gameStats.goldEarned}💰</p>
+                            <p><strong>Or dépensé:</strong> ${this.gameStats.goldSpent}💰</p>
+                            <p><strong>Solde actuel:</strong> ${this.gold}💰</p>
+                            <p><strong>Unités achetées:</strong> ${this.gameStats.unitsPurchased}</p>
+                            <p><strong>Bonus achetés:</strong> ${this.gameStats.bonusesPurchased}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div class="summary-section">
+                            <h4>🎯 Performance</h4>
+                            <p><strong>Dégâts totaux:</strong> ${this.gameStats.totalDamageDealt.toLocaleString()}</p>
+                            <p><strong>Meilleur tour:</strong> ${this.gameStats.bestTurnDamage} dégâts (tour ${this.gameStats.bestTurnRound})</p>
+                            <p><strong>Rang atteint:</strong> ${this.gameStats.highestRank}</p>
+                            <p><strong>Temps de jeu:</strong> ${gameTime} minutes</p>
+                        </div>
+                        <div class="summary-section">
+                            <h4>👥 Unités</h4>
+                            <p><strong>Unité la plus jouée:</strong> ${mostUsedUnit} (${mostUsedCount} fois)</p>
+                            <p><strong>Unités différentes:</strong> ${Object.keys(this.gameStats.unitsUsed).length}</p>
+                        </div>
+                    </div>
+
+                    <div class="summary-section">
+                        <h4>🏆 Top 5 des Unités Utilisées</h4>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${Object.entries(this.gameStats.unitsUsed)
+                                .sort(([,a], [,b]) => b - a)
+                                .slice(0, 5)
+                                .map(([unitName, count], index) => `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 6px;">
+                                        <span><strong>${index + 1}.</strong> ${unitName}</span>
+                                        <span style="color: #666;">${count} fois</span>
+                                    </div>
+                                `).join('')}
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn primary" onclick="gameState.newGame()">Nouvelle Partie</button>
+                        <button class="btn secondary" onclick="this.closest('.modal').remove()">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(summaryModal);
     }
 
     // Retirer aléatoirement des troupes du pool de combat
@@ -684,6 +1469,7 @@ export class GameState {
     // Gestion des ressources
     addGold(amount) {
         this.gold += amount;
+        this.gameStats.goldEarned += amount;
         this.updateUI();
     }
 
@@ -715,13 +1501,40 @@ export class GameState {
         return bonus;
     }
 
+    // Calculer le bonus d'or des bonus d'équipement
+    calculateEquipmentGoldBonus() {
+        let totalBonus = 0;
+        
+        // Compter les occurrences de chaque bonus
+        const bonusCounts = {};
+        this.unlockedBonuses.forEach(bonusId => {
+            bonusCounts[bonusId] = (bonusCounts[bonusId] || 0) + 1;
+        });
+        
+        // Bonus d'or uniquement
+        if (bonusCounts['gold_bonus']) {
+            totalBonus = 25 * bonusCounts['gold_bonus'];
+        }
+        
+        return totalBonus;
+    }
+
     spendGold(amount) {
         if (this.gold >= amount) {
             this.gold -= amount;
+            this.gameStats.goldSpent += amount;
             this.updateUI();
             return true;
         }
         return false;
+    }
+    
+    // Mettre à jour le nom de la guilde
+    updateGuildName(newName) {
+        if (newName && newName.trim() !== '') {
+            this.guildName = newName.trim();
+            this.updateUI();
+        }
     }
 
     // Gestion des troupes
@@ -787,8 +1600,23 @@ export class GameState {
             return;
         }
         
-        if (troopIndex >= 0 && troopIndex < this.combatTroops.length) {
-            const troop = this.combatTroops.splice(troopIndex, 1)[0];
+        // Obtenir toutes les troupes disponibles
+        const allAvailableTroops = [...this.combatTroops, ...this.availableTroops];
+        
+        if (troopIndex >= 0 && troopIndex < allAvailableTroops.length) {
+            const troop = allAvailableTroops[troopIndex];
+            
+            // Retirer la troupe de la liste appropriée
+            const combatIndex = this.combatTroops.findIndex(t => t.id === troop.id);
+            if (combatIndex !== -1) {
+                this.combatTroops.splice(combatIndex, 1);
+            } else {
+                const availableIndex = this.availableTroops.findIndex(t => t.id === troop.id);
+                if (availableIndex !== -1) {
+                    this.availableTroops.splice(availableIndex, 1);
+                }
+            }
+            
             this.selectedTroops.push(troop);
             this.updateTroopsUI();
             this.updateSynergies();
@@ -799,7 +1627,16 @@ export class GameState {
     deselectTroopFromCombat(troopIndex) {
         if (troopIndex >= 0 && troopIndex < this.selectedTroops.length) {
             const troop = this.selectedTroops.splice(troopIndex, 1)[0];
+            
+            // Remettre la troupe dans la liste appropriée selon son origine
+            if (this.BASE_UNITS.some(baseUnit => baseUnit.name === troop.name)) {
+                // C'est une troupe de base, la remettre dans combatTroops
             this.combatTroops.push(troop);
+            } else {
+                // C'est une troupe achetée, la remettre dans availableTroops
+                this.availableTroops.push(troop);
+            }
+            
             this.updateTroopsUI();
             this.updateSynergies();
         }
@@ -847,70 +1684,120 @@ export class GameState {
             }
         });
 
+        // --- SYNERGIE SOIGNEUR ---
+        const healerCount = typeCounts['Soigneur'] || 0;
+        if (healerCount > 0) {
+            synergies.push({
+                name: 'Présence de Soigneur',
+                description: `+${healerCount} dégâts pour toute l'équipe (Soigneur)`,
+                bonus: { damage: healerCount, target: 'all' },
+                level: healerCount
+            });
+        }
+
+        // --- SAINTE TRINITÉ ---
+        const meleeCount = typeCounts['Corps à corps'] || 0;
+        const rangedCount = typeCounts['Distance'] || 0;
+        if (meleeCount >= 1 && rangedCount >= 1 && healerCount >= 1) {
+            synergies.push({
+                name: 'Sainte Trinité',
+                description: '+2 dégâts et +2 multiplicateur pour toute l\'équipe',
+                bonus: { damage: 2, multiplier: 2, target: 'all' },
+                level: 1
+            });
+        }
+
         // Synergies de base (augmentées)
         if (typeCounts['Corps à corps'] >= 3) {
+            const level = this.synergyLevels['Formation Corps à Corps'] || 1;
+            const multiplierBonus = 2 + (level - 1); // +2 au niveau 1, +3 au niveau 2, etc.
             synergies.push({
                 name: 'Formation Corps à Corps',
-                description: '+2 multiplicateur pour toutes les unités corps à corps',
-                bonus: { multiplier: 2, target: 'Corps à corps' }
+                description: `+${multiplierBonus} multiplicateur pour toutes les unités corps à corps (Niveau ${level})`,
+                bonus: { multiplier: multiplierBonus, target: 'Corps à corps' },
+                level: level
             });
         }
         
         if (typeCounts['Distance'] >= 3) {
+            const level = this.synergyLevels['Formation Distance'] || 1;
+            const multiplierBonus = 3 + (level - 1); // +3 au niveau 1, +4 au niveau 2, etc.
             synergies.push({
                 name: 'Formation Distance',
-                description: '+3 multiplicateur pour toutes les unités distance',
-                bonus: { multiplier: 3, target: 'Distance' }
+                description: `+${multiplierBonus} multiplicateur pour toutes les unités distance (Niveau ${level})`,
+                bonus: { multiplier: multiplierBonus, target: 'Distance' },
+                level: level
             });
         }
         
         if (typeCounts['Magique'] >= 3) {
+            const level = this.synergyLevels['Formation Magique'] || 1;
+            const multiplierBonus = 4 + (level - 1); // +4 au niveau 1, +5 au niveau 2, etc.
             synergies.push({
                 name: 'Formation Magique',
-                description: '+4 multiplicateur pour toutes les unités magiques',
-                bonus: { multiplier: 4, target: 'Magique' }
+                description: `+${multiplierBonus} multiplicateur pour toutes les unités magiques (Niveau ${level})`,
+                bonus: { multiplier: multiplierBonus, target: 'Magique' },
+                level: level
             });
         }
 
         // Synergies avancées (nouvelles et plus puissantes)
         if (typeCounts['Corps à corps'] >= 5) {
+            const level = this.synergyLevels['Horde Corps à Corps'] || 1;
+            const damageBonus = 5 + (level - 1); // +5 au niveau 1, +6 au niveau 2, etc.
+            const multiplierBonus = 3 + (level - 1); // +3 au niveau 1, +4 au niveau 2, etc.
             synergies.push({
                 name: 'Horde Corps à Corps',
-                description: '+5 dégâts et +3 multiplicateur pour toutes les unités corps à corps',
-                bonus: { damage: 5, multiplier: 3, target: 'Corps à corps' }
+                description: `+${damageBonus} dégâts et +${multiplierBonus} multiplicateur pour toutes les unités corps à corps (Niveau ${level})`,
+                bonus: { damage: damageBonus, multiplier: multiplierBonus, target: 'Corps à corps' },
+                level: level
             });
         }
         
         if (typeCounts['Distance'] >= 5) {
+            const level = this.synergyLevels['Volée de Flèches'] || 1;
+            const damageBonus = 8 + (level - 1); // +8 au niveau 1, +9 au niveau 2, etc.
+            const multiplierBonus = 4 + (level - 1); // +4 au niveau 1, +5 au niveau 2, etc.
             synergies.push({
                 name: 'Volée de Flèches',
-                description: '+8 dégâts et +4 multiplicateur pour toutes les unités distance',
-                bonus: { damage: 8, multiplier: 4, target: 'Distance' }
+                description: `+${damageBonus} dégâts et +${multiplierBonus} multiplicateur pour toutes les unités distance (Niveau ${level})`,
+                bonus: { damage: damageBonus, multiplier: multiplierBonus, target: 'Distance' },
+                level: level
             });
         }
         
         if (typeCounts['Magique'] >= 5) {
+            const level = this.synergyLevels['Tempête Magique'] || 1;
+            const damageBonus = 10 + (level - 1); // +10 au niveau 1, +11 au niveau 2, etc.
+            const multiplierBonus = 5 + (level - 1); // +5 au niveau 1, +6 au niveau 2, etc.
             synergies.push({
                 name: 'Tempête Magique',
-                description: '+10 dégâts et +5 multiplicateur pour toutes les unités magiques',
-                bonus: { damage: 10, multiplier: 5, target: 'Magique' }
+                description: `+${damageBonus} dégâts et +${multiplierBonus} multiplicateur pour toutes les unités magiques (Niveau ${level})`,
+                bonus: { damage: damageBonus, multiplier: multiplierBonus, target: 'Magique' },
+                level: level
             });
         }
 
         // Synergies mixtes (nouvelles)
         if (typeCounts['Corps à corps'] >= 3 && typeCounts['Distance'] >= 3) {
+            const level = this.synergyLevels['Tactique Mixte'] || 1;
+            const damageBonus = 3 + (level - 1); // +3 au niveau 1, +4 au niveau 2, etc.
             synergies.push({
                 name: 'Tactique Mixte',
-                description: '+3 dégâts pour toutes les unités',
-                bonus: { damage: 3, target: 'all' }
+                description: `+${damageBonus} dégâts pour toutes les unités (Niveau ${level})`,
+                bonus: { damage: damageBonus, target: 'all' },
+                level: level
             });
         }
         
         if (typeCounts['Physique'] >= 6) {
+            const level = this.synergyLevels['Force Physique'] || 1;
+            const damageBonus = 4 + (level - 1); // +4 au niveau 1, +5 au niveau 2, etc.
             synergies.push({
                 name: 'Force Physique',
-                description: '+4 dégâts pour toutes les unités physiques',
-                bonus: { damage: 4, target: 'Physique' }
+                description: `+${damageBonus} dégâts pour toutes les unités physiques (Niveau ${level})`,
+                bonus: { damage: damageBonus, target: 'Physique' },
+                level: level
             });
         }
 
@@ -1101,13 +1988,12 @@ export class GameState {
             return false;
         }
         
-        if (!this.unlockedBonuses.includes(bonusId)) {
+        // Ajouter le bonus (permet l'empilement)
             this.unlockedBonuses.push(bonusId);
-            // this.showNotification('Nouveau bonus débloqué !', 'success');
+        // this.showNotification('Bonus débloqué !', 'success');
             
             // Mettre à jour l'interface immédiatement pour afficher le nouveau bonus
             this.updateActiveBonuses();
-        }
         return true;
     }
 
@@ -1128,14 +2014,14 @@ export class GameState {
     // Mise à jour de l'interface
     updateUI() {
         const rankElement = document.getElementById('current-rank');
-        const progressElement = document.getElementById('rank-progress');
         const goldElement = document.getElementById('gold-amount');
-        // const reputationElement = document.getElementById('reputation-amount'); // Supprimé
+        const guildNameInput = document.getElementById('guild-name-input');
         
         if (rankElement) rankElement.textContent = this.rank;
-        if (progressElement) progressElement.textContent = `${this.rankProgress}/${this.rankTarget}`;
         if (goldElement) goldElement.textContent = this.gold;
-        // if (reputationElement) reputationElement.textContent = this.reputation; // Supprimé
+        if (guildNameInput && guildNameInput.value !== this.guildName) {
+            guildNameInput.value = this.guildName;
+        }
 
         // Nettoyer les bonus invalides avant de mettre à jour l'affichage
         this.cleanInvalidBonuses();
@@ -1174,6 +2060,9 @@ export class GameState {
         
         // Mettre à jour les troupes
         this.updateTroopsUI();
+        
+        // Mettre à jour les consomables
+        this.updateConsumablesDisplay();
     }
 
     // Mettre à jour la jauge de dégâts pour les boss
@@ -1258,12 +2147,82 @@ export class GameState {
             
             // Ajouter les informations initiales du combat
             if (this.currentCombat.isBossFight) {
-                this.addCombatLog(`BOSS: ${this.currentCombat.bossName} !`, 'warning');
-                this.addCombatLog(`Mécanique: ${this.currentCombat.bossMechanic}`, 'warning');
+                // Créer un encart spécial pour le malus de boss en premier
+                const bossMalusContainer = document.createElement('div');
+                bossMalusContainer.className = 'boss-malus-modal';
+                bossMalusContainer.style.cssText = `
+                    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+                    border: 3px solid #c44569;
+                    border-radius: 12px;
+                    padding: 15px;
+                    margin-bottom: 15px;
+                    color: white;
+                    text-align: center;
+                    position: relative;
+                    overflow: hidden;
+                    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+                `;
+                
+                // Ajouter un effet de brillance
+                const shine = document.createElement('div');
+                shine.style.cssText = `
+                    position: absolute;
+                    top: -50%;
+                    left: -50%;
+                    width: 200%;
+                    height: 200%;
+                    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+                    transform: rotate(45deg);
+                    animation: shine 3s infinite;
+                `;
+                bossMalusContainer.appendChild(shine);
+                
+                const bossMalusContent = document.createElement('div');
+                bossMalusContent.style.cssText = `
+                    position: relative;
+                    z-index: 1;
+                `;
+                
+                const bossTitle = document.createElement('div');
+                bossTitle.style.cssText = `
+                    font-size: 1.2rem;
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                `;
+                bossTitle.textContent = '⚠️ MALUS DE BOSS ⚠️';
+                
+                const bossName = document.createElement('div');
+                bossName.style.cssText = `
+                    font-size: 1.1rem;
+                    font-weight: bold;
+                    margin-bottom: 8px;
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+                `;
+                bossName.textContent = this.currentCombat.bossName;
+                
+                const bossEffect = document.createElement('div');
+                bossEffect.style.cssText = `
+                    font-size: 1rem;
+                    font-style: italic;
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+                `;
+                bossEffect.textContent = this.currentCombat.bossMechanic;
+                
+                bossMalusContent.appendChild(bossTitle);
+                bossMalusContent.appendChild(bossName);
+                bossMalusContent.appendChild(bossEffect);
+                bossMalusContainer.appendChild(bossMalusContent);
+                
+                // Insérer le malus de boss en premier dans le log
+                combatLog.appendChild(bossMalusContainer);
+                
+                // Ajouter l'objectif après le malus
+                this.addCombatLog(`Objectif: ${this.currentCombat.targetDamage} dégâts`, 'info');
             } else {
                 this.addCombatLog(`Combat contre ${this.getEnemyName()} !`, 'info');
-            }
             this.addCombatLog(`Objectif: ${this.currentCombat.targetDamage} dégâts`, 'info');
+            }
         }
     }
     
@@ -1334,10 +2293,9 @@ export class GameState {
     updateCombatProgressDisplay() {
         const combatProgressContainer = document.getElementById('combat-progress-container');
         
-        // NE PAS afficher la barre classique si c'est un combat de boss
+        // Afficher la barre pour tous les combats, y compris les boss
         if (this.currentCombat.isBossFight) {
             if (combatProgressContainer) combatProgressContainer.remove();
-            return;
         }
         if (this.currentCombat.isActive) {
             if (!combatProgressContainer) {
@@ -1564,8 +2522,10 @@ export class GameState {
         availableContainer.innerHTML = '';
         selectedContainer.innerHTML = '';
 
-        // Afficher les troupes tirées pour le combat
-        this.combatTroops.forEach((troop, index) => {
+        // Afficher toutes les troupes disponibles (combat + achetées)
+        const allAvailableTroops = [...this.combatTroops, ...this.availableTroops];
+        
+        allAvailableTroops.forEach((troop, index) => {
             const troopCard = this.createTroopCard(troop, index, false);
             availableContainer.appendChild(troopCard);
         });
@@ -1581,7 +2541,7 @@ export class GameState {
         const selectedTitle = selectedContainer.parentElement.querySelector('h4');
         
         if (availableTitle) {
-            availableTitle.textContent = `Troupes Tirées (${this.combatTroops.length})`;
+            availableTitle.textContent = `Troupes Disponibles (${allAvailableTroops.length})`;
         }
         if (selectedTitle) {
             selectedTitle.textContent = `Troupes Sélectionnées (${this.selectedTroops.length}/5)`;
@@ -1592,7 +2552,33 @@ export class GameState {
         const card = document.createElement('div');
         const isUsed = this.usedTroopsThisRank.includes(troop.id);
         
-        card.className = `unit-card ${isSelected ? 'selected' : ''} ${isUsed ? 'used' : ''}`;
+        // Ajouter la classe de rareté
+        const rarityClass = troop.rarity ? `rarity-${troop.rarity}` : '';
+        const classes = ['unit-card'];
+        if (isSelected) classes.push('selected');
+        if (isUsed) classes.push('used');
+        if (rarityClass) classes.push(rarityClass);
+        card.className = classes.join(' ');
+        
+        // Debug: afficher les informations de rareté
+        console.log(`Création carte pour ${troop.name}:`, {
+            rarity: troop.rarity,
+            rarityClass: rarityClass,
+            finalClassName: card.className
+        });
+        
+        // Forcer l'application du background de rareté via style inline
+        if (troop.rarity) {
+            const rarityColors = {
+                'common': 'linear-gradient(135deg, rgba(102, 102, 102, 0.1) 0%, rgba(102, 102, 102, 0.05) 100%)',
+                'uncommon': 'linear-gradient(135deg, rgba(0, 184, 148, 0.1) 0%, rgba(0, 184, 148, 0.05) 100%)',
+                'rare': 'linear-gradient(135deg, rgba(116, 185, 255, 0.1) 0%, rgba(116, 185, 255, 0.05) 100%)',
+                'epic': 'linear-gradient(135deg, rgba(162, 155, 254, 0.1) 0%, rgba(162, 155, 254, 0.05) 100%)',
+                'legendary': 'linear-gradient(135deg, rgba(253, 203, 110, 0.1) 0%, rgba(253, 203, 110, 0.05) 100%)'
+            };
+            card.style.background = rarityColors[troop.rarity];
+            card.style.borderColor = this.getRarityColor(troop.rarity);
+        }
         
         // Afficher les types (gère les types multiples)
         const typeDisplay = Array.isArray(troop.type) ? troop.type.join(' / ') : troop.type;
@@ -1602,6 +2588,9 @@ export class GameState {
             <div class="unit-name">${troop.name}</div>
             <div class="unit-stats">${troop.damage} dmg ×${troop.multiplier}</div>
             <div class="unit-type">${typeDisplay}</div>
+            ${troop.rarity ? `<div class="unit-rarity" style="color: ${this.getRarityColor(troop.rarity)}; font-weight: 600; margin-top: 5px; font-size: 0.8rem;">
+                ${this.getRarityIcon(troop.rarity)} ${troop.rarity.toUpperCase()}
+            </div>` : ''}
             ${isUsed ? '<div class="unit-used">Utilisée</div>' : ''}
         `;
 
@@ -1628,6 +2617,9 @@ export class GameState {
             return;
         }
 
+        // Vider le conteneur AVANT d'ajouter de nouveaux éléments
+        synergiesContainer.innerHTML = '';
+
         // Utiliser UNIQUEMENT les troupes sélectionnées pour les synergies
         let troopsToAnalyze = this.selectedTroops;
         
@@ -1647,7 +2639,7 @@ export class GameState {
             return;
         }
 
-        synergiesContainer.innerHTML = '<h4>Synergies Actives:</h4>';
+        // Ajouter les synergies une par une
         synergies.forEach(synergy => {
             const synergyElement = document.createElement('div');
             synergyElement.className = 'synergy-item';
@@ -1669,27 +2661,35 @@ export class GameState {
         const enemyImage = document.getElementById('enemy-image');
         const enemyImageModal = document.getElementById('enemy-image-modal');
 
-
-
         // Calculer l'objectif de dégâts même sans combat actif
         let targetDamage = 0;
         let isBossFight = false;
+        let selectedBoss = null;
         
         if (this.currentCombat && this.currentCombat.isActive) {
             // Combat actif en cours
             targetDamage = this.currentCombat.targetDamage;
             isBossFight = this.currentCombat.isBossFight;
+            if (isBossFight) {
+                selectedBoss = {
+                    name: this.currentCombat.bossName,
+                    mechanic: this.currentCombat.bossMechanic,
+                    targetDamage: this.currentCombat.targetDamage
+                };
+            }
         } else {
             // Calculer l'objectif pour le prochain combat
             isBossFight = this.BOSS_RANKS.includes(this.rank);
                         if (isBossFight) {
-                // Objectif de boss (moyenne des boss)
-                targetDamage = 8000; // Valeur moyenne des boss (800 * 10)
+                // Utiliser le boss mémorisé ou en sélectionner un nouveau si pas encore fait
+                if (!this.displayBoss) {
+                    this.displayBoss = this.BOSSES[Math.floor(Math.random() * this.BOSSES.length)];
+                }
+                selectedBoss = this.displayBoss;
+                targetDamage = selectedBoss.targetDamage;
             } else {
                 // Objectif normal basé sur le rang
-                const rankIndex = this.RANKS.indexOf(this.rank);
-                targetDamage = 2000 + (rankIndex * 500); // (200 + rankIndex * 50) * 10
- 
+                targetDamage = this.calculateTargetDamageByRank(this.rank);
             }
         }
 
@@ -1700,7 +2700,7 @@ export class GameState {
         let enemyImageSrc = 'assets/gobelin.jpg';
         
         if (isBossFight) {
-            enemyNameText = 'Boss';
+            enemyNameText = selectedBoss ? selectedBoss.name : 'Boss';
             enemyImageSrc = 'assets/orcs.jpg'; // Image pour les boss
         } else {
             // Noms d'ennemis et images basés sur le rang
@@ -1740,8 +2740,8 @@ export class GameState {
         // Afficher les informations de boss si c'est un combat de boss
         if (isBossFight && bossMechanicDisplay) {
             bossMechanicDisplay.style.display = 'block';
-            if (bossName) bossName.textContent = enemyNameText;
-            if (bossMechanicText) bossMechanicText.textContent = this.currentCombat ? this.currentCombat.bossMechanic : 'Mécanique spéciale de boss';
+            if (bossName) bossName.textContent = selectedBoss ? selectedBoss.name : 'Boss';
+            if (bossMechanicText) bossMechanicText.textContent = selectedBoss ? selectedBoss.mechanic : 'Mécanique spéciale de boss';
         } else if (bossMechanicDisplay) {
             bossMechanicDisplay.style.display = 'none';
         }
@@ -1779,19 +2779,88 @@ export class GameState {
                     damage: troop.damage,
                     multiplier: troop.multiplier,
                     type: troop.unitType || troop.type, // Gérer les deux formats possibles
-                    icon: troop.icon
+                    icon: troop.icon,
+                    rarity: troop.rarity
                 };
             }
             troopsByType[troop.name].count++;
         });
 
+        // Ajuster les compteurs pour les unités de base transformées
+        Object.keys(this.transformedBaseUnits).forEach(unitName => {
+            if (troopsByType[unitName]) {
+                troopsByType[unitName].count = Math.max(0, troopsByType[unitName].count - this.transformedBaseUnits[unitName]);
+            }
+        });
+
         // Créer les éléments pour chaque type de troupe
         Object.keys(troopsByType).forEach(troopName => {
             const troopData = troopsByType[troopName];
+            const rarityClass = troopData.rarity ? `rarity-${troopData.rarity}` : '';
+            const classes = ['troop-list-item'];
+            if (rarityClass) classes.push(rarityClass);
             const troopElement = document.createElement('div');
-            troopElement.className = 'troop-list-item';
+            troopElement.className = classes.join(' ');
 
             const typeDisplay = Array.isArray(troopData.type) ? troopData.type.join(' / ') : troopData.type;
+
+            // Vérifier si l'unité peut être transformée
+            // Permettre la transformation des unités possédées (base ou achetées)
+            const baseUnit = this.BASE_UNITS.find(unit => unit.name === troopName);
+            const transformedCount = this.transformedBaseUnits[troopName] || 0;
+            const availableCount = baseUnit ? (5 - transformedCount) : troopData.count;
+            
+            // Vérifier quel type de consommable de transformation est disponible
+            const hasSwordTransform = this.consumables.some(c => c.type === 'transformSword');
+            const hasArcherTransform = this.consumables.some(c => c.type === 'transformArcher');
+            const hasLancierTransform = this.consumables.some(c => c.type === 'transformLancier');
+            const hasPaysanTransform = this.consumables.some(c => c.type === 'transformPaysan');
+            const hasMagicienBleuTransform = this.consumables.some(c => c.type === 'transformMagicienBleu');
+            const hasMagicienRougeTransform = this.consumables.some(c => c.type === 'transformMagicienRouge');
+            const hasBarbareTransform = this.consumables.some(c => c.type === 'transformBarbare');
+            const hasSorcierTransform = this.consumables.some(c => c.type === 'transformSorcier');
+            const hasFrondeTransform = this.consumables.some(c => c.type === 'transformFronde');
+            
+            let transformButton = '';
+            if (availableCount > 0) {
+                if (hasSwordTransform && troopName !== 'Épéiste') {
+                    transformButton = `<button class="transform-btn" data-unit-name="${troopName}" data-target-unit="Épéiste" title="Transformer en Épéiste">
+                        ⚔️ Transformer
+                    </button>`;
+                } else if (hasArcherTransform && troopName !== 'Archer') {
+                    transformButton = `<button class="transform-btn" data-unit-name="${troopName}" data-target-unit="Archer" title="Transformer en Archer">
+                        🏹 Transformer
+                    </button>`;
+                } else if (hasLancierTransform && troopName !== 'Lancier') {
+                    transformButton = `<button class="transform-btn" data-unit-name="${troopName}" data-target-unit="Lancier" title="Transformer en Lancier">
+                        🔱 Transformer
+                    </button>`;
+                } else if (hasPaysanTransform && troopName !== 'Paysan') {
+                    transformButton = `<button class="transform-btn" data-unit-name="${troopName}" data-target-unit="Paysan" title="Transformer en Paysan">
+                        👨‍🌾 Transformer
+                    </button>`;
+                } else if (hasMagicienBleuTransform && troopName !== 'Magicien Bleu') {
+                    transformButton = `<button class="transform-btn" data-unit-name="${troopName}" data-target-unit="Magicien Bleu" title="Transformer en Magicien Bleu">
+                        🔵 Transformer
+                    </button>`;
+                } else if (hasMagicienRougeTransform && troopName !== 'Magicien Rouge') {
+                    transformButton = `<button class="transform-btn" data-unit-name="${troopName}" data-target-unit="Magicien Rouge" title="Transformer en Magicien Rouge">
+                        🔴 Transformer
+                    </button>`;
+                } else if (hasBarbareTransform && troopName !== 'Barbare') {
+                    transformButton = `<button class="transform-btn" data-unit-name="${troopName}" data-target-unit="Barbare" title="Transformer en Barbare">
+                        👨‍🚒 Transformer
+                    </button>`;
+                } else if (hasSorcierTransform && troopName !== 'Sorcier') {
+                    transformButton = `<button class="transform-btn" data-unit-name="${troopName}" data-target-unit="Sorcier" title="Transformer en Sorcier">
+                        🔮 Transformer  
+                    </button>`;
+                } else if (hasFrondeTransform && troopName !== 'Fronde') {
+                    transformButton = `<button class="transform-btn" data-unit-name="${troopName}" data-target-unit="Fronde" title="Transformer en Fronde">
+                        🪨 Transformer
+                    </button>`;
+                }   
+            }
 
             troopElement.innerHTML = `
                 <div class="troop-list-name">
@@ -1801,14 +2870,47 @@ export class GameState {
                     <span>💥 ${troopData.damage}</span>
                     <span>⚡ ${troopData.multiplier}</span>
                     <span>🏷️ ${typeDisplay}</span>
+                    ${troopData.rarity ? `<span style="color: ${this.getRarityColor(troopData.rarity)}; font-weight: 600;">
+                        ${this.getRarityIcon(troopData.rarity)} ${troopData.rarity.toUpperCase()}
+                    </span>` : ''}
                 </div>
                 <div class="troop-list-count">
                     x${troopData.count}
                 </div>
+                <div class="troop-list-actions">
+                    ${transformButton}
+                </div>
             `;
+
+            // Appliquer le style de rareté directement
+            if (troopData.rarity) {
+                const rarityColors = {
+                    'common': 'linear-gradient(135deg, rgba(102, 102, 102, 0.1) 0%, rgba(102, 102, 102, 0.05) 100%)',
+                    'uncommon': 'linear-gradient(135deg, rgba(0, 184, 148, 0.1) 0%, rgba(0, 184, 148, 0.05) 100%)',
+                    'rare': 'linear-gradient(135deg, rgba(116, 185, 255, 0.1) 0%, rgba(116, 185, 255, 0.05) 100%)',
+                    'epic': 'linear-gradient(135deg, rgba(162, 155, 254, 0.1) 0%, rgba(162, 155, 254, 0.05) 100%)',
+                    'legendary': 'linear-gradient(135deg, rgba(253, 203, 110, 0.1) 0%, rgba(253, 203, 110, 0.05) 100%)'
+                };
+                troopElement.style.background = rarityColors[troopData.rarity];
+                troopElement.style.borderLeftColor = this.getRarityColor(troopData.rarity);
+            }
 
             troopsList.appendChild(troopElement);
         });
+
+        // Ajouter les gestionnaires d'événements pour les boutons de transformation
+        setTimeout(() => {
+            const transformButtons = troopsList.querySelectorAll('.transform-btn');
+            transformButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const unitName = e.target.getAttribute('data-unit-name');
+                    const targetUnit = e.target.getAttribute('data-target-unit');
+                    if (unitName && targetUnit) {
+                        this.transformUnitFromModal(unitName, targetUnit);
+                    }
+                });
+            });
+        }, 100);
 
         // Afficher la modal
         troopsModal.style.display = 'block';
@@ -1835,6 +2937,30 @@ export class GameState {
             'elixir_puissance': { name: 'Élixir de Puissance', description: '+1 multiplicateur pour toutes les unités', icon: '🧪' },
             'relique_ancienne': { name: 'Relique Ancienne', description: '+10 dégâts et +3 multiplicateur pour toutes les unités', icon: '🏛️' }
         };
+    }
+
+    // Fonction pour obtenir l'icône de rareté
+    getRarityIcon(rarity) {
+        const icons = {
+            common: '⚪',
+            uncommon: '🟢',
+            rare: '🔵',
+            epic: '🟣',
+            legendary: '🟡'
+        };
+        return icons[rarity] || '⚪';
+    }
+
+    // Fonction pour obtenir la couleur de rareté
+    getRarityColor(rarity) {
+        const colors = {
+            common: '#666666',
+            uncommon: '#00b894',
+            rare: '#74b9ff',
+            epic: '#a29bfe',
+            legendary: '#fdcb6e'
+        };
+        return colors[rarity] || '#666666';
     }
 
     // Mettre à jour les bonus actifs
@@ -1869,15 +2995,44 @@ export class GameState {
             const bonus = bonusDescriptions[bonusId];
             if (bonus) {
                 const bonusElement = document.createElement('div');
-                bonusElement.className = 'bonus-item';
+                
+                // Déterminer la rareté du bonus
+                let rarity = 'common'; // Rareté par défaut
+                
+                // Bonus de base (très abordables)
+                if (['gold_bonus', 'corps_a_corps_bonus', 'distance_bonus', 'magique_bonus'].includes(bonusId)) {
+                    rarity = 'common';
+                }
+                // Bonus d'équipement communs
+                else if (['epee_aiguisee', 'arc_renforce', 'grimoire_magique'].includes(bonusId)) {
+                    rarity = 'common';
+                }
+                // Bonus d'équipement rares
+                else if (['amulette_force', 'cristal_precision', 'orbe_mystique', 'potion_force', 'elixir_puissance'].includes(bonusId)) {
+                    rarity = 'uncommon';
+                }
+                // Bonus d'équipement très rares
+                else if (['armure_legendaire', 'arc_divin', 'baguette_supreme'].includes(bonusId)) {
+                    rarity = 'rare';
+                }
+                // Bonus légendaires
+                else if (['relique_ancienne'].includes(bonusId)) {
+                    rarity = 'legendary';
+                }
+                
+                // Ajouter la classe de rareté
+                bonusElement.className = `bonus-item rarity-${rarity}`;
+                
                 const count = bonusCounts[bonusId];
-                const countText = count > 1 ? ` (x${count})` : '';
+                const countText = count > 1 ? ` <span class="bonus-count">×${count}</span>` : '';
+                const rarityIcon = this.getRarityIcon(rarity);
+                
                 bonusElement.innerHTML = `
-                    ${bonus.icon} ${bonus.name}${countText}
+                    ${rarityIcon} ${bonus.icon} ${bonus.name}${countText}
                     <div class="bonus-tooltip">${bonus.description}${count > 1 ? ` - ${count} fois` : ''}</div>
                 `;
                 bonusesContainer.appendChild(bonusElement);
-                console.log(`Bonus affiché: ${bonus.name}`);
+                console.log(`Bonus affiché: ${bonus.name} (count: ${count}, rarity: ${rarity})`);
             } else {
                 // Si le bonus n'est pas trouvé, afficher un message d'erreur temporaire
                 console.warn(`Bonus non trouvé: ${bonusId}`);
@@ -1885,7 +3040,7 @@ export class GameState {
                 bonusElement.className = 'bonus-item';
                 bonusElement.style.color = '#ff6b6b';
                 const count = bonusCounts[bonusId];
-                const countText = count > 1 ? ` (x${count})` : '';
+                const countText = count > 1 ? ` <span class="bonus-count">×${count}</span>` : '';
                 bonusElement.innerHTML = `
                     ❓ Bonus Inconnu${countText}
                     <div class="bonus-tooltip">Bonus non défini: ${bonusId}</div>
@@ -1923,6 +3078,27 @@ export class GameState {
 
         shopContainer.innerHTML = '';
 
+        // Ajouter le bouton de rafraîchissement
+        const refreshButton = document.createElement('div');
+        refreshButton.className = 'shop-refresh-button';
+        refreshButton.innerHTML = `
+            <div class="refresh-icon">🔄</div>
+            <div class="refresh-text">Rafraîchir</div>
+            <div class="refresh-cost">${this.shopRefreshCost}💰</div>
+        `;
+        
+        // Griser le bouton si pas assez d'or
+        if (this.gold < this.shopRefreshCost) {
+            refreshButton.style.opacity = '0.5';
+            refreshButton.style.cursor = 'not-allowed';
+        } else {
+            refreshButton.addEventListener('click', () => {
+                this.refreshShop();
+            });
+        }
+        
+        shopContainer.appendChild(refreshButton);
+
         // Générer des items aléatoires pour le magasin (seulement si pas déjà générés)
         if (!this.currentShopItems) {
             this.currentShopItems = this.generateShopItems();
@@ -1931,13 +3107,20 @@ export class GameState {
         
         shopItems.forEach(item => {
             const itemElement = document.createElement('div');
-            itemElement.className = 'shop-item';
+            
+            // Ajouter la classe de rareté
+            const rarityClass = item.rarity ? `rarity-${item.rarity}` : '';
+            itemElement.className = `shop-item ${rarityClass}`;
             
             const canAfford = this.gold >= item.price;
-            const isBonusAlreadyOwned = item.type === 'bonus' && this.unlockedBonuses.includes(item.bonusId);
+            const isBonusAlreadyPurchasedInSession = item.type === 'bonus' && this.currentShopPurchasedBonuses.includes(item.bonusId);
+            const isUnitAlreadyPurchasedInSession = item.type === 'unit' && this.currentShopPurchasedUnits.includes(item.name);
+            const isConsumableAlreadyPurchasedInSession = item.type === 'consumable' && this.currentShopPurchasedConsumables.includes(item.consumableType);
+            // Limite de consommables atteinte ?
+            const isConsumableLimitReached = item.type === 'consumable' && this.consumables && this.consumables.length >= 3;
             
-            // Griser si pas assez d'or OU si le bonus est déjà acheté
-            if (!canAfford || isBonusAlreadyOwned) {
+            // Griser si pas assez d'or OU si déjà acheté dans cette session OU limite consommable atteinte
+            if (!canAfford || isBonusAlreadyPurchasedInSession || isUnitAlreadyPurchasedInSession || isConsumableAlreadyPurchasedInSession || isConsumableLimitReached) {
                 itemElement.style.opacity = '0.5';
             }
             
@@ -1950,6 +3133,9 @@ export class GameState {
                     <div style="font-weight: 600; margin-bottom: 5px;">${item.name}</div>
                     <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">${typeDisplay}</div>
                     <div style="font-size: 0.8rem; margin-bottom: 10px;">${item.damage} dmg ×${item.multiplier}</div>
+                    ${item.rarity ? `<div style="margin-bottom: 10px; font-weight: 600; color: ${this.getRarityColor(item.rarity)}; font-size: 0.8rem;">
+                        ${this.getRarityIcon(item.rarity)} ${item.rarity.toUpperCase()}
+                    </div>` : ''}
                     <div class="item-price">${item.price}💰</div>
                 `;
             } else {
@@ -1957,12 +3143,15 @@ export class GameState {
                     <div style="font-size: 2rem; margin-bottom: 10px;">${item.icon}</div>
                     <div style="font-weight: 600; margin-bottom: 5px;">${item.name}</div>
                     <div style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">${item.description}</div>
+                    ${item.rarity ? `<div style="margin-bottom: 10px; font-weight: 600; color: ${this.getRarityColor(item.rarity)}; font-size: 0.8rem;">
+                        ${this.getRarityIcon(item.rarity)} ${item.rarity.toUpperCase()}
+                    </div>` : ''}
                     <div class="item-price">${item.price}💰</div>
                 `;
             }
             
-            // Permettre l'achat seulement si on peut se le permettre ET que le bonus n'est pas déjà possédé
-            if (canAfford && !isBonusAlreadyOwned) {
+            // Permettre l'achat seulement si on peut se le permettre ET que le bonus n'est pas déjà acheté dans cette session ET limite consommable non atteinte
+            if (canAfford && !isBonusAlreadyPurchasedInSession && !isUnitAlreadyPurchasedInSession && !isConsumableAlreadyPurchasedInSession && !isConsumableLimitReached) {
                 itemElement.addEventListener('click', () => {
                     if (this.spendGold(item.price)) {
                         if (item.type === 'unit') {
@@ -1974,12 +3163,20 @@ export class GameState {
                             };
                             delete troop.unitType; // Supprimer unitType pour éviter la confusion
                             this.addTroop(troop);
-                            // this.showNotification(`${item.name} acheté !`, 'success');
+                            // Ajouter à la liste des unités achetées dans cette session
+                            this.currentShopPurchasedUnits.push(item.name);
+                        } else if (item.type === 'consumable') {
+                            // Ajouter le consommable à l'inventaire
+                            this.addConsumable(item.consumableType);
+                            // Ajouter à la liste des consomables achetés dans cette session
+                            this.currentShopPurchasedConsumables.push(item.consumableType);
                         } else {
                             this.unlockBonus(item.bonusId);
-                            // this.showNotification(`${item.name} débloqué !`, 'success');
+                            // Ajouter le bonus à la liste des bonus achetés dans cette session
+                            this.currentShopPurchasedBonuses.push(item.bonusId);
                         }
                         this.updateUI();
+                        this.updateActiveBonuses(); // Forcer la mise à jour des bonus actifs
                     }
                 });
             }
@@ -1993,52 +3190,60 @@ export class GameState {
         const bonusDescriptions = this.getBonusDescriptions();
         
         const allItems = [
-            // Unités de base (prix réduits)
-            { type: 'unit', name: 'Épéiste', icon: '⚔️', unitType: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, price: 25 },
-            { type: 'unit', name: 'Archer', icon: '🏹', unitType: ['Distance', 'Physique'], damage: 4, multiplier: 3, price: 25 },
-            { type: 'unit', name: 'Magicien Rouge', icon: '🔴', unitType: ['Distance', 'Magique'], damage: 6, multiplier: 2, price: 30 },
-            { type: 'unit', name: 'Magicien Bleu', icon: '🔵', unitType: ['Corps à corps', 'Magique'], damage: 3, multiplier: 4, price: 30 },
-            { type: 'unit', name: 'Lancier', icon: '🔱', unitType: ['Corps à corps', 'Physique'], damage: 4, multiplier: 3, price: 25 },
-            { type: 'unit', name: 'Barbare', icon: '🪓', unitType: ['Corps à corps', 'Physique'], damage: 7, multiplier: 1, price: 30 },
-            { type: 'unit', name: 'Viking', icon: '🛡️', unitType: ['Corps à corps', 'Physique'], damage: 6, multiplier: 2, price: 30 },
-            { type: 'unit', name: 'Fronde', icon: '🪨', unitType: ['Distance', 'Physique'], damage: 2, multiplier: 5, price: 35 },
+            // Unités de base (prix augmentés de 75%)
+            { type: 'unit', name: 'Épéiste', icon: '⚔️', unitType: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, price: Math.ceil(25 * 1.75), rarity: 'common' },
+            { type: 'unit', name: 'Archer', icon: '🏹', unitType: ['Distance', 'Physique'], damage: 4, multiplier: 3, price: Math.ceil(25 * 1.75), rarity: 'common' },
+            { type: 'unit', name: 'Magicien Rouge', icon: '🔴', unitType: ['Distance', 'Magique'], damage: 6, multiplier: 2, price: Math.ceil(30 * 1.75), rarity: 'uncommon' },
+            { type: 'unit', name: 'Magicien Bleu', icon: '🔵', unitType: ['Corps à corps', 'Magique'], damage: 3, multiplier: 4, price: Math.ceil(30 * 1.75), rarity: 'uncommon' },
+            { type: 'unit', name: 'Lancier', icon: '🔱', unitType: ['Corps à corps', 'Physique'], damage: 4, multiplier: 3, price: Math.ceil(25 * 1.75), rarity: 'common' },
+            { type: 'unit', name: 'Paysan', icon: '👨‍🌾', unitType: ['Corps à corps', 'Physique'], damage: 2, multiplier: 1, price: Math.ceil(20 * 1.75), rarity: 'common' },
+            { type: 'unit', name: 'Soigneur', icon: '💚', unitType: ['Soigneur', 'Magique'], damage: 1, multiplier: 1, price: Math.ceil(25 * 1.75), rarity: 'common' },
+            { type: 'unit', name: 'Barbare', icon: '🪓', unitType: ['Corps à corps', 'Physique'], damage: 7, multiplier: 1, price: Math.ceil(30 * 1.75), rarity: 'uncommon' },
+            { type: 'unit', name: 'Viking', icon: '🛡️', unitType: ['Corps à corps', 'Physique'], damage: 6, multiplier: 2, price: Math.ceil(30 * 1.75), rarity: 'uncommon' },
+            { type: 'unit', name: 'Fronde', icon: '🪨', unitType: ['Distance', 'Physique'], damage: 2, multiplier: 5, price: Math.ceil(35 * 1.75), rarity: 'rare' },
             
-            // Unités spéciales (prix réduits)
-            { type: 'unit', name: 'Paladin', icon: '⚜️', unitType: ['Corps à corps', 'Physique'], damage: 8, multiplier: 2, price: 50 },
-            { type: 'unit', name: 'Assassin', icon: '🗡️', unitType: ['Corps à corps', 'Physique'], damage: 3, multiplier: 6, price: 50 },
-            { type: 'unit', name: 'Mage', icon: '🔮', unitType: ['Distance', 'Magique'], damage: 5, multiplier: 4, price: 50 },
-            { type: 'unit', name: 'Chevalier', icon: '🐎', unitType: ['Corps à corps', 'Physique'], damage: 9, multiplier: 1, price: 60 },
-            { type: 'unit', name: 'Arbalétrier', icon: '🎯', unitType: ['Distance', 'Physique'], damage: 8, multiplier: 2, price: 60 },
-            { type: 'unit', name: 'Sorcier', icon: '🧙‍♂️', unitType: ['Distance', 'Magique'], damage: 4, multiplier: 5, price: 60 },
-            { type: 'unit', name: 'Berserker', icon: '😤', unitType: ['Corps à corps', 'Physique'], damage: 10, multiplier: 1, price: 60 },
-            { type: 'unit', name: 'Archer d\'Élite', icon: '🎖️', unitType: ['Distance', 'Physique'], damage: 6, multiplier: 4, price: 80 },
-            { type: 'unit', name: 'Mage Suprême', icon: '👑', unitType: ['Distance', 'Magique', 'Corps à corps'], damage: 7, multiplier: 5, price: 100 },
-            { type: 'unit', name: 'Champion', icon: '🏆', unitType: ['Corps à corps', 'Physique', 'Magique'], damage: 12, multiplier: 2, price: 120 },
+            // Unités spéciales (prix augmentés de 75%)
+            { type: 'unit', name: 'Paladin', icon: '⚜️', unitType: ['Corps à corps', 'Physique'], damage: 8, multiplier: 2, price: Math.ceil(50 * 1.75), rarity: 'rare' },
+            { type: 'unit', name: 'Assassin', icon: '🗡️', unitType: ['Corps à corps', 'Physique'], damage: 3, multiplier: 6, price: Math.ceil(50 * 1.75), rarity: 'rare' },
+            { type: 'unit', name: 'Mage', icon: '🔮', unitType: ['Distance', 'Magique'], damage: 5, multiplier: 4, price: Math.ceil(50 * 1.75), rarity: 'rare' },
+            { type: 'unit', name: 'Chevalier', icon: '🐎', unitType: ['Corps à corps', 'Physique'], damage: 9, multiplier: 1, price: Math.ceil(60 * 1.75), rarity: 'epic' },
+            { type: 'unit', name: 'Arbalétrier', icon: '🎯', unitType: ['Distance', 'Physique'], damage: 8, multiplier: 2, price: Math.ceil(60 * 1.75), rarity: 'epic' },
+            { type: 'unit', name: 'Sorcier', icon: '🧙‍♂️', unitType: ['Distance', 'Magique'], damage: 4, multiplier: 5, price: Math.ceil(60 * 1.75), rarity: 'epic' },
+            { type: 'unit', name: 'Berserker', icon: '😤', unitType: ['Corps à corps', 'Physique'], damage: 10, multiplier: 1, price: Math.ceil(60 * 1.75), rarity: 'epic' },
+            { type: 'unit', name: 'Archer d\'Élite', icon: '🎖️', unitType: ['Distance', 'Physique'], damage: 6, multiplier: 4, price: Math.ceil(80 * 1.75), rarity: 'legendary' },
+            { type: 'unit', name: 'Mage Suprême', icon: '👑', unitType: ['Distance', 'Magique', 'Corps à corps'], damage: 7, multiplier: 5, price: Math.ceil(100 * 1.75), rarity: 'legendary' },
+            { type: 'unit', name: 'Champion', icon: '🏆', unitType: ['Corps à corps', 'Physique', 'Magique'], damage: 12, multiplier: 2, price: Math.ceil(120 * 1.75), rarity: 'legendary' },
             // Bonus - générés dynamiquement à partir des définitions centralisées
             ...Object.keys(bonusDescriptions).map(bonusId => {
                 const bonus = bonusDescriptions[bonusId];
-                // Prix réduits pour permettre plus d'achats
-                let price = 50; // Prix par défaut réduit
+                // Prix augmentés de 75% pour équilibrer l'économie
+                let price = Math.ceil(50 * 1.75); // Prix par défaut augmenté
+                let rarity = 'common'; // Rareté par défaut
                 
                 // Bonus de base (très abordables)
                 if (['gold_bonus', 'corps_a_corps_bonus', 'distance_bonus', 'magique_bonus'].includes(bonusId)) {
-                    price = 30;
+                    price = Math.ceil(30 * 1.75);
+                    rarity = 'common';
                 }
                 // Bonus d'équipement communs
                 else if (['epee_aiguisee', 'arc_renforce', 'grimoire_magique'].includes(bonusId)) {
-                    price = 25;
+                    price = Math.ceil(25 * 1.75);
+                    rarity = 'common';
                 }
                 // Bonus d'équipement rares
                 else if (['amulette_force', 'cristal_precision', 'orbe_mystique', 'potion_force', 'elixir_puissance'].includes(bonusId)) {
-                    price = 40;
+                    price = Math.ceil(40 * 1.75);
+                    rarity = 'uncommon';
                 }
                 // Bonus d'équipement très rares
                 else if (['armure_legendaire', 'arc_divin', 'baguette_supreme'].includes(bonusId)) {
-                    price = 60;
+                    price = Math.ceil(60 * 1.75);
+                    rarity = 'rare';
                 }
                 // Bonus légendaires
                 else if (['relique_ancienne'].includes(bonusId)) {
-                    price = 100;
+                    price = Math.ceil(100 * 1.75);
+                    rarity = 'legendary';
                 }
                 
                 
@@ -2048,18 +3253,69 @@ export class GameState {
                     icon: bonus.icon,
                     description: bonus.description,
                     bonusId: bonusId,
-                    price: price
+                    price: price,
+                    rarity: rarity
                 };
             })
         ];
         
-        // Mélanger et sélectionner 8 items aléatoires (augmenté de 5 à 8)
-        return allItems.sort(() => Math.random() - 0.5).slice(0, 8);
+        // Ajouter un consommable potentiellement
+        const consumableItem = this.addConsumableToShop();
+        if (consumableItem) {
+            allItems.push(consumableItem);
+        }
+        
+        // Garantir qu'un consommable soit inclus s'il a été généré
+        const consumableItems = allItems.filter(item => item.type === 'consumable');
+        const nonConsumableItems = allItems.filter(item => item.type !== 'consumable');
+        
+        // Mélanger les items non-consommables
+        const shuffledNonConsumables = nonConsumableItems.sort(() => Math.random() - 0.5);
+        
+        // Si on a un consommable, l'inclure et prendre 7 autres items
+        if (consumableItems.length > 0) {
+            const selectedConsumable = consumableItems[0]; // Prendre le premier consommable
+            const selectedNonConsumables = shuffledNonConsumables.slice(0, 7);
+            return [selectedConsumable, ...selectedNonConsumables];
+        } else {
+            // Sinon, prendre 8 items normaux
+            return shuffledNonConsumables.slice(0, 8);
+        }
     }
 
     // Réinitialiser le magasin
     resetShop() {
         this.currentShopItems = null;
+        this.currentShopPurchasedBonuses = [];
+        this.currentShopPurchasedUnits = [];
+        this.currentShopPurchasedConsumables = [];
+    }
+
+    // Rafraîchir le magasin
+    refreshShop() {
+        const cost = this.shopRefreshCost;
+        
+        if (this.gold >= cost) {
+            // Dépenser l'or
+            this.spendGold(cost);
+            
+            // Réinitialiser le magasin
+            this.currentShopItems = null;
+            this.currentShopPurchasedBonuses = [];
+            
+            // Augmenter le coût pour le prochain rafraîchissement
+            this.shopRefreshCount++;
+            this.shopRefreshCost = 10 + (this.shopRefreshCount * 5);
+            
+            // Mettre à jour l'affichage
+            this.updatePreCombatShop();
+            this.updateUI();
+            
+            // Notification de succès
+            //this.showNotification(`Magasin rafraîchi pour ${cost}💰 !`, 'success');
+        } else {
+            this.showNotification(`Or insuffisant ! Coût : ${cost}💰`, 'error');
+        }
     }
 
     // Notifications
@@ -2133,6 +3389,7 @@ export class GameState {
             rankProgress: this.rankProgress,
             rankTarget: this.rankTarget,
             gold: this.gold,
+            guildName: this.guildName,
             availableTroops: this.availableTroops,
             selectedTroops: this.selectedTroops,
             combatTroops: this.combatTroops,
@@ -2141,7 +3398,11 @@ export class GameState {
             isFirstTime: this.isFirstTime,
             unlockedBonuses: this.unlockedBonuses,
             currentCombat: this.currentCombat,
-            currentShopItems: this.currentShopItems
+            currentShopItems: this.currentShopItems,
+            gameStats: this.gameStats,
+            consumables: this.consumables,
+            transformedBaseUnits: this.transformedBaseUnits,
+            synergyLevels: this.synergyLevels
         };
         
         localStorage.setItem('guildMasterSave', JSON.stringify(saveData));
@@ -2153,6 +3414,26 @@ export class GameState {
         if (saveData) {
             const data = JSON.parse(saveData);
             Object.assign(this, data);
+            
+            // Initialiser les statistiques si pas présentes
+            if (!this.gameStats) {
+                this.gameStats = {
+                    combatsPlayed: 0,
+                    combatsWon: 0,
+                    combatsLost: 0,
+                    goldSpent: 0,
+                    goldEarned: 0,
+                    unitsPurchased: 0,
+                    bonusesPurchased: 0,
+                    unitsUsed: {},
+                    maxDamageInTurn: 0,
+                    bestTurnDamage: 0,
+                    bestTurnRound: 0,
+                    totalDamageDealt: 0,
+                    highestRank: 'F-',
+                    startTime: Date.now()
+                };
+            }
             
             // Initialiser les bonus si pas présents
             if (!this.unlockedBonuses) {
@@ -2177,11 +3458,54 @@ export class GameState {
             if (!this.currentShopItems) {
                 this.currentShopItems = null;
             }
+        
+        // Initialiser les bonus achetés dans la session si pas présent
+        if (!this.currentShopPurchasedBonuses) {
+            this.currentShopPurchasedBonuses = [];
+        }
+        
+        // Initialiser les variables de rafraîchissement si pas présentes
+        if (typeof this.shopRefreshCount === 'undefined') {
+            this.shopRefreshCount = 0;
+        }
+        if (typeof this.shopRefreshCost === 'undefined') {
+            this.shopRefreshCost = 10;
+        }
+        
+                    // Initialiser le boss d'affichage si pas présent
+            if (!this.displayBoss) {
+                this.displayBoss = null;
+            }
+            
+            // Initialiser les consomables si pas présents
+            if (!this.consumables) {
+                this.consumables = [];
+            }
+            
+            // Initialiser les unités de base transformées si pas présentes
+            if (!this.transformedBaseUnits) {
+                this.transformedBaseUnits = {};
+            }
+            
+            // Initialiser les niveaux de synergies si pas présents
+            if (!this.synergyLevels) {
+                this.synergyLevels = {
+                    'Formation Corps à Corps': 1,
+                    'Formation Distance': 1,
+                    'Formation Magique': 1,
+                    'Horde Corps à Corps': 1,
+                    'Volée de Flèches': 1,
+                    'Tempête Magique': 1,
+                    'Tactique Mixte': 1,
+                    'Force Physique': 1
+                };
+            }
             
             // Nettoyer les bonus invalides au chargement
             this.cleanInvalidBonuses();
             
             this.updateUI();
+            this.updateConsumablesDisplay();
             
             // Tirer les troupes de combat si aucune n'est disponible
             if (this.combatTroops.length === 0) {
@@ -2199,6 +3523,7 @@ export class GameState {
         this.rankProgress = 0;
         this.rankTarget = 100;
         this.gold = 100;
+        this.guildName = 'Guilde d\'Aventuriers';
         this.availableTroops = [];
         this.selectedTroops = [];
         this.combatTroops = [];
@@ -2206,6 +3531,43 @@ export class GameState {
         this.combatHistory = [];
         this.isFirstTime = true;
         this.unlockedBonuses = [];
+        this.consumables = [];
+        this.transformedBaseUnits = {};
+        this.synergyLevels = {
+            'Formation Corps à Corps': 1,
+            'Formation Distance': 1,
+            'Formation Magique': 1,
+            'Horde Corps à Corps': 1,
+            'Volée de Flèches': 1,
+            'Tempête Magique': 1,
+            'Tactique Mixte': 1,
+            'Force Physique': 1
+        };
+        
+        // Réinitialiser les variables de rafraîchissement du magasin
+        this.shopRefreshCount = 0;
+        this.shopRefreshCost = 10;
+        // Initialiser les listes d'achats de la session de magasin
+        this.currentShopPurchasedUnits = [];
+        this.currentShopPurchasedConsumables = [];
+        
+        // Réinitialiser les statistiques
+        this.gameStats = {
+            combatsPlayed: 0,
+            combatsWon: 0,
+            combatsLost: 0,
+            goldSpent: 0,
+            goldEarned: 0,
+            unitsPurchased: 0,
+            bonusesPurchased: 0,
+            unitsUsed: {},
+            maxDamageInTurn: 0,
+            bestTurnDamage: 0,
+            bestTurnRound: 0,
+            totalDamageDealt: 0,
+            highestRank: 'F-',
+            startTime: Date.now()
+        };
         
         // Réinitialiser le combat
         this.currentCombat = {
@@ -2223,8 +3585,440 @@ export class GameState {
         console.log('newGame() - RANKS.indexOf(this.rank):', this.RANKS.indexOf(this.rank));
         
         this.updateUI();
+        this.updateConsumablesDisplay();
         
         // Tirer les premières troupes pour le combat
         this.drawCombatTroops();
+    }
+
+    // === SYSTÈME DE CONSOMMABLES ===
+
+    // Ajouter un consommable à l'inventaire
+    addConsumable(consumableType) {
+        // Limite de 3 consommables
+        if (this.consumables.length >= 3) {
+            this.showNotification('Inventaire de consommables plein (3 max) !', 'error');
+            return;
+        }
+        const consumableTemplate = this.CONSUMABLES_TYPES[consumableType];
+        if (!consumableTemplate) {
+            console.error(`Type de consommable inconnu: ${consumableType}`);
+            return;
+        }
+
+        const consumable = {
+            id: `${consumableType}_${Date.now()}_${Math.random()}`,
+            type: consumableType,
+            name: consumableTemplate.name,
+            description: consumableTemplate.description,
+            icon: consumableTemplate.icon,
+            effect: consumableTemplate.effect
+        };
+
+        this.consumables.push(consumable);
+        //this.showNotification(`${consumable.name} ajouté à l'inventaire !`, 'success');
+        this.updateConsumablesDisplay();
+    }
+
+    // Utiliser un consommable
+    useConsumable(consumableId) {
+        const consumableIndex = this.consumables.findIndex(c => c.id === consumableId);
+        if (consumableIndex === -1) {
+            console.error(`Consommable non trouvé: ${consumableId}`);
+            return false;
+        }
+
+        const consumable = this.consumables[consumableIndex];
+        
+        // Exécuter l'effet du consommable
+        const success = this.executeConsumableEffect(consumable);
+        
+        if (success) {
+            // Pour les consommables qui ne nécessitent pas d'action supplémentaire, les supprimer immédiatement
+            if (consumable.effect !== 'transformUnit') {
+                this.consumables.splice(consumableIndex, 1);
+                this.updateConsumablesDisplay();
+            }
+            // Pour l'épée de transformation, le consommable sera supprimé après la transformation effective
+           // this.showNotification(`${consumable.name} utilisé !`, 'success');
+            return true;
+        } else {
+            this.showNotification('Impossible d\'utiliser ce consommable !', 'error');
+            return false;
+        }
+    }
+
+    // Exécuter l'effet d'un consommable
+    executeConsumableEffect(consumable) {
+        switch (consumable.effect) {
+            case 'refreshShop':
+                // Relancer le magasin gratuitement
+                this.shopRefreshCount = 0; // Réinitialiser le compteur
+                this.shopRefreshCost = 10; // Réinitialiser le coût
+                this.resetShop();
+                this.generateShopItems();
+                this.updatePreCombatShop();
+                return true;
+            
+            case 'transformUnit':
+                // Ouvrir la modal des troupes existante pour la transformation
+                this.showAllTroops();
+                const targetUnitName = consumable.targetUnit || 'Épéiste';
+                //this.showNotification(`Sélectionnez une unité dans la liste pour la transformer en ${targetUnitName} !`, 'info');
+                return true;
+            
+            case 'upgradeSynergy':
+                // Ouvrir une modal pour sélectionner quelle synergie améliorer
+                this.showSynergyUpgradeModal();
+                return true;
+            
+            default:
+                console.error(`Effet de consommable inconnu: ${consumable.effect}`);
+                return false;
+        }
+    }
+
+    // Afficher les consomables dans l'interface
+    updateConsumablesDisplay() {
+        const consumablesContainer = document.getElementById('consumables-display');
+        if (!consumablesContainer) {
+            return;
+        }
+
+        consumablesContainer.innerHTML = '';
+
+        // Ajouter le titre avec le compteur
+        const titleElement = document.createElement('div');
+        titleElement.className = 'consumables-title';
+        titleElement.innerHTML = `
+            <h4>Consommables (${this.consumables.length}/3)</h4>
+        `;
+        consumablesContainer.appendChild(titleElement);
+
+        if (this.consumables.length === 0) {
+            const noConsumablesElement = document.createElement('div');
+            noConsumablesElement.className = 'no-consumables';
+            noConsumablesElement.innerHTML = '<p>Aucun consommable disponible</p>';
+            consumablesContainer.appendChild(noConsumablesElement);
+            return;
+        }
+
+        this.consumables.forEach(consumable => {
+            const consumableElement = document.createElement('div');
+            consumableElement.className = 'consumable-item';
+            consumableElement.innerHTML = `
+                <div class="consumable-icon">${consumable.icon}</div>
+                <div class="consumable-info">
+                    <div class="consumable-name">${consumable.name}</div>
+                    <div class="consumable-description">${consumable.description}</div>
+                </div>
+                <button class="use-consumable-btn" data-consumable-id="${consumable.id}">
+                    Utiliser
+                </button>
+            `;
+            
+            // Ajouter l'événement click au bouton
+            const useButton = consumableElement.querySelector('.use-consumable-btn');
+            useButton.addEventListener('click', () => {
+                this.useConsumable(consumable.id);
+            });
+            
+            consumablesContainer.appendChild(consumableElement);
+        });
+    }
+
+    // Ajouter un consommable au magasin
+    addConsumableToShop() {
+        // 80% de chance d'avoir un consommable dans le magasin (augmenté pour plus de visibilité)
+        if (Math.random() < 0.8) {
+            const consumableTypes = Object.keys(this.CONSUMABLES_TYPES);
+            
+            // 25% de chance d'avoir spécifiquement le consommable d'amélioration de synergie
+            if (Math.random() < 0.25) {
+                const consumableTemplate = this.CONSUMABLES_TYPES['upgradeSynergy'];
+                return {
+                    type: 'consumable',
+                    id: `consumable_upgradeSynergy`,
+                    name: consumableTemplate.name,
+                    description: consumableTemplate.description,
+                    icon: consumableTemplate.icon,
+                    price: consumableTemplate.price,
+                    consumableType: 'upgradeSynergy'
+                };
+            } else {
+                // Sinon, sélectionner aléatoirement parmi tous les autres consommables
+                const otherTypes = consumableTypes.filter(type => type !== 'upgradeSynergy');
+                const randomType = otherTypes[Math.floor(Math.random() * otherTypes.length)];
+                const consumableTemplate = this.CONSUMABLES_TYPES[randomType];
+                
+                return {
+                    type: 'consumable',
+                    id: `consumable_${randomType}`,
+                    name: consumableTemplate.name,
+                    description: consumableTemplate.description,
+                    icon: consumableTemplate.icon,
+                    price: consumableTemplate.price,
+                    consumableType: randomType
+                };
+            }
+        }
+        return null;
+    }
+
+
+
+    // Récupérer toutes les troupes disponibles dans le jeu
+    getAllAvailableTroops() {
+        return [
+            // Unités de base
+            { name: 'Épéiste', icon: '⚔️', unitType: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, rarity: 'common' },
+            { name: 'Archer', icon: '🏹', unitType: ['Distance', 'Physique'], damage: 4, multiplier: 3, rarity: 'common' },
+            { name: 'Magicien Rouge', icon: '🔴', unitType: ['Distance', 'Magique'], damage: 6, multiplier: 2, rarity: 'uncommon' },
+            { name: 'Magicien Bleu', icon: '🔵', unitType: ['Corps à corps', 'Magique'], damage: 3, multiplier: 4, rarity: 'uncommon' },
+            { name: 'Lancier', icon: '🔱', unitType: ['Corps à corps', 'Physique'], damage: 4, multiplier: 3, rarity: 'common' },
+            { name: 'Paysan', icon: '👨‍🌾', unitType: ['Corps à corps', 'Physique'], damage: 2, multiplier: 1, rarity: 'common' },
+            { name: 'Soigneur', icon: '💚', unitType: ['Soigneur', 'Magique'], damage: 1, multiplier: 1, rarity: 'common' },
+            { name: 'Soigneur', icon: '💚', unitType: ['Soigneur', 'Magique'], damage: 1, multiplier: 1, rarity: 'common' },
+            { name: 'Barbare', icon: '🪓', unitType: ['Corps à corps', 'Physique'], damage: 7, multiplier: 1, rarity: 'uncommon' },
+            { name: 'Viking', icon: '🛡️', unitType: ['Corps à corps', 'Physique'], damage: 6, multiplier: 2, rarity: 'uncommon' },
+            { name: 'Fronde', icon: '🪨', unitType: ['Distance', 'Physique'], damage: 2, multiplier: 5, rarity: 'rare' },
+            
+            // Unités spéciales
+            { name: 'Paladin', icon: '⚜️', unitType: ['Corps à corps', 'Physique'], damage: 8, multiplier: 2, rarity: 'rare' },
+            { name: 'Assassin', icon: '🗡️', unitType: ['Corps à corps', 'Physique'], damage: 3, multiplier: 6, rarity: 'rare' },
+            { name: 'Mage', icon: '🔮', unitType: ['Distance', 'Magique'], damage: 5, multiplier: 4, rarity: 'rare' },
+            { name: 'Chevalier', icon: '🐎', unitType: ['Corps à corps', 'Physique'], damage: 9, multiplier: 1, rarity: 'epic' },
+            { name: 'Arbalétrier', icon: '🎯', unitType: ['Distance', 'Physique'], damage: 8, multiplier: 2, rarity: 'epic' },
+            { name: 'Sorcier', icon: '🧙‍♂️', unitType: ['Distance', 'Magique'], damage: 4, multiplier: 5, rarity: 'epic' },
+            { name: 'Berserker', icon: '😤', unitType: ['Corps à corps', 'Physique'], damage: 10, multiplier: 1, rarity: 'epic' },
+            { name: 'Archer d\'Élite', icon: '🎖️', unitType: ['Distance', 'Physique'], damage: 6, multiplier: 4, rarity: 'legendary' },
+            { name: 'Mage Suprême', icon: '👑', unitType: ['Distance', 'Magique', 'Corps à corps'], damage: 7, multiplier: 5, rarity: 'legendary' },
+            { name: 'Champion', icon: '🏆', unitType: ['Corps à corps', 'Physique', 'Magique'], damage: 12, multiplier: 2, rarity: 'legendary' }
+        ];
+    }
+
+
+
+    // Transformer une unité depuis la modal des troupes
+    transformUnitFromModal(fromUnitName, toUnitName) {
+        // Vérifier si l'utilisateur a un consommable de transformation approprié
+        const transformConsumables = this.consumables.filter(c => 
+            c.type === 'transformSword' || 
+            c.type === 'transformArcher' || 
+            c.type === 'transformLancier' ||
+            c.type === 'transformPaysan' ||
+            c.type === 'transformMagicienBleu' ||
+            c.type === 'transformMagicienRouge' ||
+            c.type === 'transformBarbare' ||
+            c.type === 'transformSorcier' ||
+            c.type === 'transformFronde' ||
+            c.type === 'upgradeSynergy'
+        );
+        
+        if (transformConsumables.length === 0) {
+            this.showNotification('Vous devez posséder un consommable de transformation pour transformer des unités !', 'error');
+            return;
+        }
+
+        // Vérifier si l'unité source existe
+        const sourceTroops = this.availableTroops.filter(troop => troop.name === fromUnitName);
+        const baseUnit = this.BASE_UNITS.find(unit => unit.name === fromUnitName);
+        
+        // Si c'est une unité de base
+        if (baseUnit) {
+            // Initialiser le compteur si nécessaire
+            if (!this.transformedBaseUnits[fromUnitName]) {
+                this.transformedBaseUnits[fromUnitName] = 0;
+            }
+            
+            // Vérifier qu'on n'a pas déjà transformé toutes les unités de base
+            if (this.transformedBaseUnits[fromUnitName] >= 5) {
+                this.showNotification(`Vous avez déjà transformé toutes vos unités ${fromUnitName} !`, 'error');
+                return;
+            }
+            
+            // Incrémenter le compteur de transformation
+            this.transformedBaseUnits[fromUnitName]++;
+        } else if (sourceTroops.length === 0) {
+            this.showNotification(`Aucune unité "${fromUnitName}" trouvée !`, 'error');
+            return;
+        }
+
+        // Trouver l'unité cible dans toutes les unités disponibles
+        const allAvailableUnits = [...this.BASE_UNITS, ...this.getAllAvailableTroops()];
+        const targetUnit = allAvailableUnits.find(unit => unit.name === toUnitName);
+        if (!targetUnit) {
+            this.showNotification(`Unité cible "${toUnitName}" non trouvée !`, 'error');
+            return;
+        }
+
+        // Supprimer une unité source si c'est une unité achetée
+        if (!baseUnit) {
+            const sourceTroopIndex = this.availableTroops.findIndex(troop => troop.name === fromUnitName);
+            if (sourceTroopIndex !== -1) {
+                this.availableTroops.splice(sourceTroopIndex, 1);
+            } else {
+                this.showNotification(`Impossible de transformer cette unité !`, 'error');
+                return;
+            }
+        }
+
+        // Ajouter l'unité cible
+        this.availableTroops.push({...targetUnit, id: `${targetUnit.name}_${Date.now()}`});
+
+        // Consommer le consommable de transformation approprié (prendre le premier disponible)
+        const consumableIndex = this.consumables.findIndex(c => 
+            c.type === 'transformSword' || 
+            c.type === 'transformArcher' || 
+            c.type === 'transformLancier' ||
+            c.type === 'transformPaysan' ||
+            c.type === 'transformMagicienBleu' ||
+            c.type === 'transformMagicienRouge' ||
+            c.type === 'transformBarbare' ||
+            c.type === 'transformSorcier' ||
+            c.type === 'transformFronde'
+        );
+        if (consumableIndex !== -1) {
+            this.consumables.splice(consumableIndex, 1);
+        }
+
+        // Jouer l'animation de transformation
+        this.playTransformAnimation(fromUnitName, toUnitName);
+
+        // Mettre à jour l'affichage
+        this.updateUI();
+        this.updateConsumablesDisplay();
+
+        // Fermer la modal des troupes
+        const troopsModal = document.getElementById('troops-modal');
+        if (troopsModal) {
+            troopsModal.style.display = 'none';
+        }
+
+        //this.showNotification(`${fromUnitName} a été transformé en ${toUnitName} !`, 'success');
+    }
+
+    // Obtenir l'icône d'une unité par son nom
+    getUnitIcon(unitName) {
+        const allUnits = [...this.BASE_UNITS, ...this.getAllAvailableTroops()];
+        const unit = allUnits.find(u => u.name === unitName);
+        return unit ? unit.icon : '❓';
+    }
+
+    // Afficher la modal d'amélioration de synergie
+    showSynergyUpgradeModal() {
+        const modal = document.createElement('div');
+        modal.id = 'synergy-upgrade-modal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>💎 Améliorer une Synergie</h3>
+                    <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <p>Sélectionnez une synergie à améliorer :</p>
+                    <div id="synergy-upgrade-list"></div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Afficher la liste des synergies disponibles
+        this.updateSynergyUpgradeList();
+        
+        // Afficher la modal
+        modal.style.display = 'block';
+    }
+    
+    // Mettre à jour la liste des synergies pour l'amélioration
+    updateSynergyUpgradeList() {
+        const container = document.getElementById('synergy-upgrade-list');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        const synergyNames = Object.keys(this.synergyLevels);
+        
+        synergyNames.forEach(synergyName => {
+            const currentLevel = this.synergyLevels[synergyName];
+            const nextLevel = currentLevel + 1;
+            
+            const synergyElement = document.createElement('div');
+            synergyElement.className = 'synergy-upgrade-item';
+            synergyElement.innerHTML = `
+                <div class="synergy-info">
+                    <div class="synergy-name">${synergyName}</div>
+                    <div class="synergy-level">Niveau actuel: ${currentLevel}</div>
+                    <div class="synergy-next">Niveau suivant: ${nextLevel}</div>
+                </div>
+                <button class="upgrade-synergy-btn" data-synergy="${synergyName}">
+                    Améliorer
+                </button>
+            `;
+            
+            // Ajouter l'événement click
+            const upgradeBtn = synergyElement.querySelector('.upgrade-synergy-btn');
+            upgradeBtn.addEventListener('click', () => {
+                this.upgradeSynergy(synergyName);
+            });
+            
+            container.appendChild(synergyElement);
+        });
+    }
+    
+    // Améliorer une synergie
+    upgradeSynergy(synergyName) {
+        if (!this.synergyLevels[synergyName]) {
+            this.synergyLevels[synergyName] = 1;
+        }
+        
+        this.synergyLevels[synergyName]++;
+        
+        // Consommer le consommable
+        const consumableIndex = this.consumables.findIndex(c => c.type === 'upgradeSynergy');
+        if (consumableIndex !== -1) {
+            this.consumables.splice(consumableIndex, 1);
+        }
+        
+        // Fermer la modal
+        const modal = document.getElementById('synergy-upgrade-modal');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // Mettre à jour l'affichage
+        this.updateUI();
+        this.updateConsumablesDisplay();
+        
+        // Notification de succès
+        this.showNotification(`${synergyName} améliorée au niveau ${this.synergyLevels[synergyName]} !`, 'success');
+    }
+
+    // Animation de transformation
+    playTransformAnimation(fromUnitName, toUnitName) {
+        // Créer l'élément d'animation
+        const animationElement = document.createElement('div');
+        animationElement.className = 'transform-animation';
+        animationElement.innerHTML = `
+            <div class="transform-content">
+                <div class="transform-from">${this.getUnitIcon(fromUnitName)} ${fromUnitName}</div>
+                <div class="transform-arrow">➜</div>
+                <div class="transform-to">${this.getUnitIcon(toUnitName)} ${toUnitName}</div>
+            </div>
+        `;
+        
+        document.body.appendChild(animationElement);
+        
+        // Animation CSS
+        setTimeout(() => {
+            animationElement.classList.add('show');
+        }, 100);
+        
+        // Supprimer après l'animation
+        setTimeout(() => {
+            animationElement.remove();
+        }, 2000);
     }
 } 
