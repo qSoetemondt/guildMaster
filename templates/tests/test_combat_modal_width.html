@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Largeur Modal Combat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #2980b9;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test Largeur Modal Combat</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Largeur de la Modal de Combat</h3>
+            <p>Vérifier que la modal de combat a une largeur plus importante que les autres modals.</p>
+            <button class="test-button" onclick="testCombatModalWidth()">Tester Largeur Modal Combat</button>
+            <div id="test1-result" class="debug-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 2: Comparaison avec Autres Modals</h3>
+            <p>Comparer la largeur de la modal de combat avec d'autres modals.</p>
+            <button class="test-button" onclick="testModalComparison()">Comparer Modals</button>
+            <div id="test2-result" class="debug-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 3: Responsive Design</h3>
+            <p>Vérifier que la modal reste responsive sur différentes tailles d'écran.</p>
+            <button class="test-button" onclick="testResponsiveDesign()">Tester Responsive</button>
+            <div id="test3-result" class="debug-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>État Actuel</h3>
+            <div id="current-state" class="debug-info"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GameState } from '../js/modules/GameState.js';
+        
+        let gameState;
+        
+        // Initialiser le jeu
+        function initGame() {
+            gameState = new GameState();
+            gameState.newGame();
+            updateCurrentState();
+        }
+        
+        // Mettre à jour l'affichage de l'état actuel
+        function updateCurrentState() {
+            const stateDiv = document.getElementById('current-state');
+            if (gameState) {
+                const combatModal = document.getElementById('combat-modal');
+                const combatModalContent = combatModal ? combatModal.querySelector('.modal-content') : null;
+                
+                const isModalVisible = combatModal && 
+                    (combatModal.style.display === 'flex' || combatModal.classList.contains('active'));
+                
+                stateDiv.innerHTML = `
+                    <strong>État du jeu :</strong><br>
+                    Rang: ${gameState.rank}<br>
+                    Or: ${gameState.gold}<br>
+                    Combat actif: ${gameState.currentCombat ? gameState.currentCombat.isActive : 'Non'}<br>
+                    <br>
+                    <strong>Modal de combat :</strong><br>
+                    Visible: ${isModalVisible ? 'Oui' : 'Non'}<br>
+                    Largeur: ${combatModalContent ? getComputedStyle(combatModalContent).width : 'N/A'}<br>
+                    Max-width: ${combatModalContent ? getComputedStyle(combatModalContent).maxWidth : 'N/A'}
+                `;
+            }
+        }
+        
+        // Test 1: Largeur de la modal de combat
+        window.testCombatModalWidth = function() {
+            const resultDiv = document.getElementById('test1-result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                // Démarrer un nouveau combat pour ouvrir la modal
+                gameState.startNewCombat();
+                
+                // Attendre que la modal soit affichée
+                setTimeout(() => {
+                    const combatModal = document.getElementById('combat-modal');
+                    const combatModalContent = combatModal ? combatModal.querySelector('.modal-content') : null;
+                    
+                    if (!combatModalContent) {
+                        resultDiv.innerHTML = '<span class="error">❌ ERREUR - Modal content non trouvé</span>';
+                        updateCurrentState();
+                        return;
+                    }
+                    
+                    const computedStyle = getComputedStyle(combatModalContent);
+                    const width = computedStyle.width;
+                    const maxWidth = computedStyle.maxWidth;
+                    const minWidth = computedStyle.minWidth;
+                    
+                    // Vérifier que la largeur est plus importante
+                    const isWider = width.includes('95%') || width.includes('800px') || 
+                                   maxWidth.includes('95%') || minWidth.includes('800px');
+                    
+                    resultDiv.innerHTML = `
+                        <strong>Résultat du test largeur :</strong><br>
+                        Width: ${width}<br>
+                        Max-width: ${maxWidth}<br>
+                        Min-width: ${minWidth}<br>
+                        <br>
+                        <strong>Résultat :</strong> ${isWider ? '<span class="success">✅ SUCCÈS - Modal plus large</span>' : '<span class="error">❌ ÉCHEC - Modal pas assez large</span>'}
+                    `;
+                    
+                    updateCurrentState();
+                }, 1000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Erreur: ${error.message}</span>`;
+            }
+        };
+        
+        // Test 2: Comparaison avec autres modals
+        window.testModalComparison = function() {
+            const resultDiv = document.getElementById('test2-result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                // Créer une modal de test pour comparaison
+                const testModal = document.createElement('div');
+                testModal.className = 'modal active';
+                testModal.innerHTML = `
+                    <div class="modal-overlay"></div>
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Modal de Test</h3>
+                            <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Modal de test pour comparaison</p>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(testModal);
+                
+                // Démarrer un combat pour ouvrir la modal de combat
+                gameState.startNewCombat();
+                
+                setTimeout(() => {
+                    const combatModal = document.getElementById('combat-modal');
+                    const combatModalContent = combatModal ? combatModal.querySelector('.modal-content') : null;
+                    const testModalContent = testModal.querySelector('.modal-content');
+                    
+                    if (combatModalContent && testModalContent) {
+                        const combatWidth = getComputedStyle(combatModalContent).width;
+                        const testWidth = getComputedStyle(testModalContent).width;
+                        
+                        // Convertir en pixels pour comparaison
+                        const combatWidthPx = parseFloat(combatWidth);
+                        const testWidthPx = parseFloat(testWidth);
+                        
+                        const isCombatWider = combatWidthPx > testWidthPx;
+                        
+                        resultDiv.innerHTML = `
+                            <strong>Comparaison des modals :</strong><br>
+                            Modal combat width: ${combatWidth}<br>
+                            Modal test width: ${testWidth}<br>
+                            <br>
+                            <strong>Résultat :</strong> ${isCombatWider ? '<span class="success">✅ SUCCÈS - Modal combat plus large</span>' : '<span class="error">❌ ÉCHEC - Modal combat pas plus large</span>'}
+                        `;
+                        
+                        // Nettoyer la modal de test
+                        testModal.remove();
+                    } else {
+                        resultDiv.innerHTML = '<span class="error">❌ ERREUR - Modals non trouvées</span>';
+                    }
+                    
+                    updateCurrentState();
+                }, 1000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Erreur: ${error.message}</span>`;
+            }
+        };
+        
+        // Test 3: Responsive design
+        window.testResponsiveDesign = function() {
+            const resultDiv = document.getElementById('test3-result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                // Démarrer un combat
+                gameState.startNewCombat();
+                
+                setTimeout(() => {
+                    const combatModal = document.getElementById('combat-modal');
+                    const combatModalContent = combatModal ? combatModal.querySelector('.modal-content') : null;
+                    
+                    if (combatModalContent) {
+                        const computedStyle = getComputedStyle(combatModalContent);
+                        const width = computedStyle.width;
+                        const maxWidth = computedStyle.maxWidth;
+                        
+                        // Vérifier que la modal est responsive (max-width en pourcentage)
+                        const isResponsive = maxWidth.includes('%');
+                        
+                        resultDiv.innerHTML = `
+                            <strong>Test responsive design :</strong><br>
+                            Width: ${width}<br>
+                            Max-width: ${maxWidth}<br>
+                            <br>
+                            <strong>Résultat :</strong> ${isResponsive ? '<span class="success">✅ SUCCÈS - Modal responsive</span>' : '<span class="warning">⚠️ ATTENTION - Modal pas responsive</span>'}
+                        `;
+                    } else {
+                        resultDiv.innerHTML = '<span class="error">❌ ERREUR - Modal content non trouvé</span>';
+                    }
+                    
+                    updateCurrentState();
+                }, 1000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Erreur: ${error.message}</span>`;
+            }
+        };
+        
+        // Initialiser le jeu au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            initGame();
+        });
+    </script>
+</body>
+</html> 

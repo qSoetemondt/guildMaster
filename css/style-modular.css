@@ -1,0 +1,11 @@
+/* 
+ * Guild Master - CSS Modulaire
+ * Fichier principal qui importe tous les modules CSS
+ */
+
+/* Import des modules CSS */
+@import url('modules/base.css');
+@import url('modules/header.css');
+@import url('modules/resources.css');
+@import url('modules/troops.css');
+@import url('modules/units.css'); 

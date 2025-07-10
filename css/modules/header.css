@@ -1,0 +1,222 @@
+/* En-tête du jeu */
+.game-header {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    display: flex;
+    
+    align-items: flex-start;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    min-height: 120px;
+}
+
+.guild-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.guild-name-input {
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #2d3436;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+    max-width: 350px;
+}
+
+.guild-name-input:hover {
+    border-color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+}
+
+.guild-name-input:focus {
+    outline: none;
+    border-color: #3498db;
+    background: rgba(52, 152, 219, 0.1);
+}
+
+.guild-rank {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2d3436;
+    background: linear-gradient(45deg, #f39c12, #e67e22);
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+}
+
+/* Bonus actifs */
+.active-bonuses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.bonus-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.8);
+    border: 2px solid transparent;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.bonus-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.bonus-count {
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.bonus-level {
+    background: #27ae60;
+    color: white;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    margin-left: 4px;
+}
+
+.bonus-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.bonus-item:hover .bonus-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.bonus-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Styles de rareté pour les bonus */
+.bonus-item.rarity-common {
+    border-color: #95a5a6;
+    color: #2c3e50;
+}
+
+.bonus-item.rarity-uncommon {
+    border-color: #27ae60;
+    color: #27ae60;
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(39, 174, 96, 0.05));
+}
+
+.bonus-item.rarity-epic {
+    border-color: #9b59b6;
+    color: #9b59b6;
+    background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(155, 89, 182, 0.05));
+}
+
+.bonus-item.rarity-legendary {
+    border-color: #f39c12;
+    color: #f39c12;
+    background: linear-gradient(135deg, rgba(243, 156, 18, 0.1), rgba(243, 156, 18, 0.05));
+    animation: legendary-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes legendary-glow {
+    from {
+        box-shadow: 0 2px 6px rgba(243, 156, 18, 0.3);
+    }
+    to {
+        box-shadow: 0 4px 12px rgba(243, 156, 18, 0.6);
+    }
+}
+
+/* Animation spéciale pour le bonus Coup Fatal */
+@keyframes coup-fatal-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.6);
+    }
+}
+
+.bonus-item[data-bonus-id="coup_fatal"] {
+    animation: coup-fatal-pulse 2s ease-in-out infinite;
+    border-color: #dc3545 !important;
+    color: #dc3545 !important;
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05)) !important;
+}
+
+/* Responsive pour l'en-tête */
+@media (max-width: 768px) {
+    .game-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .guild-header {
+        justify-content: center;
+    }
+    
+    .guild-name-input {
+        font-size: 1.5rem;
+        min-width: 150px;
+        max-width: 250px;
+    }
+    
+    .active-bonuses {
+        justify-content: center;
+    }
+    
+    .bonus-item {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+} 

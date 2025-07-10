@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Réutilisabilité des unités du shop</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .unit-card {
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .unit-card.permanent {
+            border-color: #4CAF50;
+            background: #e8f5e8;
+        }
+        .unit-card.temporary {
+            border-color: #ff9800;
+            background: #fff3e0;
+        }
+        .unit-card.used {
+            opacity: 0.5;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #2196F3;
+            color: white;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        .log {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test - Réutilisabilité des unités du shop</h1>
+    
+    <div class="test-section">
+        <h2>Test d'achat d'unité dans le shop</h2>
+        <p>Ce test simule l'achat d'une unité dans le shop et vérifie qu'elle est réutilisable.</p>
+        
+        <button onclick="simulateShopPurchase()">Simuler achat unité</button>
+        <button onclick="simulateCombatUse()">Simuler utilisation en combat</button>
+        <button onclick="resetTest()">Réinitialiser</button>
+        
+        <h3>Unités disponibles :</h3>
+        <div id="available-units"></div>
+        
+        <h3>Unités sélectionnées :</h3>
+        <div id="selected-units"></div>
+        
+        <h3>Log des actions :</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script type="module">
+        import { GameState } from '../js/modules/GameState.js';
+        import { ShopManager } from '../js/modules/ShopManager.js';
+
+        let gameState;
+        let shopManager;
+
+        // Initialiser le jeu
+        function initGame() {
+            gameState = new GameState();
+            shopManager = new ShopManager();
+            log('Jeu initialisé');
+            updateDisplay();
+        }
+
+        // Simuler l'achat d'une unité dans le shop
+        function simulateShopPurchase() {
+            const purchasedUnit = {
+                name: 'Épéiste Légendaire',
+                icon: '⚔️',
+                type: 'Corps à corps',
+                damage: 15,
+                multiplier: 3,
+                id: `Épéiste Légendaire_${Date.now()}_${Math.random()}`,
+                rarity: 'legendary'
+            };
+
+            gameState.addTroop(purchasedUnit);
+            log(`✅ Unité achetée : ${purchasedUnit.name} (ID: ${purchasedUnit.id})`);
+            log(`📊 Unités disponibles : ${gameState.availableTroops.length}`);
+            updateDisplay();
+        }
+
+        // Simuler l'utilisation en combat
+        function simulateCombatUse() {
+            if (gameState.availableTroops.length === 0) {
+                log('❌ Aucune unité disponible pour le test');
+                return;
+            }
+
+            const unitToUse = gameState.availableTroops[0];
+            gameState.selectedTroops = [unitToUse];
+            
+            log(`⚔️ Utilisation en combat : ${unitToUse.name}`);
+            log(`📊 Unités sélectionnées : ${gameState.selectedTroops.length}`);
+            
+            // Simuler la fin de combat
+            gameState.removeUsedTroopsFromCombat([unitToUse]);
+            
+            log(`🔄 Après combat - Unités disponibles : ${gameState.availableTroops.length}`);
+            log(`🔄 Après combat - Unités sélectionnées : ${gameState.selectedTroops.length}`);
+            
+            // Vérifier si l'unité est réutilisable
+            const isReusable = gameState.availableTroops.some(troop => troop.id === unitToUse.id);
+            if (isReusable) {
+                log('✅ SUCCÈS : L\'unité est réutilisable !');
+            } else {
+                log('❌ ÉCHEC : L\'unité n\'est pas réutilisable !');
+            }
+            
+            updateDisplay();
+        }
+
+        // Réinitialiser le test
+        function resetTest() {
+            gameState = new GameState();
+            log('🔄 Test réinitialisé');
+            updateDisplay();
+        }
+
+        // Mettre à jour l'affichage
+        function updateDisplay() {
+            const availableContainer = document.getElementById('available-units');
+            const selectedContainer = document.getElementById('selected-units');
+            
+            // Afficher les unités disponibles
+            availableContainer.innerHTML = '';
+            gameState.availableTroops.forEach(unit => {
+                const card = createUnitCard(unit, 'available');
+                availableContainer.appendChild(card);
+            });
+            
+            // Afficher les unités sélectionnées
+            selectedContainer.innerHTML = '';
+            gameState.selectedTroops.forEach(unit => {
+                const card = createUnitCard(unit, 'selected');
+                selectedContainer.appendChild(card);
+            });
+        }
+
+        // Créer une carte d'unité
+        function createUnitCard(unit, type) {
+            const card = document.createElement('div');
+            card.className = `unit-card ${gameState.isPermanentUnit(unit) ? 'permanent' : 'temporary'}`;
+            card.innerHTML = `
+                <div><strong>${unit.icon} ${unit.name}</strong></div>
+                <div>💥 ${unit.damage} ⚡ ${unit.multiplier}</div>
+                <div><small>ID: ${unit.id}</small></div>
+                <div><small>Type: ${type}</small></div>
+            `;
+            return card;
+        }
+
+        // Logger les messages
+        function log(message) {
+            const logContainer = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logContainer.innerHTML += `[${timestamp}] ${message}\n`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // Exposer les fonctions globalement
+        window.simulateShopPurchase = simulateShopPurchase;
+        window.simulateCombatUse = simulateCombatUse;
+        window.resetTest = resetTest;
+
+        // Initialiser au chargement
+        initGame();
+    </script>
+</body>
+</html> 

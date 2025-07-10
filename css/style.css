@@ -22,7 +22,7 @@ body {
     left: 0;
     width: 100%;
     min-height: 100vh;
-    padding: 20px;
+    padding: 10px;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -107,17 +107,14 @@ body {
 /* En-tête du jeu */
 .game-header {
     background: rgba(255, 255, 255, 0.95);
-    padding: 20px;
+    padding: 10px;
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     display: flex;
-    justify-content: space-between;
+    
     align-items: flex-start;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-}
-
-.guild-info {
-    flex: 1;
+    min-height: 120px;
 }
 
 .guild-header {
@@ -269,6 +266,266 @@ body {
     background: linear-gradient(45deg, #00cec9, #55a3ff);
 }
 
+/* Anciens styles pour les boutons de vente individuels - supprimés car remplacés par la modal */
+
+/* Styles pour la modal de confirmation de vente */
+.sell-confirmation-details {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #ff6b6b;
+}
+
+.sell-price-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.sell-price-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.sell-price-value {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 1.2rem;
+}
+
+.sell-description {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.sell-confirmation-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.sell-confirmation-actions .btn {
+    min-width: 80px;
+}
+
+/* Styles pour la modal de vente de bonus */
+.sell-bonuses-info {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+}
+
+.sell-bonuses-info p {
+    margin: 0;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.sell-bonuses-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.sell-bonus-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background: #ffffff;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.sell-bonus-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+}
+
+.sell-bonus-item.has-quantity {
+    border-color: #28a745;
+    background: #f8fff9;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+}
+
+.sell-bonus-info {
+    flex: 1;
+    margin-right: 15px;
+}
+
+.sell-bonus-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sell-bonus-description {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 6px;
+}
+
+.sell-bonus-count {
+    font-size: 0.8rem;
+    color: #495057;
+    font-weight: 500;
+}
+
+.sell-bonus-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 200px;
+}
+
+.sell-quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.quantity-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 4px;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.quantity-btn:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+}
+
+.quantity-btn:active {
+    transform: scale(0.95);
+}
+
+.quantity-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.sell-quantity-input {
+    width: 50px;
+    height: 28px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.sell-quantity-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.sell-bonus-price {
+    text-align: right;
+    min-width: 120px;
+}
+
+.sell-bonus-price-value {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+
+.sell-bonus-price-total {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #28a745;
+}
+
+.sell-bonuses-summary {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-top: 3px solid #28a745;
+}
+
+.total-gold-gain {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+.summary-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.summary-value {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 1.2rem;
+}
+
+.sell-bonuses-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+.sell-bonuses-actions .btn {
+    min-width: 100px;
+}
+
+/* Responsive pour la modal de vente */
+@media (max-width: 768px) {
+    .sell-bonus-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .sell-bonus-controls {
+        width: 100%;
+        justify-content: space-between;
+        min-width: auto;
+    }
+    
+    .sell-quantity-controls {
+        flex: 1;
+        max-width: 150px;
+    }
+    
+    .sell-bonus-price {
+        text-align: right;
+        min-width: auto;
+    }
+}
+
 .bonus-tooltip {
     position: absolute;
     bottom: 100%;
@@ -327,6 +584,8 @@ body {
 .resources {
     display: flex;
     gap: 20px;
+    margin-left: auto;
+    align-items: center;
 }
 
 .resource {
@@ -341,6 +600,429 @@ body {
 
 .resource-icon {
     font-size: 1.2rem;
+}
+
+.consumables-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-grow: 1;
+}
+
+.consumables-icons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.consumable-icon-header {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+}
+
+.consumable-icon-header:hover {
+    transform: scale(1.1);
+}
+
+.consumable-icon-header[data-count]:not([data-count="0"])::after {
+    content: attr(data-count);
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    animation: bonusCountPulse 2s infinite;
+}
+
+/* Styles pour l'affichage des troupes dans le header */
+.troops-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.troops-header h4 {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.sort-icons {
+    display: flex;
+    gap: 4px;
+    flex-wrap: nowrap;
+    align-items: center;
+    overflow-x: auto;
+    padding: 5px 0;
+}
+
+.sort-icon-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 8px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 50px;
+    min-height: 50px;
+    font-size: 0.75rem;
+    text-decoration: none;
+    user-select: none;
+}
+
+.sort-icon-btn:hover {
+    border-color: #74b9ff;
+    background: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(116, 185, 255, 0.2);
+}
+
+.sort-icon-btn.active {
+    border-color: #74b9ff;
+    background: #74b9ff;
+    color: white;
+    box-shadow: 0 2px 8px rgba(116, 185, 255, 0.3);
+}
+
+.sort-icon-btn .sort-icon {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+    line-height: 1;
+}
+
+.sort-icon-btn .sort-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1;
+}
+
+.sort-direction-btn {
+    padding: 6px 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 32px;
+}
+
+.sort-direction-btn:hover {
+    border-color: #74b9ff;
+    background: #f8f9fa;
+}
+
+.sort-direction-btn.active {
+    border-color: #74b9ff;
+    background: #74b9ff;
+    color: white;
+}
+
+.sort-icon {
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: transform 0.2s ease;
+}
+
+.sort-direction-btn.ascending .sort-icon {
+    transform: rotate(180deg);
+}
+
+/* Bouton de reset des filtres */
+.clear-filters-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 40px;
+    text-transform: none;
+    letter-spacing: normal;
+    backdrop-filter: blur(5px);
+}
+
+.clear-filters-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.clear-filters-btn .sort-icon {
+    font-size: 1rem;
+    line-height: 1;
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));
+}
+
+.clear-filters-btn .sort-label {
+    font-size: 0.6rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.reroll-btn {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    border: 2px solid #3498db;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.reroll-btn:hover {
+    background: linear-gradient(135deg, #2980b9, #1f5f8b);
+    border-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.reroll-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
+}
+
+.reroll-btn:disabled {
+    background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+    border-color: #bdc3c7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 6px rgba(189, 195, 199, 0.3);
+}
+
+.reroll-btn .sort-icon {
+    font-size: 0.9rem;
+}
+
+.reroll-btn .sort-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: white;
+}
+
+.reroll-section {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(52, 152, 219, 0.1);
+    border-radius: 8px;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.reroll-counter {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #2d3436;
+    margin-left: 8px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+/* Version mobile pour les contrôles de tri */
+@media (max-width: 768px) {
+    .troops-sort-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .sort-controls {
+        justify-content: center;
+    }
+    
+    .sort-icons {
+        justify-content: center;
+        gap: 3px;
+    }
+    
+    .sort-icon-btn {
+        min-width: 45px;
+        min-height: 45px;
+        padding: 4px 6px;
+    }
+    
+    .sort-icon-btn .sort-icon {
+        font-size: 1rem;
+    }
+    
+    .sort-icon-btn .sort-label {
+        font-size: 0.65rem;
+    }
+}
+
+.troops-icons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+    max-width: none;
+    padding-bottom: 5px;
+}
+
+.troop-icon-header {
+    position: relative;
+    cursor: help;
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+    padding: 4px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid transparent;
+}
+
+.troop-icon-header:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.troop-icon-header[data-count]:not([data-count="0"])::after {
+    content: attr(data-count);
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #3498db;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 1px solid white;
+}
+
+.troop-tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    margin-top: 8px;
+    max-width: 200px;
+    text-align: center;
+}
+
+.troop-icon-header:hover .troop-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+.troop-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-bottom-color: rgba(0, 0, 0, 0.9);
+}
+
+/* Styles de rareté pour les icônes de troupes */
+.troop-icon-header.rarity-common {
+    background: rgba(102, 102, 102, 0.1);
+    border-color: rgba(102, 102, 102, 0.3);
+}
+
+.troop-icon-header.rarity-uncommon {
+    background: rgba(0, 184, 148, 0.1);
+    border-color: rgba(0, 184, 148, 0.3);
+}
+
+.troop-icon-header.rarity-rare {
+    background: rgba(116, 185, 255, 0.1);
+    border-color: rgba(116, 185, 255, 0.3);
+}
+
+.troop-icon-header.rarity-epic {
+    background: rgba(162, 155, 254, 0.1);
+    border-color: rgba(162, 155, 254, 0.3);
+}
+
+.troop-icon-header.rarity-legendary {
+    background: rgba(253, 203, 110, 0.1);
+    border-color: rgba(253, 203, 110, 0.3);
+}
+
+/* Responsive pour les troupes dans le header */
+@media (max-width: 768px) {
+    .troops-icons {
+        max-width: none;
+        gap: 6px;
+    }
+    
+    .troop-icon-header {
+        font-size: 1rem;
+        padding: 3px;
+    }
+    
+    .troop-icon-header[data-count]:not([data-count="0"])::after {
+        width: 14px;
+        height: 14px;
+        font-size: 0.5rem;
+    }
+    
+    .troop-tooltip {
+        font-size: 0.7rem;
+        max-width: 150px;
+    }
 }
 
 /* Zone principale */
@@ -459,25 +1141,35 @@ body {
     transform: scale(1.02);
 }
 
-/* Garder le gradient de rareté même quand sélectionné */
+/* Garder le gradient de rareté même quand sélectionné - Styles plus spécifiques */
 .unit-card.selected.rarity-common {
-    background: linear-gradient(135deg, rgba(102, 102, 102, 0.15) 0%, rgba(102, 102, 102, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 107, 107, 0.05) 100%) !important;
+    background: linear-gradient(135deg, rgba(102, 102, 102, 0.15) 0%, rgba(102, 102, 102, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
 }
 
 .unit-card.selected.rarity-uncommon {
-    background: linear-gradient(135deg, rgba(0, 184, 148, 0.15) 0%, rgba(0, 184, 148, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 107, 107, 0.05) 100%) !important;
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.15) 0%, rgba(0, 184, 148, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
 }
 
 .unit-card.selected.rarity-rare {
-    background: linear-gradient(135deg, rgba(116, 185, 255, 0.15) 0%, rgba(116, 185, 255, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 107, 107, 0.05) 100%) !important;
+    background: linear-gradient(135deg, rgba(116, 185, 255, 0.15) 0%, rgba(116, 185, 255, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
 }
 
 .unit-card.selected.rarity-epic {
-    background: linear-gradient(135deg, rgba(162, 155, 254, 0.15) 0%, rgba(162, 155, 254, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 107, 107, 0.05) 100%) !important;
+    background: linear-gradient(135deg, rgba(162, 155, 254, 0.15) 0%, rgba(162, 155, 254, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
 }
 
 .unit-card.selected.rarity-legendary {
-    background: linear-gradient(135deg, rgba(253, 203, 110, 0.15) 0%, rgba(253, 203, 110, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.1) 0%, rgba(255, 107, 107, 0.05) 100%) !important;
+    background: linear-gradient(135deg, rgba(253, 203, 110, 0.15) 0%, rgba(253, 203, 110, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
 }
 
 .unit-card.used {
@@ -534,6 +1226,8 @@ body {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(2px);
 }
+
+
 
 /* Bordures de rareté pour les cartes d'unités */
 .unit-card.rarity-common {
@@ -615,6 +1309,37 @@ div.unit-card.rarity-uncommon {
 
 div.unit-card.rarity-common {
     background: linear-gradient(135deg, rgba(102, 102, 102, 0.1) 0%, rgba(102, 102, 102, 0.05) 100%) !important;
+}
+
+/* Styles de sélection très spécifiques pour toutes les rarités */
+div.unit-card.selected.rarity-legendary {
+    background: linear-gradient(135deg, rgba(253, 203, 110, 0.15) 0%, rgba(253, 203, 110, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
+}
+
+div.unit-card.selected.rarity-rare {
+    background: linear-gradient(135deg, rgba(116, 185, 255, 0.15) 0%, rgba(116, 185, 255, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
+}
+
+div.unit-card.selected.rarity-epic {
+    background: linear-gradient(135deg, rgba(162, 155, 254, 0.15) 0%, rgba(162, 155, 254, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
+}
+
+div.unit-card.selected.rarity-uncommon {
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.15) 0%, rgba(0, 184, 148, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
+}
+
+div.unit-card.selected.rarity-common {
+    background: linear-gradient(135deg, rgba(102, 102, 102, 0.15) 0%, rgba(102, 102, 102, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
 }
 
 /* Bordures de rareté pour les items du magasin */
@@ -850,6 +1575,54 @@ div.unit-card.rarity-common {
     z-index: 1001;
 }
 
+/* Modal de combat plus large */
+#combat-modal .modal-content {
+    max-width: 95%;
+    width: 95%;
+    min-width: 800px;
+}
+
+/* Empêcher la fermeture de la modal de combat */
+#combat-modal {
+    pointer-events: auto;
+}
+
+#combat-modal .modal-content {
+    pointer-events: auto;
+}
+
+/* Désactiver les interactions de fermeture pour la modal de combat */
+#combat-modal .close-btn {
+    display: none !important;
+}
+
+/* Empêcher la fermeture de l'animation de combat pendant un combat actif */
+#combat-animation-container.combat-active {
+    pointer-events: none;
+}
+
+#combat-animation-container.combat-active .close-button {
+    display: none !important;
+}
+
+/* Section de fermeture de l'animation de combat */
+.combat-close-section {
+    text-align: center;
+    padding: 15px;
+}
+
+.combat-close-section .btn {
+    font-size: 1.1rem;
+    padding: 12px 30px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.combat-close-section .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
 .modal-header {
     padding: 20px;
     border-bottom: 1px solid #ddd;
@@ -988,6 +1761,7 @@ div.unit-card.rarity-common {
     text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .shop-item:hover {
@@ -999,6 +1773,33 @@ div.unit-card.rarity-common {
     font-weight: 600;
     color: #ff6b6b;
     margin-top: 10px;
+}
+
+.item-type-tag {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Couleurs spécifiques pour chaque type d'item */
+.item-type-tag[data-type="bonus"] {
+    background: rgba(231, 76, 60, 0.9);
+}
+
+.item-type-tag[data-type="consumable"] {
+    background: rgba(46, 204, 113, 0.9);
+}
+
+.item-type-tag[data-type="unit"] {
+    background: rgba(52, 152, 219, 0.9);
 }
 
 /* Bouton de rafraîchissement du magasin */
@@ -1159,6 +1960,18 @@ div.unit-card.rarity-common {
         justify-content: center;
     }
     
+    .consumables-header {
+        margin-top: 10px;
+    }
+    
+    .consumables-icons {
+        gap: 6px;
+    }
+    
+    .consumable-icon-header {
+        font-size: 1.3rem;
+    }
+    
     .troops-container {
         grid-template-columns: 1fr;
     }
@@ -1224,7 +2037,7 @@ div.unit-card.rarity-common {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.8);
-    z-index: 10000;
+    z-index: 999;
     display: none;
     justify-content: center;
     align-items: center;
@@ -1233,68 +2046,75 @@ div.unit-card.rarity-common {
 .combat-animation {
     background: linear-gradient(135deg, #2c3e50, #34495e);
     border-radius: 20px;
-    padding: 20px;
+    padding: 5px;
     text-align: center;
     color: white;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     min-width: 500px;
     max-width: 600px;
-    max-height: 85vh;
+    max-height: 80vh;
     overflow-y: auto;
     position: relative;
 }
 
-.close-button {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    background: rgba(231, 76, 60, 0.9);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    font-size: 20px;
-    font-weight: bold;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    z-index: 10001;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.close-button:hover {
-    background: rgba(231, 76, 60, 1);
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    border-color: rgba(255, 255, 255, 0.5);
-}
+/* Styles supprimés pour l'ancien bouton de fermeture */
 
 /* Compteur principal */
 .main-counter {
     background: linear-gradient(45deg, #e74c3c, #c0392b);
-    border-radius: 15px;
-    padding: 15px;
-    margin: 15px 0;
-    box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+    border-radius: 12px;
+    padding: 10px;
+    margin: 5px 0;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.main-counter::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--progress-width, 0%);
+    height: 100%;
+    background: linear-gradient(45deg, #27ae60, #2ecc71);
+    transition: width 0.5s ease;
+    z-index: 0;
+}
+
+.main-counter.over-100::before {
+    background: linear-gradient(45deg, #f39c12, #e67e22);
+    animation: over100Pulse 1s infinite;
+}
+
+.main-counter > * {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes over100Pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
 }
 
 .damage-display {
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .multiplier-symbol {
     color: #f39c12;
-    margin: 0 10px;
-    font-size: 2.5rem;
+    margin: 0 8px;
+    font-size: 2rem;
 }
 
 .final-result {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     color: #ecf0f1;
     font-weight: bold;
 }
@@ -1399,20 +2219,83 @@ div.unit-card.rarity-common {
     font-size: 1.1rem;
 }
 
+/* Nouvelle structure pour bonus et synergies sur 2 colonnes */
+.bonuses-synergies-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 0;
+}
+
+.bonuses-synergies-row .bonuses-section,
+.bonuses-synergies-row .synergies-section {
+    margin: 0;
+}
+
+/* Version mobile : passer en une seule colonne */
+@media (max-width: 768px) {
+    .bonuses-synergies-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+}
+
 /* Styles pour les synergies et bonus dans l'animation de combat */
 .combat-animation .synergy-item, 
 .combat-animation .bonus-item {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    padding: 8px;
-    margin: 6px 0;
+    text-align: center;
+    padding: 6px 8px;
+    margin: 2px 0;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    border-radius: 6px;
     opacity: 0;
     transform: scale(0.8);
     transition: all 0.5s ease;
     border-left: 3px solid;
+    min-height: 45px;
+    justify-content: center;
+    position: relative;
+}
+
+/* Styles de rareté pour les bonus dans l'animation de combat */
+.combat-animation .bonus-item.rarity-common {
+    background: linear-gradient(135deg, rgba(102, 102, 102, 0.8) 0%, rgba(127, 140, 141, 0.6) 100%);
+    border-left-color: #666666;
+    box-shadow: 0 2px 8px rgba(102, 102, 102, 0.3);
+}
+
+.combat-animation .bonus-item.rarity-uncommon {
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.8) 0%, rgba(0, 206, 201, 0.6) 100%);
+    border-left-color: #00b894;
+    box-shadow: 0 2px 8px rgba(0, 184, 148, 0.3);
+}
+
+.combat-animation .bonus-item.rarity-rare {
+    background: linear-gradient(135deg, rgba(116, 185, 255, 0.8) 0%, rgba(85, 163, 255, 0.6) 100%);
+    border-left-color: #74b9ff;
+    box-shadow: 0 2px 8px rgba(116, 185, 255, 0.3);
+}
+
+.combat-animation .bonus-item.rarity-epic {
+    background: linear-gradient(135deg, rgba(162, 155, 254, 0.8) 0%, rgba(108, 92, 231, 0.6) 100%);
+    border-left-color: #a29bfe;
+    box-shadow: 0 2px 8px rgba(162, 155, 254, 0.3);
+}
+
+.combat-animation .bonus-item.rarity-legendary {
+    background: linear-gradient(135deg, rgba(253, 203, 110, 0.8) 0%, rgba(225, 112, 85, 0.6) 100%);
+    border-left-color: #fdcb6e;
+    box-shadow: 0 2px 8px rgba(253, 203, 110, 0.3);
+}
+
+/* Fallback pour les bonus sans rareté dans l'animation */
+.combat-animation .bonus-item:not([class*="rarity-"]) {
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.8) 0%, rgba(0, 206, 201, 0.6) 100%);
+    border-left-color: #00b894;
+    box-shadow: 0 2px 8px rgba(0, 184, 148, 0.3);
 }
 
 .combat-animation .synergy-item {
@@ -1472,50 +2355,60 @@ div.unit-card.rarity-common {
 .combat-animation .synergy-name, 
 .combat-animation .bonus-name {
     font-weight: bold;
-    flex: 1;
-    font-size: 0.95rem;
+    font-size: 0.8rem;
+    margin-bottom: 3px;
+    text-align: center;
+    line-height: 1.1;
 }
 
 .combat-animation .synergy-effect, 
 .combat-animation .bonus-effect {
     color: #f39c12;
     font-weight: bold;
-    font-size: 0.9rem;
-    text-align: right;
-}
-
-/* Barre de progression */
-.combat-progress-bar {
-    width: 100%;
-    height: 10px;
-    background: #34495e;
-    border-radius: 5px;
-    margin: 20px 0;
-    overflow: hidden;
-}
-
-.combat-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #e74c3c, #f39c12);
-    width: 0%;
-    transition: width 0.5s ease;
-}
-
-.close-hint {
+    font-size: 0.7rem;
     text-align: center;
-    margin-top: 15px;
-    color: #bdc3c7;
-    font-style: italic;
-    opacity: 0.8;
+    line-height: 1.1;
 }
 
-.close-hint small {
-    font-size: 0.85rem;
+/* Tag pour le bonus-count dans l'animation de combat */
+.combat-animation .bonus-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e74c3c;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 8px;
+    min-width: 16px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    z-index: 10;
 }
+
+/* Grille compacte pour les bonus et synergies */
+#bonuses-animation-content,
+#synergies-animation-content {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+    padding: 4px;
+}
+
+#bonuses-animation-content-mobile,
+#synergies-animation-content-mobile {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3px;
+    padding: 3px;
+}
+
+/* Styles supprimés pour la barre de progression et le bouton de fermeture */
 
 /* Image de l'ennemi dans l'animation de combat */
 .enemy-animation-preview {
-    margin: 20px 0;
+    margin: 5px 0;
     text-align: center;
 }
 
@@ -1536,75 +2429,109 @@ div.unit-card.rarity-common {
 
 
 
-/* Animation de victoire */
-.victory-animation {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 4rem;
-    color: #f1c40f;
-    z-index: 10001;
-    opacity: 0;
-    display: none;
-    animation: victoryPulse 2s ease-in-out;
-    text-shadow: 0 0 20px rgba(241, 196, 15, 0.8);
-}
-
-.victory-particles {
+/* NOUVELLE ANIMATION DE VICTOIRE */
+.victory-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
     z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: victoryScreenFadeIn 0.5s ease-out;
 }
 
-.victory-particle {
+.victory-content {
+    text-align: center;
+    color: white;
+    animation: victoryContentSlideIn 0.5s ease-out 0.1s both;
+}
+
+.victory-title {
+    font-size: 8rem;
+    font-weight: 900;
+    background: linear-gradient(45deg, #ffd700, #ffed4e, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+    margin-bottom: 2rem;
+    animation: victoryTitleGlow 2s ease-in-out infinite;
+}
+
+.victory-subtitle {
+    font-size: 2rem;
+    color: #ffd700;
+    margin-bottom: 3rem;
+    opacity: 0;
+    animation: victorySubtitleFadeIn 0.5s ease-out 0.3s both;
+}
+
+.victory-stars {
     position: absolute;
-    width: 8px;
-    height: 8px;
-    background: linear-gradient(45deg, #f1c40f, #f39c12);
-    border-radius: 50%;
-    animation: victoryParticle 1.5s ease-out forwards;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
 }
 
-@keyframes victoryPulse {
+.victory-star {
+    position: absolute;
+    font-size: 2rem;
+    color: #ffd700;
+    animation: victoryStarFloat 3s ease-in-out infinite;
+}
+
+@keyframes victoryScreenFadeIn {
     0% {
         opacity: 0;
-        transform: translate(-50%, -50%) scale(0.5) rotate(-10deg);
-    }
-    25% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.3) rotate(5deg);
-    }
-    50% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.1) rotate(-3deg);
-    }
-    75% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1.2) rotate(2deg);
     }
     100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+        opacity: 1;
     }
 }
 
-@keyframes victoryParticle {
+@keyframes victoryContentSlideIn {
     0% {
-        opacity: 1;
-        transform: translate(0, 0) scale(1) rotate(0deg);
-    }
-    50% {
-        opacity: 0.8;
-        transform: translate(calc(var(--x) * 0.5), calc(var(--y) * 0.5)) scale(1.2) rotate(180deg);
+        opacity: 0;
+        transform: translateY(50px) scale(0.8);
     }
     100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes victoryTitleGlow {
+    0%, 100% {
+        filter: brightness(1) drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+    }
+    50% {
+        filter: brightness(1.3) drop-shadow(0 0 40px rgba(255, 215, 0, 1));
+    }
+}
+
+@keyframes victorySubtitleFadeIn {
+    0% {
         opacity: 0;
-        transform: translate(var(--x), var(--y)) scale(0) rotate(360deg);
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes victoryStarFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translateY(-20px) rotate(180deg);
+        opacity: 1;
     }
 }
 
@@ -1769,6 +2696,25 @@ div.unit-card.rarity-common {
 
 .boss-mechanic strong {
     color: #f1c40f;
+}
+
+/* Style pour la mécanique de boss désactivée */
+.boss-mechanic.disabled {
+    opacity: 0.7;
+}
+
+.boss-mechanic.disabled #boss-mechanic-text {
+    text-decoration: line-through;
+    color: #6c757d;
+    font-style: italic;
+    transition: all 0.3s ease;
+}
+
+.boss-mechanic.disabled::after {
+    content: " (DÉSACTIVÉE)";
+    color: #28a745;
+    font-weight: bold;
+    font-size: 0.8em;
 }
 
 /* Styles pour la liste des troupes */
@@ -1950,19 +2896,10 @@ div.unit-card.rarity-common {
     display: none;
     grid-template-columns: 1fr 1fr;
     gap: 30px;
-    margin: 20px 0;
+    margin: 10px 0;
 }
 
-.combat-left-column {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.combat-right-column {
-    display: flex;
-    flex-direction: column;
-}
+/* Styles supprimés pour l'ancienne structure en colonnes */
 
 .combat-content-mobile {
     display: block;
@@ -1973,7 +2910,7 @@ div.unit-card.rarity-common {
     .combat-animation {
         max-width: 1200px;
         width: 90%;
-        padding: 20px;
+        padding: 5px;
         max-height: 90vh;
         overflow-y: auto;
     }
@@ -1981,7 +2918,7 @@ div.unit-card.rarity-common {
     .combat-content-desktop {
         display: grid;
         gap: 20px;
-        margin: 15px 0;
+        margin: 10px 0;
     }
     
     .combat-content-mobile {
@@ -2029,17 +2966,16 @@ div.unit-card.rarity-common {
     
     /* Réduire les espaces dans les sections bonus et synergies */
     .bonuses-section, .synergies-section {
-        margin-bottom: 10px;
+        margin-bottom: 8px;
+        padding: 8px;
     }
     
     .bonuses-section h3, .synergies-section h3 {
-        font-size: 1.1rem;
-        margin-bottom: 8px;
+        font-size: 0.95rem;
+        margin-bottom: 6px;
     }
     
-    .combat-left-column {
-        gap: 15px;
-    }
+    /* Styles supprimés pour l'ancienne structure */
 }
 
 /* Styles pour les animations de bonus sur les unités */
@@ -3303,3 +4239,615 @@ div.unit-card.rarity-common {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(99, 110, 114, 0.3);
 }
+
+.troop-damage-tooltip {
+    color: #2980ef;
+    font-weight: bold;
+}
+.troop-mult-tooltip {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.shop-damage {
+    color: #2980ef;
+    font-weight: bold;
+}
+.shop-multiplier {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.unit-damage {
+    color: #2980ef;
+    font-weight: bold;
+}
+.unit-multiplier {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.combat-damage {
+    color: #2980ef;
+    font-weight: bold;
+}
+.combat-multiplier {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+/* Mode transformation */
+.transform-mode {
+    cursor: pointer !important;
+}
+
+.transform-mode .troop-icon-header {
+    cursor: pointer !important;
+    transition: all 0.3s ease;
+}
+
+.transform-mode .troop-icon-header:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.8);
+    border-radius: 50%;
+    background: rgba(255, 193, 7, 0.2);
+}
+
+/* Modal de confirmation de transformation */
+.transform-confirmation-content {
+    text-align: center;
+    padding: 20px;
+}
+
+.transform-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    color: white;
+}
+
+.transform-from,
+.transform-to {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    min-width: 120px;
+}
+
+.transform-icon {
+    font-size: 2rem;
+}
+
+.transform-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.transform-arrow {
+    font-size: 2rem;
+    color: #f39c12;
+    animation: pulse 1.5s infinite;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid #eee;
+}
+
+.modal-footer .btn {
+    flex: 1;
+    max-width: 150px;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/* Styles pour le mode transformation */
+#transform-notification {
+    background: linear-gradient(135deg, #ff6b35, #ff8c42);
+    border: 3px solid #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(255, 107, 53, 0.4);
+    animation: transformNotificationPulse 2s ease-in-out infinite;
+}
+
+.transform-notification-content {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    gap: 15px;
+    color: white;
+    font-weight: bold;
+}
+
+.transform-icon {
+    font-size: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.transform-text {
+    flex: 1;
+}
+
+.transform-title {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.transform-description {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.transform-cancel {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.transform-cancel:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+#transform-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 107, 53, 0.1);
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.transform-target {
+    animation: transformTargetPulse 1.5s ease-in-out infinite;
+    position: relative;
+}
+
+.transform-target::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    border: 3px solid #ff6b35;
+    border-radius: 50%;
+    animation: transformTargetGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes transformNotificationPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes transformTargetPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes transformTargetGlow {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Mode transformation actif */
+body.transform-mode {
+    cursor: crosshair !important;
+}
+
+body.transform-mode * {
+    cursor: crosshair !important;
+}
+
+body.transform-mode .troop-icon {
+    cursor: pointer !important;
+}
+
+/* Contrôles de vitesse d'animation */
+.animation-speed-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    padding: 0;
+    background: none;
+    border-radius: 0;
+    justify-content: flex-end;
+    border: none;
+}
+
+.speed-label {
+    color: #fff;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-right: 8px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.speed-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 40px;
+    text-transform: none;
+    letter-spacing: normal;
+    backdrop-filter: blur(5px);
+}
+
+.speed-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.speed-btn.active {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    border-color: #ff6b6b;
+    box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
+    transform: translateY(-1px);
+}
+
+.speed-btn.active:hover {
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.5);
+    transform: translateY(-1px);
+}
+
+.speed-icon {
+    font-size: 1rem;
+    line-height: 1;
+    filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));
+}
+
+.speed-text {
+    font-size: 0.6rem;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 768px) {
+    .animation-speed-controls {
+        gap: 6px;
+    }
+    
+    .speed-label {
+        margin-right: 6px;
+        font-size: 0.9rem;
+    }
+    
+    .speed-btn {
+        padding: 5px 6px;
+        min-width: 35px;
+    }
+    
+    .speed-icon {
+        font-size: 0.9rem;
+    }
+    
+    .speed-text {
+        font-size: 0.5rem;
+    }
+}
+
+/* Contrôles de musique */
+.music-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-right: 15px;
+}
+
+.music-label {
+    font-size: 1.2rem;
+    color: #fff;
+    font-weight: bold;
+}
+
+.music-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: auto;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.music-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+}
+
+.music-btn.playing {
+    background: linear-gradient(45deg, #00b894, #00a085);
+}
+
+.music-btn.playing:hover {
+    box-shadow: 0 4px 12px rgba(0, 184, 148, 0.4);
+}
+
+.music-icon {
+    font-size: 1rem;
+}
+
+.music-text {
+    font-size: 0.8rem;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.volume-slider {
+    width: 80px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #ff6b6b;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(255, 107, 107, 0.4);
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #ff6b6b;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(255, 107, 107, 0.4);
+}
+
+.volume-display {
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 35px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .music-controls {
+        flex-direction: column;
+        gap: 8px;
+        padding: 6px 8px;
+        margin-right: 10px;
+    }
+    
+    .music-label {
+        font-size: 1rem;
+    }
+    
+    .music-btn {
+        padding: 4px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .music-icon {
+        font-size: 0.9rem;
+    }
+    
+    .music-text {
+        font-size: 0.7rem;
+    }
+    
+    .volume-slider {
+        width: 60px;
+    }
+    
+    .volume-display {
+        font-size: 0.7rem;
+    }
+}
+
+/* Contrôles de musique sur le menu principal */
+.title-music-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    margin-top: 30px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.title-music-controls .music-label {
+    font-size: 1.5rem;
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.title-music-controls .music-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: auto;
+    text-transform: none;
+    letter-spacing: normal;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+}
+
+.title-music-controls .music-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+}
+
+.title-music-controls .music-btn.playing {
+    background: linear-gradient(45deg, #00b894, #00a085);
+    box-shadow: 0 4px 15px rgba(0, 184, 148, 0.3);
+}
+
+.title-music-controls .music-btn.playing:hover {
+    box-shadow: 0 6px 20px rgba(0, 184, 148, 0.5);
+}
+
+.title-music-controls .music-icon {
+    font-size: 1.2rem;
+}
+
+.title-music-controls .music-text {
+    font-size: 0.9rem;
+}
+
+.title-music-controls .volume-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.title-music-controls .volume-slider {
+    width: 100px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.title-music-controls .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #ff6b6b;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(255, 107, 107, 0.5);
+}
+
+.title-music-controls .volume-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #ff6b6b;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 3px 8px rgba(255, 107, 107, 0.5);
+}
+
+.title-music-controls .volume-display {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+@media (max-width: 768px) {
+    .title-music-controls {
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px 16px;
+        margin-top: 20px;
+    }
+    
+    .title-music-controls .music-label {
+        font-size: 1.3rem;
+    }
+    
+    .title-music-controls .music-btn {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .title-music-controls .music-icon {
+        font-size: 1.1rem;
+    }
+    
+    .title-music-controls .music-text {
+        font-size: 0.8rem;
+    }
+    
+    .title-music-controls .volume-slider {
+        width: 80px;
+    }
+    
+    .title-music-controls .volume-display {
+        font-size: 0.8rem;
+    }
+}
+

@@ -17,7 +17,19 @@
                 <button id="new-game-btn" class="btn primary">Nouvelle Partie</button>
                 <button id="load-game-btn" class="btn secondary">Charger Partie</button>
                 <button id="tutorial-btn" class="btn secondary">Tutoriel</button>
-                <!-- <button id="simulation-btn" class="btn secondary">🎯 Simulateur d'Équilibrage</button> -->
+            </div>
+            
+            <!-- Contrôles de musique sur le menu principal -->
+            <div class="title-music-controls">
+                <span class="music-label">🎵</span>
+                <button id="title-music-toggle" class="btn music-btn" title="Play/Pause musique">
+                    <span class="music-icon">▶️</span>
+                    <span class="music-text">Play</span>
+                </button>
+                <div class="volume-control">
+                    <input type="range" id="title-volume-slider" class="volume-slider" min="0" max="100" value="30" title="Volume">
+                    <span id="title-volume-display" class="volume-display">30%</span>
+                </div>
             </div>
         </div>
     </div>
@@ -37,10 +49,17 @@
                 </div>
             </div>
             <div class="resources">
+                <div class="consumables-header">
+                    <span class="consumables-label"></span><div id="consumables-display" class="consumables-icons"></div>
+                </div>
+                <div class="troops-header">
+                    <span class="troops-label"></span><div id="troops-display" class="troops-icons"></div>
+                </div>
                 <div class="resource">
                     <span class="resource-icon">💰</span>
                     <span id="gold-amount">100</span>
                 </div>
+                
             </div>
         </header>
 
@@ -54,9 +73,7 @@
                         <h4>Magasin de la Guilde</h4>
                         <div id="pre-combat-shop" class="shop-grid"></div>
                     </div>
-                    <div class="consumables-preview">
-                        <div id="consumables-display" class="consumables-grid"></div>
-                    </div>
+
                     <div class="combat-info">
                         <h4>Prochain Combat</h4>
                         <div id="next-combat-info" class="combat-preview">
@@ -82,14 +99,70 @@
                 <h3>Mes Troupes</h3>
                 <div class="troops-container">
                     <div class="troops-available">
-                        <h4>Troupes Disponibles</h4>
+                        <div class="troops-sort-header">
+                            <h4>Troupes Disponibles</h4>
+                            <div class="sort-controls"> 
+                                <div class="sort-icons">
+                                    <button class="sort-icon-btn" data-sort="power" title="Trier par puissance (dmg × mult)">
+                                        <span class="sort-icon">⚔️</span>
+                                        <span class="sort-label">Puissance</span>
+                                    </button>
+                                    <button class="sort-icon-btn" data-sort="damage" title="Trier par dégâts">
+                                        <span class="sort-icon">💥</span>
+                                        <span class="sort-label">Dégâts</span>
+                                    </button>
+                                    <button class="sort-icon-btn" data-sort="multiplier" title="Trier par multiplicateur">
+                                        <span class="sort-icon">⚡</span>
+                                        <span class="sort-label">Multi</span>
+                                    </button>
+                                    <button class="sort-icon-btn" data-sort="type-cac" title="Trier par type: Corps à corps">
+                                        <span class="sort-icon">🛡️</span>
+                                        <span class="sort-label">CAC</span>
+                                    </button>
+                                    <button class="sort-icon-btn" data-sort="type-distance" title="Trier par type: Distance">
+                                        <span class="sort-icon">🏹</span>
+                                        <span class="sort-label">Dist</span>
+                                    </button>
+                                    <button class="sort-icon-btn" data-sort="type-magique" title="Trier par type: Magique">
+                                        <span class="sort-icon">🔮</span>
+                                        <span class="sort-label">Mag</span>
+                                    </button>
+                                    <button class="sort-icon-btn" data-sort="type-physique" title="Trier par type: Physique">
+                                        <span class="sort-icon">💪</span>
+                                        <span class="sort-label">Phy</span>
+                                    </button>
+                                    <button class="sort-icon-btn" data-sort="type-soigneur" title="Trier par type: Soigneur">
+                                        <span class="sort-icon">💚</span>
+                                        <span class="sort-label">Soin</span>
+                                    </button>
+                                    <button class="sort-icon-btn" data-sort="rarity" title="Trier par rareté">
+                                        <span class="sort-icon">💎</span>
+                                        <span class="sort-label">Rareté</span>
+                                    </button>
+                                    <button class="sort-icon-btn" data-sort="name" title="Trier par nom">
+                                        <span class="sort-icon">📝</span>
+                                        <span class="sort-label">Nom</span>
+                                    </button>
+                                    <button id="sort-direction" class="btn sort-direction-btn" title="Ordre croissant/décroissant">
+                                        <span class="sort-icon">↓</span>
+                                    </button>
+                                    <button id="clear-filters" class="btn clear-filters-btn" title="Enlever tous les filtres">
+                                        <span class="sort-icon">❌</span>
+                                        <span class="sort-label">Reset</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         <div id="available-troops" class="troops-grid"></div>
+                        <div id="reroll-section" class="reroll-section" style="display: none;">
+                            <button id="reroll-selected-btn" class="btn reroll-btn" title="Relancer les troupes sélectionnées">
+                                <span class="sort-icon">🔄</span>
+                                <span class="sort-label">Relancer</span>
+                                <span class="reroll-counter">(<span id="reroll-count">0</span>/3)</span>
+                            </button>
+                        </div>
                     </div>
                     <div class="troops-selected">
-                        
-                        
-                        <h4>Troupes Sélectionnées</h4>
-                        <div id="selected-troops" class="troops-grid"></div>
                         <div class="team-synergies">
                             <h5>Synergies d'Équipe</h5>
                             <div id="synergies-display"></div>
@@ -102,9 +175,39 @@
             <section class="actions-section">
                 <div class="action-buttons">
                     <button id="start-combat-btn" class="btn primary">Lancer Combat</button>
-                    <button id="view-troops-btn" class="btn secondary">Voir mes troupes</button>
+                    <button id="sell-bonuses-btn" class="btn secondary">Vendre Bonus</button>
                     <button id="save-btn" class="btn secondary">Sauvegarder</button>
                     <button id="menu-btn" class="btn secondary">Menu</button>
+                    
+                    <!-- Contrôles de musique -->
+                    <div class="music-controls">
+                        <span class="music-label">🎵</span>
+                        <button id="music-toggle" class="btn music-btn" title="Play/Pause musique">
+                            <span class="music-icon">▶️</span>
+                            <span class="music-text">Play</span>
+                        </button>
+                        <div class="volume-control">
+                            <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="30" title="Volume">
+                            <span id="volume-display" class="volume-display">30%</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Contrôles de vitesse d'animation -->
+                    <div class="animation-speed-controls">
+                        <span class="speed-label">⚡</span>
+                        <button id="speed-1x" class="btn speed-btn active" data-speed="1" title="Vitesse normale">
+                            <span class="speed-icon">🐌</span>
+                            <span class="speed-text">1x</span>
+                        </button>
+                        <button id="speed-2x" class="btn speed-btn" data-speed="2" title="Vitesse rapide">
+                            <span class="speed-icon">🏃</span>
+                            <span class="speed-text">2x</span>
+                        </button>
+                        <button id="speed-4x" class="btn speed-btn" data-speed="4" title="Vitesse très rapide">
+                            <span class="speed-icon">🚀</span>
+                            <span class="speed-text">4x</span>
+                        </button>
+                    </div>
                 </div>
             </section>
         </main>
@@ -128,7 +231,6 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Combat en cours...</h3>
-                <button class="close-btn">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="combat-info">
@@ -161,21 +263,6 @@
                 <div class="tutorial-navigation">
                     <button id="tutorial-prev" class="btn secondary">Précédent</button>
                     <button id="tutorial-next" class="btn primary">Suivant</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal des troupes -->
-    <div id="troops-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Mes Troupes</h3>
-                <button class="close-btn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="all-troops-list" class="all-troops-list">
-                    <!-- Les troupes seront listées ici -->
                 </div>
             </div>
         </div>
@@ -218,6 +305,32 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de vente de bonus -->
+    <div id="sell-bonuses-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💰 Vendre des Bonus</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="sell-bonuses-info">
+                    <p>Vendez vos bonus pour récupérer de l'or. Prix de vente : <strong>50% du prix d'achat</strong></p>
+                </div>
+                <div id="sell-bonuses-list" class="sell-bonuses-list">
+                    <!-- Les bonus seront ajoutés ici dynamiquement -->
+                </div>
+                <div class="sell-bonuses-summary">
+                    <div class="total-gold-gain">
+                        <span class="summary-label">Gain total :</span>
+                        <span id="total-gold-gain" class="summary-value">0💰</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     </div>
 
     <!-- Overlay pour les modals -->
@@ -226,9 +339,6 @@
     <!-- Conteneur d'animation de combat -->
     <div id="combat-animation-container" class="combat-animation-container">
         <div class="combat-animation">
-            <button id="close-combat-animation" class="close-button">×</button>
-            <h2>Tour de Combat</h2>
-            
             <!-- Image de l'ennemi -->
             <div class="enemy-animation-preview">
                 <img id="enemy-image-animation" src="assets/gobelin.jpg" alt="Ennemi" class="enemy-image-animation">
@@ -246,8 +356,8 @@
             
             <!-- Contenu principal en colonnes (desktop) -->
             <div class="combat-content-desktop">
-                <!-- Colonne gauche : Bonus et Synergies -->
-                <div class="combat-left-column">
+                <!-- Section bonus et synergies sur 2 colonnes -->
+                <div class="bonuses-synergies-row">
                     <div class="bonuses-section">
                         <h3>Bonus d'équipement</h3>
                         <div id="bonuses-animation-content"></div>
@@ -259,27 +369,26 @@
                     </div>
                 </div>
                 
-                <!-- Colonne droite : Unités -->
-                <div class="combat-right-column">
-                    <div class="units-section">
-                        <h3>Unités participantes</h3>
-                        <div id="units-slider-content"></div>
-                    </div>
+                <!-- Section unités -->
+                <div class="units-section">
+                    <h3>Unités participantes</h3>
+                    <div id="units-slider-content"></div>
                 </div>
             </div>
             
             <!-- Contenu mobile (affichage actuel) -->
             <div class="combat-content-mobile">
-                <!-- Section bonus -->
-                <div class="bonuses-section">
-                    <h3>Bonus d'équipement</h3>
-                    <div id="bonuses-animation-content-mobile"></div>
-                </div>
-                
-                <!-- Section synergies -->
-                <div class="synergies-section">
-                    <h3>Synergies actives</h3>
-                    <div id="synergies-animation-content-mobile"></div>
+                <!-- Section bonus et synergies sur 2 colonnes -->
+                <div class="bonuses-synergies-row">
+                    <div class="bonuses-section">
+                        <h3>Bonus d'équipement</h3>
+                        <div id="bonuses-animation-content-mobile"></div>
+                    </div>
+                    
+                    <div class="synergies-section">
+                        <h3>Synergies actives</h3>
+                        <div id="synergies-animation-content-mobile"></div>
+                    </div>
                 </div>
                 
                 <!-- Slider des unités -->
@@ -289,17 +398,51 @@
                 </div>
             </div>
             
-            <!-- Barre de progression -->
-            <div class="combat-progress-bar">
-                <div class="combat-progress-fill"></div>
+            <!-- Bouton de fermeture (apparaît à la fin de l'animation) -->
+            <div id="combat-close-section" class="combat-close-section" style="display: none;">
+                <button id="close-combat-animation" class="btn primary">Fermer</button>
             </div>
-            
             
         </div>
     </div>
 
-    <!-- Animation de victoire -->
-    <div id="victory-animation" class="victory-animation">🎉</div>
+
+
+    <!-- Éléments cachés pour le simulateur -->
+    <div id="simulation-container" style="display: none;">
+        <!-- Éléments de base -->
+        <span id="gold-display">100💰</span>
+        
+        <!-- Troupes -->
+        <div id="troops-display"></div>
+        <div id="header-troops"></div>
+        
+        <!-- Boss -->
+        <div id="boss-damage-gauge" style="display: none"></div>
+        <div id="boss-damage-fill"></div>
+        <span id="boss-damage-current">0</span>
+        <span id="boss-damage-target">0</span>
+        
+        <!-- Magasin -->
+        <div id="pre-combat-shop"></div>
+        <div id="shop-modal" class="modal"></div>
+        
+        <!-- Modals supplémentaires -->
+        <div id="troops-modal" class="modal"></div>
+        
+        <!-- Notifications -->
+        <div id="notification-container"></div>
+        
+        <!-- Contrôles de vitesse -->
+        <div class="speed-controls"></div>
+        <button class="speed-btn" data-speed="1">1x</button>
+    </div>
+
+    <!-- Élément audio pour la musique -->
+    <audio id="background-music" loop>
+        <source src="assets/Guild Master.wav" type="audio/mpeg">
+        Votre navigateur ne supporte pas l'élément audio.
+    </audio>
 
     <!-- Scripts -->
     <script type="module" src="js/main.js"></script>
