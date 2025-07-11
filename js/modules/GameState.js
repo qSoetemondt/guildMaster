@@ -159,9 +159,6 @@ export class GameState {
         // Réinitialiser les triggers de bonus dynamiques pour le nouveau combat
         this.dynamicBonusTriggers = {};
         
-        // Synchroniser les compteurs de trigger avec le nombre d'exemplaires possédés
-        syncDynamicBonusTriggers(this);
-        
         const isBossFight = this.bossManager.isBossRank(this.rank);
         
         if (isBossFight) {
