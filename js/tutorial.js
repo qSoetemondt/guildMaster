@@ -215,6 +215,8 @@ class TutorialSystem {
     /**
  * Displays the current step of the tutorial in the modal.
  */
+    }
+    showCurrentStep() {
         const step = this.tutorialSteps[this.currentStep];
         const content = document.getElementById('tutorial-content');
         const prevBtn = document.getElementById('tutorial-prev');
