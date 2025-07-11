@@ -569,8 +569,17 @@ export function calculateDynamicBonus(bonusDesc, gameState, bonusId) {
     
     bonusDesc.effects.forEach(effect => {
         if (effect.condition === 'base') {
-            // Effet de base : toujours appliqué
-            totalValue += effect.value;
+            // Effet de base : valeur de base + améliorations d'achat
+            let baseValue = effect.value;
+            
+            // Ajouter les améliorations d'achat si disponibles
+            if (gameState.dynamicBonusStates && 
+                gameState.dynamicBonusStates[bonusId] && 
+                gameState.dynamicBonusStates[bonusId]['base']) {
+                baseValue += gameState.dynamicBonusStates[bonusId]['base'];
+            }
+            
+            totalValue += baseValue;
             target = effect.target;
         }
         else if (effect.condition === 'synergy_trigger') {
@@ -602,7 +611,7 @@ export function calculateDynamicBonus(bonusDesc, gameState, bonusId) {
         };
     }
     
-    return null;
+        return null;
 }
 
 // Incrémenter le compteur d'un bonus dynamique quand une synergie se déclenche

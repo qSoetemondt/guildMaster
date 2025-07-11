@@ -684,9 +684,53 @@ export function unlockBonus(bonusId, gameState) {
         return false;
     }
     
-    // Ajouter le bonus (permet l'empilement)
-    gameState.unlockedBonuses.push(bonusId);
-    // gameState.showNotification('Bonus débloqué !', 'success');
+    // Liste des bonus dynamiques qui ne peuvent avoir qu'un seul exemplaire
+    const dynamicBonuses = ['cac_cest_la_vie'];
+    
+    // Vérifier si c'est un bonus dynamique
+    if (dynamicBonuses.includes(bonusId)) {
+        // Vérifier si le bonus existe déjà
+        const existingIndex = gameState.unlockedBonuses.indexOf(bonusId);
+        if (existingIndex !== -1) {
+            // Le bonus existe déjà, augmenter sa valeur au lieu d'ajouter un exemplaire
+            // Initialiser les états dynamiques si nécessaire
+            if (!gameState.dynamicBonusStates) {
+                gameState.dynamicBonusStates = {};
+            }
+            if (!gameState.dynamicBonusStates[bonusId]) {
+                gameState.dynamicBonusStates[bonusId] = {};
+            }
+            
+            // Augmenter le compteur de base (pas de trigger spécifique)
+            if (!gameState.dynamicBonusStates[bonusId]['base']) {
+                gameState.dynamicBonusStates[bonusId]['base'] = 0;
+            }
+            gameState.dynamicBonusStates[bonusId]['base'] += 1;
+            
+            // Mettre à jour immédiatement l'affichage du bonus dynamique
+            gameState.updateActiveBonuses();
+            
+            gameState.showNotification('Bonus dynamique amélioré !', 'success');
+        } else {
+            // Premier exemplaire du bonus dynamique
+            gameState.unlockedBonuses.push(bonusId);
+            
+            // Initialiser les états dynamiques
+            if (!gameState.dynamicBonusStates) {
+                gameState.dynamicBonusStates = {};
+            }
+            if (!gameState.dynamicBonusStates[bonusId]) {
+                gameState.dynamicBonusStates[bonusId] = {};
+            }
+            gameState.dynamicBonusStates[bonusId]['base'] = 0;
+            
+            gameState.showNotification('Bonus dynamique débloqué !', 'success');
+        }
+    } else {
+        // Bonus normal, permettre l'empilement
+        gameState.unlockedBonuses.push(bonusId);
+        gameState.showNotification('Bonus débloqué !', 'success');
+    }
         
     // Mettre à jour l'interface immédiatement pour afficher le nouveau bonus
     gameState.updateActiveBonuses();
@@ -730,6 +774,9 @@ export function updateActiveBonuses(gameState, shopManager = null) {
         bonusCounts[bonusId] = (bonusCounts[bonusId] || 0) + 1;
     });
 
+    // Liste des bonus dynamiques
+    const dynamicBonuses = ['cac_cest_la_vie'];
+    
     // Afficher chaque bonus avec son nombre
     Object.keys(bonusCounts).forEach(bonusId => {
         const bonus = bonusDescriptions[bonusId];
@@ -743,11 +790,49 @@ export function updateActiveBonuses(gameState, shopManager = null) {
             bonusElement.className = `bonus-item rarity-${rarity}`;
             
             const count = bonusCounts[bonusId];
-            const countText = count > 1 ? ` <span class="bonus-count">×${count}</span>` : '';
             
-            bonusElement.innerHTML = `
-                ${bonus.icon} ${bonus.name}${countText}
-            `;
+            // Affichage spécial pour les bonus dynamiques
+            let displayText = '';
+            if (dynamicBonuses.includes(bonusId)) {
+                // Pour les bonus dynamiques, calculer la puissance totale du bonus
+                let totalPower = 0;
+                
+                // Récupérer la description du bonus pour calculer sa puissance
+                const bonusDesc = bonusDescriptions[bonusId];
+                if (bonusDesc && bonusDesc.effects) {
+                    bonusDesc.effects.forEach(effect => {
+                        if (effect.condition === 'base') {
+                            // Valeur de base + améliorations d'achat
+                            let baseValue = effect.value;
+                            if (gameState.dynamicBonusStates && 
+                                gameState.dynamicBonusStates[bonusId] && 
+                                gameState.dynamicBonusStates[bonusId]['base']) {
+                                baseValue += gameState.dynamicBonusStates[bonusId]['base'];
+                            }
+                            totalPower += baseValue;
+                        }
+                        else if (effect.condition === 'synergy_trigger') {
+                            // Bonus des synergies
+                            let triggerCount = 0;
+                            if (gameState.dynamicBonusStates && 
+                                gameState.dynamicBonusStates[bonusId] && 
+                                gameState.dynamicBonusStates[bonusId][effect.triggerSynergy]) {
+                                triggerCount = gameState.dynamicBonusStates[bonusId][effect.triggerSynergy];
+                            }
+                            totalPower += effect.value * triggerCount;
+                        }
+                    });
+                }
+                
+                const powerText = totalPower > 0 ? ` <span class="bonus-count">+${totalPower}</span>` : '';
+                displayText = `${bonus.icon} ${bonus.name}${powerText}`;
+            } else {
+                // Pour les bonus normaux, afficher le nombre d'exemplaires
+                const countText = count > 1 ? ` <span class="bonus-count">×${count}</span>` : '';
+                displayText = `${bonus.icon} ${bonus.name}${countText}`;
+            }
+            
+            bonusElement.innerHTML = displayText;
             
             // Ajouter un événement de clic pour ouvrir la modal
             bonusElement.addEventListener('click', () => {
@@ -796,10 +881,18 @@ function showBonusModal(bonusId, bonus, count, gameState) {
     if (bonusId === 'cac_cest_la_vie' && bonus.effects) {
         let totalValue = 0;
         let triggerCount = 0;
+        let baseValue = 0;
         
         bonus.effects.forEach(effect => {
             if (effect.condition === 'base') {
-                totalValue += effect.value;
+                // Valeur de base + améliorations d'achat
+                baseValue = effect.value;
+                if (gameState.dynamicBonusStates && 
+                    gameState.dynamicBonusStates[bonusId] && 
+                    gameState.dynamicBonusStates[bonusId]['base']) {
+                    baseValue += gameState.dynamicBonusStates[bonusId]['base'];
+                }
+                totalValue += baseValue;
             }
             else if (effect.condition === 'synergy_trigger') {
                 // Récupérer le compteur depuis les états sauvegardés
