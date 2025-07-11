@@ -219,7 +219,7 @@ export class SimulationEngine {
             const unit = this.selectOptimalUnit(needs, gameState.gold);
             if (unit && gameState.gold >= this.getUnitCost(unit)) {
                 gameState.addTroop(unit);
-                gameState.spendGold(this.getUnitCost(unit));
+                gameState.shopManager.spendGold(gameState, this.getUnitCost(unit));
                 gameState.gameStats.unitsPurchased++;
                 gameLog.push(`Recrutement: ${unit.name} (${unit.damage}dmg x${unit.multiplier})`);
             }
@@ -484,7 +484,7 @@ export class SimulationEngine {
         }
         
         // Générer des items de magasin
-        const shopItems = gameState.generateShopItems();
+        const shopItems = gameState.shopManager.generateShopItems(gameState);
         console.log(`📦 Items générés:`, shopItems);
         
         let purchasesMade = false;
@@ -511,7 +511,7 @@ export class SimulationEngine {
                 if (canAfford && worthBuying) {
                     console.log(`🛒 ACHAT BONUS: ${bonus.name} (${bonus.bonusId}) pour ${bonus.price} or`);
                     gameState.unlockBonus(bonus.bonusId);
-                    gameState.spendGold(bonus.price);
+                    gameState.shopManager.spendGold(gameState, bonus.price);
                     gameState.gameStats.bonusesPurchased++;
                     gameLog.push(`Achat bonus: ${bonus.name} (${bonus.bonusId}) - ${bonus.price} or`);
                     purchasesMade = true;
@@ -536,7 +536,7 @@ export class SimulationEngine {
                 if (canAfford && worthBuying) {
                     console.log(`🛒 ACHAT CONSOMMABLE: ${consumable.name} pour ${consumable.price} or`);
                     gameState.addConsumable(consumable.consumableType);
-                    gameState.spendGold(consumable.price);
+                    gameState.shopManager.spendGold(gameState, consumable.price);
                     gameState.gameStats.consumablesPurchased = (gameState.gameStats.consumablesPurchased || 0) + 1;
                     
                     // Suivre les consommables achetés
@@ -569,7 +569,7 @@ export class SimulationEngine {
                 if (canAfford && hasSpace && worthBuying) {
                     console.log(`🛒 ACHAT UNITÉ: ${unit.name} pour ${unit.price} or`);
                     gameState.addTroop(unit);
-                    gameState.spendGold(unit.price);
+                    gameState.shopManager.spendGold(gameState, unit.price);
                     gameState.gameStats.unitsPurchased++;
                     
                     // Suivre les unités achetées

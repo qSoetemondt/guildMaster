@@ -1,0 +1,420 @@
+/* Zone principale du jeu */
+.game-main {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    height: 80vh;
+    padding-bottom: 100px; /* Espace pour la barre de boutons fixe */
+}
+
+/* Section des troupes */
+.troops-section {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+/* Section avant combat */
+.pre-combat-section {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.pre-combat-section h3 {
+    color: #2d3436;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.pre-combat-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+.shop-preview, .combat-info {
+    background: #c6e0fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.shop-preview h4, .combat-info h4 {
+    color: #2d3436;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.combat-preview {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.troops-section h3 {
+    color: #2d3436;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.troops-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.troops-available, .troops-selected {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.troops-available h4, .troops-selected h4 {
+    color: #2d3436;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.troops-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    min-height: 100px;
+}
+
+/* Cartes d'unités */
+.unit-card {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+/* S'assurer que les cartes sans rareté ont un background blanc */
+.unit-card:not([class*="rarity-"]) {
+    background: white !important;
+}
+
+.unit-card:hover {
+    border-color: #74b9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.unit-card.selected {
+    border-color: #ff6b6b;
+    border-width: 3px;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4);
+    transform: scale(1.02);
+}
+
+/* Garder le gradient de rareté même quand sélectionné - Styles plus spécifiques */
+.unit-card.selected.rarity-common {
+    background: linear-gradient(135deg, rgba(102, 102, 102, 0.15) 0%, rgba(102, 102, 102, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
+}
+
+.unit-card.selected.rarity-uncommon {
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.15) 0%, rgba(0, 184, 148, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
+}
+
+.unit-card.selected.rarity-rare {
+    background: linear-gradient(135deg, rgba(116, 185, 255, 0.15) 0%, rgba(116, 185, 255, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
+}
+
+.unit-card.selected.rarity-epic {
+    background: linear-gradient(135deg, rgba(162, 155, 254, 0.15) 0%, rgba(162, 155, 254, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
+}
+
+.unit-card.selected.rarity-legendary {
+    background: linear-gradient(135deg, rgba(253, 203, 110, 0.15) 0%, rgba(253, 203, 110, 0.08) 100%), linear-gradient(135deg, rgba(255, 107, 107, 0.2) 0%, rgba(255, 107, 107, 0.1) 100%) !important;
+    border-color: #ff6b6b !important;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.4) !important;
+}
+
+.unit-card.used {
+    border-color: #d63031;
+    background: #ffe8e8;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.unit-card.used .unit-used {
+    background: #d63031;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    margin-top: 5px;
+}
+
+.unit-card .unit-icon {
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.unit-card .unit-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    color: #2d3436;
+}
+
+.unit-card .unit-stats {
+    font-size: 0.8rem;
+    color: #2d3436;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    font-weight: 500;
+}
+
+.unit-card .unit-rarity {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    font-weight: 700;
+}
+
+.unit-card .unit-type {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0.7rem;
+    background: rgba(116, 185, 255, 0.9);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+}
+
+/* Bordures de rareté pour les cartes d'unités */
+.unit-card.rarity-common {
+    border-color: #666666 !important;
+    box-shadow: 0 2px 8px rgba(102, 102, 102, 0.2) !important;
+    background: linear-gradient(135deg, rgba(102, 102, 102, 0.1) 0%, rgba(102, 102, 102, 0.05) 100%) !important;
+}
+
+.unit-card.rarity-common:hover {
+    border-color: #666666 !important;
+    box-shadow: 0 4px 16px rgba(102, 102, 102, 0.3) !important;
+    background: linear-gradient(135deg, rgba(102, 102, 102, 0.15) 0%, rgba(102, 102, 102, 0.08) 100%) !important;
+}
+
+.unit-card.rarity-uncommon {
+    border-color: #00b894 !important;
+    box-shadow: 0 2px 8px rgba(0, 184, 148, 0.2) !important;
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.1) 0%, rgba(0, 184, 148, 0.05) 100%) !important;
+}
+
+.unit-card.rarity-uncommon:hover {
+    border-color: #00b894 !important;
+    box-shadow: 0 4px 16px rgba(0, 184, 148, 0.3) !important;
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.15) 0%, rgba(0, 184, 148, 0.08) 100%) !important;
+}
+
+.unit-card.rarity-rare {
+    border-color: #74b9ff !important;
+    box-shadow: 0 2px 8px rgba(116, 185, 255, 0.2) !important;
+    background: linear-gradient(135deg, rgba(116, 185, 255, 0.1) 0%, rgba(116, 185, 255, 0.05) 100%) !important;
+}
+
+.unit-card.rarity-rare:hover {
+    border-color: #74b9ff !important;
+    box-shadow: 0 4px 16px rgba(116, 185, 255, 0.3) !important;
+    background: linear-gradient(135deg, rgba(116, 185, 255, 0.15) 0%, rgba(116, 185, 255, 0.08) 100%) !important;
+}
+
+.unit-card.rarity-epic {
+    border-color: #a29bfe !important;
+    box-shadow: 0 2px 8px rgba(162, 155, 254, 0.2) !important;
+    background: linear-gradient(135deg, rgba(162, 155, 254, 0.1) 0%, rgba(162, 155, 254, 0.05) 100%) !important;
+}
+
+.unit-card.rarity-epic:hover {
+    border-color: #a29bfe !important;
+    box-shadow: 0 4px 16px rgba(162, 155, 254, 0.3) !important;
+    background: linear-gradient(135deg, rgba(162, 155, 254, 0.15) 0%, rgba(162, 155, 254, 0.08) 100%) !important;
+}
+
+.unit-card.rarity-legendary {
+    border-color: #fdcb6e !important;
+    box-shadow: 0 2px 8px rgba(253, 203, 110, 0.2) !important;
+    background: linear-gradient(135deg, rgba(253, 203, 110, 0.1) 0%, rgba(253, 203, 110, 0.05) 100%) !important;
+}
+
+.unit-card.rarity-legendary:hover {
+    border-color: #fdcb6e !important;
+    box-shadow: 0 4px 16px rgba(253, 203, 110, 0.3) !important;
+    background: linear-gradient(135deg, rgba(253, 203, 110, 0.15) 0%, rgba(253, 203, 110, 0.08) 100%) !important;
+}
+
+/* Styles pour les éléments du shop */
+.shop-item.rarity-common {
+    border-color: #666666 !important;
+    box-shadow: 0 2px 8px rgba(102, 102, 102, 0.2) !important;
+}
+
+.shop-item.rarity-common:hover {
+    border-color: #666666 !important;
+    box-shadow: 0 4px 16px rgba(102, 102, 102, 0.3) !important;
+}
+
+.shop-item.rarity-uncommon {
+    border-color: #00b894 !important;
+    box-shadow: 0 2px 8px rgba(0, 184, 148, 0.2) !important;
+}
+
+.shop-item.rarity-uncommon:hover {
+    border-color: #00b894 !important;
+    box-shadow: 0 4px 16px rgba(0, 184, 148, 0.3) !important;
+}
+
+.shop-item.rarity-rare {
+    border-color: #74b9ff !important;
+    box-shadow: 0 2px 8px rgba(116, 185, 255, 0.2) !important;
+}
+
+.shop-item.rarity-rare:hover {
+    border-color: #74b9ff !important;
+    box-shadow: 0 4px 16px rgba(116, 185, 255, 0.3) !important;
+}
+
+.shop-item.rarity-epic {
+    border-color: #a29bfe !important;
+    box-shadow: 0 2px 8px rgba(162, 155, 254, 0.2) !important;
+}
+
+.shop-item.rarity-epic:hover {
+    border-color: #a29bfe !important;
+    box-shadow: 0 4px 16px rgba(162, 155, 254, 0.3) !important;
+}
+
+.shop-item.rarity-legendary {
+    border-color: #fdcb6e !important;
+    box-shadow: 0 2px 8px rgba(253, 203, 110, 0.2) !important;
+}
+
+.shop-item.rarity-legendary:hover {
+    border-color: #fdcb6e !important;
+    box-shadow: 0 4px 16px rgba(253, 203, 110, 0.3) !important;
+}
+
+/* Styles pour les options de recrutement */
+.recruit-option.rarity-common {
+    border-color: #666666 !important;
+    box-shadow: 0 2px 8px rgba(102, 102, 102, 0.2) !important;
+}
+
+.recruit-option.rarity-common:hover {
+    border-color: #666666 !important;
+    box-shadow: 0 4px 16px rgba(102, 102, 102, 0.3) !important;
+}
+
+.recruit-option.rarity-uncommon {
+    border-color: #00b894 !important;
+    box-shadow: 0 2px 8px rgba(0, 184, 148, 0.2) !important;
+}
+
+.recruit-option.rarity-uncommon:hover {
+    border-color: #00b894 !important;
+    box-shadow: 0 4px 16px rgba(0, 184, 148, 0.3) !important;
+}
+
+.recruit-option.rarity-rare {
+    border-color: #74b9ff !important;
+    box-shadow: 0 2px 8px rgba(116, 185, 255, 0.2) !important;
+}
+
+.recruit-option.rarity-rare:hover {
+    border-color: #74b9ff !important;
+    box-shadow: 0 4px 16px rgba(116, 185, 255, 0.3) !important;
+}
+
+.recruit-option.rarity-epic {
+    border-color: #a29bfe !important;
+    box-shadow: 0 2px 8px rgba(162, 155, 254, 0.2) !important;
+}
+
+.recruit-option.rarity-epic:hover {
+    border-color: #a29bfe !important;
+    box-shadow: 0 4px 16px rgba(162, 155, 254, 0.3) !important;
+}
+
+.recruit-option.rarity-legendary {
+    border-color: #fdcb6e !important;
+    box-shadow: 0 2px 8px rgba(253, 203, 110, 0.2) !important;
+}
+
+.recruit-option.rarity-legendary:hover {
+    border-color: #fdcb6e !important;
+    box-shadow: 0 4px 16px rgba(253, 203, 110, 0.3) !important;
+}
+
+@media (max-width: 768px) {
+    .troops-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .pre-combat-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .troops-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+    }
+
+    .unit-card {
+        padding: 8px;
+    }
+
+    .unit-card .unit-icon {
+        font-size: 1.5rem;
+    }
+
+    .unit-card .unit-name {
+        font-size: 0.8rem;
+    }
+
+    .unit-card .unit-stats {
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .troops-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 6px;
+    }
+
+    .unit-card {
+        padding: 6px;
+    }
+
+    .unit-card .unit-icon {
+        font-size: 1.2rem;
+    }
+
+    .unit-card .unit-name {
+        font-size: 0.7rem;
+    }
+
+    .unit-card .unit-stats {
+        font-size: 0.6rem;
+    }
+} 

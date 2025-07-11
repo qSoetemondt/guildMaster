@@ -1,41 +1,98 @@
 import { GameState } from './modules/GameState.js';
 import { tutorialSystem, initTutorialSystem } from './tutorial.js';
-import { SimulationEngine } from './modules/SimulationEngine.js';
-import { SimulationUI } from './modules/SimulationUI.js';
-import { testSimulation, testSingleGame } from './modules/SimulationTest.js';
+import { getRarityIcon, getRarityColor, getRarityDisplayName } from './modules/RarityUtils.js';
+import { getMusicManager } from './modules/MusicManager.js';
+
+
 
 // Instance globale du jeu
 let gameState = new GameState();
 
-// Instance du simulateur d'équilibrage
-let simulationEngine = new SimulationEngine();
-let simulationUI = new SimulationUI(simulationEngine);
+
 
 // Rendre le gameState accessible globalement pour les notifications
 window.gameState = gameState;
 
-// Rendre les tests de simulation accessibles globalement
-window.testSimulation = testSimulation;
-window.testSingleGame = testSingleGame;
+
+
+
+// ===== FONCTIONS DE DEBUG =====
+// Fonction pour ajouter de l'or facilement
+window.addGold = function(amount = 100) {
+    if (gameState) {
+        gameState.addGold(amount);
+        gameState.notificationManager.showGoldAdded(amount);
+    } else {
+        console.error('gameState non disponible');
+    }
+};
+
+// Fonction pour définir l'or directement
+window.setGold = function(amount) {
+    if (gameState) {
+        gameState.gold = amount;
+        gameState.updateUI();
+        gameState.notificationManager.showGoldSet(amount);
+    } else {
+        console.error('gameState non disponible');
+    }
+};
+
+// Fonction pour afficher les informations de debug
+window.debugInfo = function() {
+    if (gameState) {
+        // Fonction de debug silencieuse
+    } else {
+        console.error('gameState non disponible');
+    }
+};
+
+// Fonction pour rafraîchir le magasin gratuitement
+window.refreshShop = function() {
+    if (gameState && gameState.shopManager) {
+        gameState.shopManager.currentShopItems = null;
+        gameState.shopManager.currentShopPurchasedBonuses = [];
+        gameState.shopManager.currentShopPurchasedUnits = [];
+        gameState.shopManager.currentShopPurchasedConsumables = [];
+        gameState.shopManager.shopRefreshCount = 0;
+        gameState.shopManager.shopRefreshCost = 10;
+        gameState.shopManager.updatePreCombatShop(gameState);
+        gameState.notificationManager.showShopRefreshed();
+    } else {
+        console.error('gameState ou shopManager non disponible');
+    }
+};
+
+// Fonction pour débloquer tous les bonus
+window.unlockAllBonuses = function() {
+    if (gameState) {
+        const bonusDescriptions = gameState.getBonusDescriptions();
+        Object.keys(bonusDescriptions).forEach(bonusId => {
+            if (!gameState.unlockedBonuses.includes(bonusId)) {
+                gameState.unlockBonus(bonusId);
+            }
+        });
+        gameState.notificationManager.showAllBonusesUnlocked();
+    } else {
+        console.error('gameState non disponible');
+    }
+};
+
+
 
 // Gestion des écrans
 function showScreen(screenId) {
-    console.log(`Changement d'écran vers: ${screenId}`);
-    
     // Cacher tous les écrans
     const screens = document.querySelectorAll('.screen');
-    console.log(`Nombre d'écrans trouvés: ${screens.length}`);
     
     screens.forEach(screen => {
         screen.classList.remove('active');
-        console.log(`Écran ${screen.id} - active: ${screen.classList.contains('active')}`);
     });
     
     // Afficher l'écran demandé
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
         targetScreen.classList.add('active');
-        console.log(`Écran ${screenId} activé avec succès`);
     } else {
         console.error(`Écran ${screenId} non trouvé !`);
     }
@@ -58,6 +115,12 @@ function hideModal(modalId) {
     const modal = document.getElementById(modalId);
     const overlay = document.getElementById('modal-overlay');
     
+    // Ne jamais fermer la modal de combat
+    if (modalId === 'combat-modal') {
+        console.log('Tentative de fermeture de la modal de combat bloquée');
+        return;
+    }
+    
     if (modal) {
         modal.classList.remove('active');
     }
@@ -70,93 +133,9 @@ function hideModal(modalId) {
 window.showModal = showModal;
 window.hideModal = hideModal;
 
-// Fonctions utilitaires
-function getRandomUnit() {
-    const units = [
-        { name: 'Épéiste', type: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, icon: '⚔️', rarity: 'common' },
-        { name: 'Archer', type: ['Distance', 'Physique'], damage: 4, multiplier: 3, icon: '🏹', rarity: 'common' },
-        { name: 'Magicien Rouge', type: ['Distance', 'Magique'], damage: 6, multiplier: 2, icon: '🔴', rarity: 'uncommon' },
-        { name: 'Magicien Bleu', type: ['Distance', 'Magique'], damage: 3, multiplier: 4, icon: '🔵', rarity: 'uncommon' },
-        { name: 'Lancier', type: ['Corps à corps', 'Physique'], damage: 4, multiplier: 3, icon: '🔱', rarity: 'common' },
-        { name: 'Paysan', type: ['Corps à corps', 'Physique'], damage: 2, multiplier: 1, icon: '👨‍🌾', rarity: 'common' },
-        { name: 'Barbare', type: ['Corps à corps', 'Physique'], damage: 7, multiplier: 1, icon: '🪓', rarity: 'uncommon' },
-        { name: 'Viking', type: ['Corps à corps', 'Physique'], damage: 6, multiplier: 2, icon: '🛡️', rarity: 'uncommon' },
-        { name: 'Fronde', type: ['Distance', 'Physique'], damage: 2, multiplier: 5, icon: '🪨', rarity: 'rare' }
-    ];
-    
-    return units[Math.floor(Math.random() * units.length)];
-}
 
-// Fonction pour obtenir l'icône de rareté
-function getRarityIcon(rarity) {
-    const icons = {
-        common: '⚪',
-        uncommon: '🟢',
-        rare: '🔵',
-        epic: '🟣',
-        legendary: '🟡'
-    };
-    return icons[rarity] || '⚪';
-}
 
-// Fonction pour obtenir la couleur de rareté
-function getRarityColor(rarity) {
-    const colors = {
-        common: '#666666',
-        uncommon: '#00b894',
-        rare: '#74b9ff',
-        epic: '#a29bfe',
-        legendary: '#fdcb6e'
-    };
-    return colors[rarity] || '#666666';
-}
 
-// Initialisation du recrutement
-function initRecruitment() {
-    const container = document.getElementById('recruit-options');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    // Générer 3 options de recrutement
-    for (let i = 0; i < 3; i++) {
-        const unit = getRandomUnit();
-        const option = document.createElement('div');
-        
-        // Ajouter la classe de rareté
-        const rarityClass = unit.rarity ? `rarity-${unit.rarity}` : '';
-        option.className = `recruit-option ${rarityClass}`;
-        
-        option.innerHTML = `
-            <div style="font-size: 2rem; margin-bottom: 10px;">${unit.icon}</div>
-            <div style="font-weight: 600; margin-bottom: 5px;">${unit.name}</div>
-            <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">${unit.type}</div>
-            <div style="font-size: 0.8rem; margin-bottom: 10px;">${unit.damage} dmg ×${unit.multiplier}</div>
-            ${unit.rarity ? `<div style="margin-top: 10px; font-weight: 600; color: ${getRarityColor(unit.rarity)}; font-size: 0.8rem;">
-                ${getRarityIcon(unit.rarity)} ${unit.rarity.toUpperCase()}
-            </div>` : ''}
-        `;
-        
-        option.addEventListener('click', () => {
-            document.querySelectorAll('.recruit-option').forEach(opt => {
-                opt.classList.remove('selected');
-            });
-            
-            option.classList.add('selected');
-            
-            setTimeout(() => {
-                gameState.addTroop(unit);
-                hideModal('recruit-modal');
-                gameState.showNotification(`${unit.name} recruté !`, 'success');
-            }, 500);
-        });
-        
-        container.appendChild(option);
-    }
-}
-
-// Le système de combat a été déplacé dans GameState.js
-// Cette fonction n'est plus utilisée
 
 
 
@@ -193,7 +172,7 @@ function initTutorial() {
         // Navigation du tutoriel
         document.getElementById('tutorial-next').addEventListener('click', () => {
             hideModal('tutorial-modal');
-            gameState.showNotification('Tutoriel terminé ! Bonne chance !', 'success');
+            gameState.notificationManager.showTutorialCompleted();
         });
         
         document.getElementById('tutorial-prev').addEventListener('click', () => {
@@ -269,7 +248,8 @@ Merci encore pour votre participation !
 
 // Initialisation du jeu
 function initGame() {
-    console.log('Initialisation du jeu...');
+    // Initialiser le gestionnaire de musique
+    const musicManager = getMusicManager();
     
     // Charger le contenu de la modal beta test
     loadBetaTestContent();
@@ -296,7 +276,6 @@ function initGame() {
     
     if (newGameBtn) {
         newGameBtn.addEventListener('click', () => {
-            console.log('Nouvelle partie cliquée');
             showModal('new-game-modal');
             
             // Focus sur le champ de nom de guilde
@@ -310,41 +289,39 @@ function initGame() {
     
     if (loadGameBtn) {
         loadGameBtn.addEventListener('click', () => {
-            console.log('Charger partie cliquée');
             if (gameState.load()) {
                 showScreen('game-screen');
-                gameState.showNotification('Partie chargée !', 'success');
+                gameState.notificationManager.showGameLoaded();
             } else {
-                gameState.showNotification('Aucune sauvegarde trouvée', 'error');
+                gameState.notificationManager.showNoSaveFound();
             }
         });
     }
     
     if (tutorialBtn) {
         tutorialBtn.addEventListener('click', () => {
-            console.log('Tutoriel cliqué');
             showModal('tutorial-modal');
             initTutorial();
         });
     }
 
+
+
     if (simulationBtn) {
         simulationBtn.addEventListener('click', () => {
-            console.log('Simulateur d\'équilibrage cliqué');
             simulationUI.show();
         });
     }
 
     // Événements du jeu
     const startCombatBtn = document.getElementById('start-combat-btn');
+    const sellBonusesBtn = document.getElementById('sell-bonuses-btn');
     const viewTroopsBtn = document.getElementById('view-troops-btn');
     const saveBtn = document.getElementById('save-btn');
     const menuBtn = document.getElementById('menu-btn');
     
     if (startCombatBtn) {
         startCombatBtn.addEventListener('click', () => {
-            console.log('Combat cliqué');
-            
             // Si pas de combat en cours, en démarrer un nouveau
             if (!gameState.currentCombat.isActive) {
                 gameState.startNewCombat();
@@ -354,7 +331,7 @@ function initGame() {
             
             // Si combat en cours, exécuter un tour
             if (gameState.selectedTroops.length === 0) {
-                gameState.showNotification('Sélectionnez des troupes pour attaquer !', 'error');
+                gameState.notificationManager.showActionRequired('Sélectionnez des troupes pour attaquer !');
                 return;
             }
             
@@ -365,21 +342,28 @@ function initGame() {
     
     if (viewTroopsBtn) {
         viewTroopsBtn.addEventListener('click', () => {
-            console.log('Voir mes troupes cliqué');
             gameState.showAllTroops();
         });
     }
     
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
-            console.log('Sauvegarder cliqué');
             gameState.save();
+        });
+    }
+    
+    if (sellBonusesBtn) {
+        sellBonusesBtn.addEventListener('click', () => {
+            if (gameState && gameState.shopManager) {
+                gameState.shopManager.openSellBonusesModal(gameState);
+            } else {
+                console.error('gameState ou shopManager non disponible');
+            }
         });
     }
     
     if (menuBtn) {
         menuBtn.addEventListener('click', () => {
-            console.log('Menu cliqué');
             showScreen('title-screen');
         });
     }
@@ -389,6 +373,11 @@ function initGame() {
         btn.addEventListener('click', (e) => {
             const modal = e.target.closest('.modal');
             if (modal) {
+                // Ne jamais fermer la modal de combat
+                if (modal.id === 'combat-modal') {
+                    return;
+                }
+                
                 hideModal(modal.id);
                 // Fermer spécifiquement la modal des troupes
                 if (modal.id === 'troops-modal') {
@@ -402,10 +391,87 @@ function initGame() {
     if (modalOverlay) {
         modalOverlay.addEventListener('click', () => {
             document.querySelectorAll('.modal.active').forEach(modal => {
+                // Ne jamais fermer la modal de combat avec l'overlay
+                if (modal.id === 'combat-modal') {
+                    return;
+                }
                 hideModal(modal.id);
             });
         });
     }
+
+    // Écouteur d'événement pour le tri des unités
+    window.addEventListener('troopsSortChanged', () => {
+        if (gameState && gameState.unitSorter) {
+            gameState.updateTroopsUI();
+        }
+    });
+
+    // Fermeture des modals avec la touche Échap
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            // Vérifier si un combat est en cours
+            const isCombatActive = gameState && gameState.currentCombat && gameState.currentCombat.isActive;
+            
+            // Fermer toutes les modals actives (statiques et dynamiques) sauf la modal de combat
+            document.querySelectorAll('.modal.active, .modal[style*="display: block"]').forEach(modal => {
+                // Ne jamais fermer la modal de combat avec Échap
+                if (modal.id === 'combat-modal') {
+                    return;
+                }
+                
+                hideModal(modal.id);
+                // Fermer spécifiquement la modal des troupes
+                if (modal.id === 'troops-modal') {
+                    modal.style.display = 'none';
+                }
+                // Fermer les modals dynamiques
+                if (modal.id === 'synergy-upgrade-modal' || modal.id === 'transform-confirmation-modal' || modal.id === 'game-summary-modal') {
+                    modal.remove();
+                }
+            });
+            
+            // Fermer l'animation de combat seulement si elle n'est pas en cours d'animation
+            const combatAnimation = document.getElementById('combat-animation-container');
+            if (combatAnimation && combatAnimation.style.display === 'flex') {
+                // Ne jamais fermer l'animation de combat si un combat est en cours
+                if (isCombatActive) {
+                    return;
+                }
+                
+                // Vérifier si l'animation est en cours en regardant si le bouton de fermeture est visible
+                const closeButton = combatAnimation.querySelector('#close-combat-animation');
+                if (closeButton && closeButton.style.display !== 'none' && closeButton.style.visibility !== 'hidden' && !isCombatActive) {
+                    // L'animation peut être fermée (bouton visible = animation terminée ET pas de combat actif)
+                    combatAnimation.style.display = 'none';
+                }
+                // Si le bouton n'est pas visible ou si un combat est actif, l'animation ne doit pas être fermée
+            }
+            
+            // Fermer l'animation de victoire si elle est active
+            const victoryAnimation = document.getElementById('victory-animation');
+            if (victoryAnimation && victoryAnimation.style.display === 'block') {
+                victoryAnimation.style.display = 'none';
+            }
+            
+            // Fermer l'overlay de transformation s'il est actif
+            const transformOverlay = document.getElementById('transform-overlay');
+            if (transformOverlay) {
+                transformOverlay.remove();
+            }
+            
+            // Fermer la notification de transformation si elle est active
+            const transformNotification = document.getElementById('transform-notification');
+            if (transformNotification) {
+                transformNotification.remove();
+            }
+            
+            // Réinitialiser le mode transformation si actif
+            if (gameState && gameState.consumableManager) {
+                gameState.consumableManager.deactivateTransformMode();
+            }
+        }
+    });
 
     // Événement pour le nom de guilde modifiable
     const guildNameInput = document.getElementById('guild-name-input');
@@ -434,9 +500,9 @@ function initGame() {
                 gameState.updateGuildName(guildName);
                 hideModal('new-game-modal');
                 showScreen('game-screen');
-                gameState.showNotification(`Nouvelle partie créée : ${guildName}`, 'success');
+                gameState.notificationManager.showNewGameCreated(guildName);
             } else {
-                gameState.showNotification('Veuillez entrer un nom de guilde', 'error');
+                gameState.notificationManager.showInputError('Veuillez entrer un nom de guilde');
             }
         });
     }
@@ -456,7 +522,7 @@ function initGame() {
     }
     
     // Vérifier s'il y a une sauvegarde au démarrage
-    if (localStorage.getItem('guildMasterSave') && loadGameBtn) {
+    if (gameState.saveManager.hasSave() && loadGameBtn) {
         loadGameBtn.textContent = 'Charger Partie ✓';
     }
     
@@ -469,6 +535,15 @@ function initGame() {
             localStorage.setItem('betaTestSeen', 'true');
         });
     }
+    
+    // Gestionnaires d'événements pour les contrôles de vitesse d'animation
+    const speedButtons = document.querySelectorAll('.speed-btn');
+    speedButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const speed = parseInt(btn.getAttribute('data-speed'));
+            gameState.animationManager.setAnimationSpeed(speed);
+        });
+    });
     
     console.log('Jeu initialisé avec succès');
 }

@@ -1,0 +1,32 @@
+⚠️ IMPORTANT - Phase de test en cours
+
+Le jeu est actuellement en version bêta non équilibrée. Cela signifie que :
+- Les mécaniques de combat peuvent être déséquilibrées
+- Certaines unités peuvent être trop fortes ou trop faibles
+- L'économie du jeu n'est pas encore optimisée
+- Des bugs peuvent survenir
+
+💾 Système de sauvegarde
+
+Votre progression est sauvegardée automatiquement dans votre navigateur. IMPORTANT :
+- Ne videz pas les données de navigation (cache, cookies, etc.)
+- Ne passez pas en navigation privée
+- Utilisez le même navigateur pour continuer votre partie
+- Le bouton "Sauvegarder" permet de forcer une sauvegarde manuelle
+
+🤐 Confidentialité
+
+Pour préserver l'effet de surprise pour les autres joueurs, merci de ne pas partager l'URL du jeu en dehors de ce groupe de testeurs. Gardons la magie intacte pour le lancement !
+
+💬 Vos retours sont essentiels
+
+Je suis ouvert à tous vos retours :
+- Bugs rencontrés
+- Suggestions d'amélioration
+- Équilibrage des unités/synergies
+- Interface utilisateur
+- Nouvelles fonctionnalités
+- Tout ce qui vous passe par la tête !
+
+N'hésitez pas à me faire part de vos impressions, même les plus détaillées. Chaque retour compte pour faire de GuildMaster le meilleur jeu possible !
+Merci encore pour votre participation ! 

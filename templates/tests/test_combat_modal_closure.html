@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Fermeture Modal Combat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #2980b9;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test Fermeture Modal Combat</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Modal de Combat - Victoire</h3>
+            <p>Vérifier que la modal de combat se ferme automatiquement après une victoire.</p>
+            <button class="test-button" onclick="testVictoryModalClosure()">Tester Fermeture Victoire</button>
+            <div id="test1-result" class="debug-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 2: Modal de Combat - Défaite</h3>
+            <p>Vérifier que la modal de combat se ferme automatiquement après une défaite.</p>
+            <button class="test-button" onclick="testDefeatModalClosure()">Tester Fermeture Défaite</button>
+            <div id="test2-result" class="debug-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 3: Timing de Fermeture</h3>
+            <p>Vérifier le timing de fermeture de la modal (3 secondes).</p>
+            <button class="test-button" onclick="testModalTiming()">Tester Timing</button>
+            <div id="test3-result" class="debug-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>État Actuel</h3>
+            <div id="current-state" class="debug-info"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GameState } from '../js/modules/GameState.js';
+        
+        let gameState;
+        
+        // Initialiser le jeu
+        function initGame() {
+            gameState = new GameState();
+            gameState.newGame();
+            updateCurrentState();
+        }
+        
+        // Mettre à jour l'affichage de l'état actuel
+        function updateCurrentState() {
+            const stateDiv = document.getElementById('current-state');
+            if (gameState) {
+                const combatModal = document.getElementById('combat-modal');
+                const isModalVisible = combatModal && 
+                    (combatModal.style.display === 'flex' || combatModal.classList.contains('active'));
+                
+                stateDiv.innerHTML = `
+                    <strong>État du jeu :</strong><br>
+                    Rang: ${gameState.rank}<br>
+                    Or: ${gameState.gold}<br>
+                    Combat actif: ${gameState.currentCombat ? gameState.currentCombat.isActive : 'Non'}<br>
+                    Dégâts totaux: ${gameState.currentCombat ? gameState.currentCombat.totalDamage : '0'}<br>
+                    Objectif: ${gameState.currentCombat ? gameState.currentCombat.targetDamage : '0'}<br>
+                    <br>
+                    <strong>Modal de combat :</strong><br>
+                    Visible: ${isModalVisible ? 'Oui' : 'Non'}<br>
+                    Display: ${combatModal ? combatModal.style.display : 'N/A'}
+                `;
+            }
+        }
+        
+        // Test 1: Fermeture après victoire
+        window.testVictoryModalClosure = function() {
+            const resultDiv = document.getElementById('test1-result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                // Démarrer un nouveau combat
+                gameState.startNewCombat();
+                
+                // Vérifier que la modal est ouverte
+                const combatModal = document.getElementById('combat-modal');
+                const isModalOpen = combatModal && 
+                    (combatModal.style.display === 'flex' || combatModal.classList.contains('active'));
+                
+                if (!isModalOpen) {
+                    resultDiv.innerHTML = '<span class="error">❌ ERREUR - Modal de combat non ouverte</span>';
+                    updateCurrentState();
+                    return;
+                }
+                
+                // Simuler une victoire
+                gameState.currentCombat.totalDamage = gameState.currentCombat.targetDamage;
+                gameState.endCombat(true);
+                
+                // Attendre 3.5 secondes pour la fermeture automatique
+                setTimeout(() => {
+                    const isModalClosed = !combatModal || 
+                        (combatModal.style.display !== 'flex' && !combatModal.classList.contains('active'));
+                    
+                    resultDiv.innerHTML = `
+                        <strong>Résultat du test victoire :</strong><br>
+                        Modal ouverte avant victoire: ${isModalOpen ? 'Oui' : 'Non'}<br>
+                        Modal fermée après 3.5s: ${isModalClosed ? 'Oui' : 'Non'}<br>
+                        <br>
+                        <strong>Résultat :</strong> ${isModalClosed ? '<span class="success">✅ SUCCÈS - Modal fermée automatiquement</span>' : '<span class="error">❌ ÉCHEC - Modal toujours ouverte</span>'}
+                    `;
+                    
+                    updateCurrentState();
+                }, 3500);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Erreur: ${error.message}</span>`;
+            }
+        };
+        
+        // Test 2: Fermeture après défaite
+        window.testDefeatModalClosure = function() {
+            const resultDiv = document.getElementById('test2-result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                // Démarrer un nouveau combat
+                gameState.startNewCombat();
+                
+                // Vérifier que la modal est ouverte
+                const combatModal = document.getElementById('combat-modal');
+                const isModalOpen = combatModal && 
+                    (combatModal.style.display === 'flex' || combatModal.classList.contains('active'));
+                
+                if (!isModalOpen) {
+                    resultDiv.innerHTML = '<span class="error">❌ ERREUR - Modal de combat non ouverte</span>';
+                    updateCurrentState();
+                    return;
+                }
+                
+                // Simuler une défaite (pas assez de dégâts)
+                gameState.currentCombat.totalDamage = 0;
+                gameState.currentCombat.round = gameState.currentCombat.maxRounds;
+                gameState.endCombat(false);
+                
+                // Attendre 3.5 secondes pour la fermeture automatique
+                setTimeout(() => {
+                    const isModalClosed = !combatModal || 
+                        (combatModal.style.display !== 'flex' && !combatModal.classList.contains('active'));
+                    
+                    resultDiv.innerHTML = `
+                        <strong>Résultat du test défaite :</strong><br>
+                        Modal ouverte avant défaite: ${isModalOpen ? 'Oui' : 'Non'}<br>
+                        Modal fermée après 3.5s: ${isModalClosed ? 'Oui' : 'Non'}<br>
+                        <br>
+                        <strong>Résultat :</strong> ${isModalClosed ? '<span class="success">✅ SUCCÈS - Modal fermée automatiquement</span>' : '<span class="error">❌ ÉCHEC - Modal toujours ouverte</span>'}
+                    `;
+                    
+                    updateCurrentState();
+                }, 3500);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Erreur: ${error.message}</span>`;
+            }
+        };
+        
+        // Test 3: Timing de fermeture
+        window.testModalTiming = function() {
+            const resultDiv = document.getElementById('test3-result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                // Démarrer un nouveau combat
+                gameState.startNewCombat();
+                
+                const combatModal = document.getElementById('combat-modal');
+                const startTime = Date.now();
+                
+                // Simuler une victoire
+                gameState.currentCombat.totalDamage = gameState.currentCombat.targetDamage;
+                gameState.endCombat(true);
+                
+                // Vérifier à différents moments
+                const checkTimes = [1000, 2000, 3000, 4000];
+                let checksCompleted = 0;
+                
+                checkTimes.forEach(delay => {
+                    setTimeout(() => {
+                        const isModalClosed = !combatModal || 
+                            (combatModal.style.display !== 'flex' && !combatModal.classList.contains('active'));
+                        
+                        checksCompleted++;
+                        
+                        if (checksCompleted === checkTimes.length) {
+                            const finalTime = Date.now();
+                            const totalTime = finalTime - startTime;
+                            
+                            resultDiv.innerHTML = `
+                                <strong>Résultat du test timing :</strong><br>
+                                Temps total écoulé: ${totalTime}ms<br>
+                                <br>
+                                <strong>Vérifications :</strong><br>
+                                À 1s: ${checkTimes[0] <= totalTime ? 'Vérifié' : 'Non vérifié'}<br>
+                                À 2s: ${checkTimes[1] <= totalTime ? 'Vérifié' : 'Non vérifié'}<br>
+                                À 3s: ${checkTimes[2] <= totalTime ? 'Vérifié' : 'Non vérifié'}<br>
+                                À 4s: ${checkTimes[3] <= totalTime ? 'Vérifié' : 'Non vérifié'}<br>
+                                <br>
+                                <strong>Résultat :</strong> <span class="success">✅ SUCCÈS - Timing testé</span>
+                            `;
+                            
+                            updateCurrentState();
+                        }
+                    }, delay);
+                });
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Erreur: ${error.message}</span>`;
+            }
+        };
+        
+        // Initialiser le jeu au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            initGame();
+        });
+    </script>
+</body>
+</html> 

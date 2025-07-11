@@ -31,7 +31,7 @@ class TutorialSystem {
                     
                     <p><strong>Objectifs :</strong></p>
                     <ul>
-                        <li>Recruter des unités variées (corps à corps, distance, magique)</li>
+                        <li>Recruter des unités variées (CAC, Dist., Mag.)</li>
                         <li>Former des équipes avec des synergies</li>
                         <li>Combattre des ennemis pour gagner de l'or</li>
                         <li>Améliorer votre guilde via le magasin</li>
@@ -62,8 +62,8 @@ class TutorialSystem {
 
                     <p><strong>Types d'unités :</strong></p>
                     <ul>
-                        <li><strong>Corps à corps :</strong> Épéiste, Lancier...</li>
-                        <li><strong>Distance :</strong> Archer, Magicien Rouge...</li>
+                        <li><strong>CAC :</strong> Épéiste, Lancier...</li>
+                        <li><strong>Dist. :</strong> Archer, Magicien Rouge...</li>
                         <li><strong>D'autres unités sont disponibles a vous de les découvrir</strong></li>
                     </ul>
                     
@@ -101,8 +101,8 @@ class TutorialSystem {
                     
                     <p><strong>Synergies de type :</strong></p>
                     <ul>
-                        <li><strong>2+ Corps à corps :</strong> +1 multiplicateur pour toutes les unités corps à corps</li>
-                        <li><strong>2+ Distance :</strong> +2 multiplicateur pour toutes les unités distance</li>
+                        <li><strong>2+ CAC :</strong> +1 multiplicateur pour toutes les unités corps à corps</li>
+                        <li><strong>2+ Dist. :</strong> +2 multiplicateur pour toutes les unités distance</li>
                     </ul>
                     
                     <p><strong>D'autres synergies sont disponibles a vous de les découvrir</strong></p>
@@ -220,7 +220,7 @@ class TutorialSystem {
         const prevBtn = document.getElementById('tutorial-prev');
         const nextBtn = document.getElementById('tutorial-next');
 
-        console.log(`Affichage de l'étape ${this.currentStep + 1}/${this.tutorialSteps.length}: ${step.title}`);
+
 
         // Mettre à jour le contenu
         content.innerHTML = `
@@ -241,7 +241,7 @@ class TutorialSystem {
  * Advances the tutorial to the next step.
  */
     nextStep() {
-        console.log(`Tentative de passage à l'étape suivante. Étape actuelle: ${this.currentStep}, Total: ${this.tutorialSteps.length}`);
+
         if (this.currentStep < this.tutorialSteps.length - 1) {
             this.currentStep++;
             this.showCurrentStep();
@@ -254,7 +254,7 @@ class TutorialSystem {
  * Goes back to the previous step in the tutorial.
  */
     prevStep() {
-        console.log(`Tentative de passage à l'étape précédente. Étape actuelle: ${this.currentStep}`);
+
         if (this.currentStep > 0) {
             this.currentStep--;
             this.showCurrentStep();

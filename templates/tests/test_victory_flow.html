@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Flux de Victoire</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #2980b9;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test Flux de Victoire</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Animation de Combat Fermée</h3>
+            <p>Vérifier que l'animation de combat se ferme en cas de victoire.</p>
+            <button class="test-button" onclick="testAnimationClosure()">Tester Fermeture Animation</button>
+            <div id="test1-result" class="debug-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 2: Modal de Récapitulatif Affichée</h3>
+            <p>Vérifier que la modal de récapitulatif reste ouverte.</p>
+            <button class="test-button" onclick="testRecapModal()">Tester Modal Récapitulatif</button>
+            <div id="test2-result" class="debug-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 3: Pas de Shop Automatique</h3>
+            <p>Vérifier que le shop ne s'ouvre pas automatiquement.</p>
+            <button class="test-button" onclick="testNoAutoShop()">Tester Pas de Shop Auto</button>
+            <div id="test3-result" class="debug-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 4: Bouton "Continuer" Fonctionne</h3>
+            <p>Vérifier que le bouton "Continuer vers le magasin" fonctionne.</p>
+            <button class="test-button" onclick="testContinueButton()">Tester Bouton Continuer</button>
+            <div id="test4-result" class="debug-info"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>État Actuel</h3>
+            <div id="current-state" class="debug-info"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { GameState } from '../js/modules/GameState.js';
+        
+        let gameState;
+        
+        // Initialiser le jeu
+        function initGame() {
+            gameState = new GameState();
+            gameState.newGame();
+            updateCurrentState();
+        }
+        
+        // Mettre à jour l'affichage de l'état actuel
+        function updateCurrentState() {
+            const stateDiv = document.getElementById('current-state');
+            if (gameState) {
+                const combatModal = document.getElementById('combat-modal');
+                const combatAnimation = document.getElementById('combat-animation-container');
+                const shopModal = document.getElementById('shop-modal');
+                
+                const isCombatModalVisible = combatModal && 
+                    (combatModal.style.display === 'flex' || combatModal.classList.contains('active'));
+                const isAnimationVisible = combatAnimation && 
+                    combatAnimation.style.display !== 'none';
+                const isShopVisible = shopModal && 
+                    (shopModal.style.display === 'block' || shopModal.classList.contains('active'));
+                
+                stateDiv.innerHTML = `
+                    <strong>État du jeu :</strong><br>
+                    Rang: ${gameState.rank}<br>
+                    Or: ${gameState.gold}<br>
+                    Combat actif: ${gameState.currentCombat ? gameState.currentCombat.isActive : 'Non'}<br>
+                    <br>
+                    <strong>Modals :</strong><br>
+                    Modal combat: ${isCombatModalVisible ? 'Visible' : 'Fermée'}<br>
+                    Animation combat: ${isAnimationVisible ? 'Visible' : 'Fermée'}<br>
+                    Modal shop: ${isShopVisible ? 'Visible' : 'Fermée'}
+                `;
+            }
+        }
+        
+        // Test 1: Fermeture de l'animation
+        window.testAnimationClosure = function() {
+            const resultDiv = document.getElementById('test1-result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                // Démarrer un nouveau combat
+                gameState.startNewCombat();
+                
+                // Vérifier que l'animation est ouverte
+                const combatAnimation = document.getElementById('combat-animation-container');
+                const isAnimationOpen = combatAnimation && combatAnimation.style.display !== 'none';
+                
+                if (!isAnimationOpen) {
+                    resultDiv.innerHTML = '<span class="warning">⚠️ Animation de combat non ouverte (normal si pas d\'animation)</span>';
+                    updateCurrentState();
+                    return;
+                }
+                
+                // Simuler une victoire
+                gameState.currentCombat.totalDamage = gameState.currentCombat.targetDamage;
+                gameState.endCombat(true);
+                
+                // Attendre 1.5 secondes pour la fermeture de l'animation
+                setTimeout(() => {
+                    const isAnimationClosed = !combatAnimation || combatAnimation.style.display === 'none';
+                    
+                    resultDiv.innerHTML = `
+                        <strong>Résultat du test animation :</strong><br>
+                        Animation ouverte avant victoire: ${isAnimationOpen ? 'Oui' : 'Non'}<br>
+                        Animation fermée après 1.5s: ${isAnimationClosed ? 'Oui' : 'Non'}<br>
+                        <br>
+                        <strong>Résultat :</strong> ${isAnimationClosed ? '<span class="success">✅ SUCCÈS - Animation fermée</span>' : '<span class="error">❌ ÉCHEC - Animation toujours ouverte</span>'}
+                    `;
+                    
+                    updateCurrentState();
+                }, 1500);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Erreur: ${error.message}</span>`;
+            }
+        };
+        
+        // Test 2: Modal de récapitulatif
+        window.testRecapModal = function() {
+            const resultDiv = document.getElementById('test2-result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                // Démarrer un nouveau combat
+                gameState.startNewCombat();
+                
+                // Simuler une victoire
+                gameState.currentCombat.totalDamage = gameState.currentCombat.targetDamage;
+                gameState.endCombat(true);
+                
+                // Attendre 2 secondes puis vérifier
+                setTimeout(() => {
+                    const combatModal = document.getElementById('combat-modal');
+                    const victoryBox = document.querySelector('.victory-summary-box');
+                    
+                    const isModalVisible = combatModal && 
+                        (combatModal.style.display === 'flex' || combatModal.classList.contains('active'));
+                    const isVictoryVisible = victoryBox && victoryBox.classList.contains('show');
+                    
+                    resultDiv.innerHTML = `
+                        <strong>Résultat du test récapitulatif :</strong><br>
+                        Modal combat visible: ${isModalVisible ? 'Oui' : 'Non'}<br>
+                        Popup victoire visible: ${isVictoryVisible ? 'Oui' : 'Non'}<br>
+                        <br>
+                        <strong>Résultat :</strong> ${isModalVisible && isVictoryVisible ? '<span class="success">✅ SUCCÈS - Récapitulatif affiché</span>' : '<span class="error">❌ ÉCHEC - Récapitulatif manquant</span>'}
+                    `;
+                    
+                    updateCurrentState();
+                }, 2000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Erreur: ${error.message}</span>`;
+            }
+        };
+        
+        // Test 3: Pas de shop automatique
+        window.testNoAutoShop = function() {
+            const resultDiv = document.getElementById('test3-result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                // Démarrer un nouveau combat
+                gameState.startNewCombat();
+                
+                // Simuler une victoire
+                gameState.currentCombat.totalDamage = gameState.currentCombat.targetDamage;
+                gameState.endCombat(true);
+                
+                // Attendre 3 secondes puis vérifier que le shop n'est pas ouvert
+                setTimeout(() => {
+                    const shopModal = document.getElementById('shop-modal');
+                    const isShopOpen = shopModal && 
+                        (shopModal.style.display === 'block' || shopModal.classList.contains('active'));
+                    
+                    resultDiv.innerHTML = `
+                        <strong>Résultat du test shop automatique :</strong><br>
+                        Shop ouvert automatiquement: ${isShopOpen ? 'Oui' : 'Non'}<br>
+                        <br>
+                        <strong>Résultat :</strong> ${!isShopOpen ? '<span class="success">✅ SUCCÈS - Pas de shop automatique</span>' : '<span class="error">❌ ÉCHEC - Shop ouvert automatiquement</span>'}
+                    `;
+                    
+                    updateCurrentState();
+                }, 3000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Erreur: ${error.message}</span>`;
+            }
+        };
+        
+        // Test 4: Bouton continuer
+        window.testContinueButton = function() {
+            const resultDiv = document.getElementById('test4-result');
+            resultDiv.innerHTML = 'Test en cours...';
+            
+            try {
+                // Démarrer un nouveau combat
+                gameState.startNewCombat();
+                
+                // Simuler une victoire
+                gameState.currentCombat.totalDamage = gameState.currentCombat.targetDamage;
+                gameState.endCombat(true);
+                
+                // Attendre que la popup de victoire soit affichée
+                setTimeout(() => {
+                    const continueBtn = document.querySelector('.victory-continue-btn');
+                    
+                    if (continueBtn) {
+                        // Simuler un clic sur le bouton
+                        continueBtn.click();
+                        
+                        // Attendre 1 seconde puis vérifier
+                        setTimeout(() => {
+                            const combatModal = document.getElementById('combat-modal');
+                            const shopModal = document.getElementById('shop-modal');
+                            
+                            const isCombatClosed = !combatModal || 
+                                (combatModal.style.display !== 'flex' && !combatModal.classList.contains('active'));
+                            const isShopOpen = shopModal && 
+                                (shopModal.style.display === 'block' || shopModal.classList.contains('active'));
+                            
+                            resultDiv.innerHTML = `
+                                <strong>Résultat du test bouton continuer :</strong><br>
+                                Bouton trouvé: ${continueBtn ? 'Oui' : 'Non'}<br>
+                                Modal combat fermée: ${isCombatClosed ? 'Oui' : 'Non'}<br>
+                                Shop ouvert: ${isShopOpen ? 'Oui' : 'Non'}<br>
+                                <br>
+                                <strong>Résultat :</strong> ${isCombatClosed && isShopOpen ? '<span class="success">✅ SUCCÈS - Bouton fonctionne</span>' : '<span class="error">❌ ÉCHEC - Bouton ne fonctionne pas</span>'}
+                            `;
+                            
+                            updateCurrentState();
+                        }, 1000);
+                    } else {
+                        resultDiv.innerHTML = '<span class="error">❌ ERREUR - Bouton "Continuer" non trouvé</span>';
+                        updateCurrentState();
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="error">Erreur: ${error.message}</span>`;
+            }
+        };
+        
+        // Initialiser le jeu au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            initGame();
+        });
+    </script>
+</body>
+</html> 

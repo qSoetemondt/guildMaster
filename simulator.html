@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuildMaster - Simulateur Automatique</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .simulator-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .simulator-header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .simulator-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .control-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .control-panel h3 {
+            margin-top: 0;
+            color: #495057;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .results-container {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .results-header {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            border-left: 4px solid #007bff;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .log-container {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+        
+        .log-info { color: #007bff; }
+        .log-success { color: #28a745; }
+        .log-warning { color: #ffc107; }
+        .log-error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="simulator-container">
+        <div class="simulator-header">
+            <h1>🎮 GuildMaster - Simulateur Automatique</h1>
+            <p>Générez des statistiques et équilibrez votre jeu avec des simulations automatiques</p>
+        </div>
+        
+        <div class="simulator-controls">
+            <div class="control-panel">
+                <h3>🎯 Simulation Simple</h3>
+                <div class="form-group">
+                    <label for="strategy-select">Stratégie:</label>
+                    <select id="strategy-select">
+                        <option value="balanced">Équilibré</option>
+                        <option value="aggressive">Agressif</option>
+                        <option value="conservative">Conservateur</option>
+                        <option value="synergy">Synergie</option>
+                        <option value="rush">Rush</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="rounds-input">Nombre de rounds max:</label>
+                    <input type="number" id="rounds-input" value="50" min="10" max="200">
+                </div>
+                <button class="btn" onclick="runSimpleSimulation()">🎮 Lancer Simulation</button>
+            </div>
+            
+            <div class="control-panel">
+                <h3>📊 Simulation Multiple</h3>
+                <div class="form-group">
+                    <label for="count-input">Nombre de parties:</label>
+                    <input type="number" id="count-input" value="100" min="10" max="1000">
+                </div>
+                <div class="form-group">
+                    <label for="strategy-multiple">Stratégie:</label>
+                    <select id="strategy-multiple">
+                        <option value="balanced">Équilibré</option>
+                        <option value="aggressive">Agressif</option>
+                        <option value="conservative">Conservateur</option>
+                        <option value="synergy">Synergie</option>
+                        <option value="rush">Rush</option>
+                    </select>
+                </div>
+                <button class="btn btn-success" onclick="runMultipleSimulation()">📊 Lancer Multiple</button>
+            </div>
+            
+            <div class="control-panel">
+                <h3>🔬 Comparaison</h3>
+                <div class="form-group">
+                    <label for="games-per-strategy">Parties par stratégie:</label>
+                    <input type="number" id="games-per-strategy" value="50" min="10" max="200">
+                </div>
+                <button class="btn btn-warning" onclick="compareStrategies()">🔬 Comparer Stratégies</button>
+                <button class="btn btn-danger" onclick="testAllStrategies()">🧪 Test Complet</button>
+            </div>
+            
+            <div class="control-panel">
+                <h3>⚡ Actions Rapides</h3>
+                <button class="btn" onclick="quickSimulation()">⚡ Simulation Rapide</button>
+                <button class="btn" onclick="showAvailableStrategies()">📋 Voir Stratégies</button>
+                <button class="btn" onclick="clearResults()">🗑️ Effacer Résultats</button>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Simulation en cours...</p>
+        </div>
+        
+        <div id="results" class="results-container" style="display: none;">
+            <div class="results-header">
+                <h3>📊 Résultats de la Simulation</h3>
+            </div>
+            <div id="stats-grid" class="stats-grid"></div>
+            <div id="detailed-results"></div>
+        </div>
+        
+        <div class="control-panel">
+            <h3>📝 Log de Simulation</h3>
+            <div id="log-container" class="log-container">
+                <div class="log-entry log-info">Simulateur prêt. Utilisez les contrôles ci-dessus pour lancer des simulations.</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importer le simulateur
+        import { AutoSimulator } from './js/modules/AutoSimulator.js';
+        
+        // Instance globale du simulateur
+        window.autoSimulator = new AutoSimulator();
+        
+        // Fonctions pour l'interface
+        window.runSimpleSimulation = async function() {
+            const strategy = document.getElementById('strategy-select').value;
+            const rounds = parseInt(document.getElementById('rounds-input').value);
+            
+            showLoading();
+            addLog(`🎮 Début simulation simple: ${strategy} (${rounds} rounds)`, 'info');
+            
+            try {
+                const result = await autoSimulator.simulateGame(strategy, rounds);
+                showResults(result);
+                addLog(`✅ Simulation terminée: ${result.finalRank} - ${result.victory ? 'Victoire' : 'Défaite'}`, 'success');
+            } catch (error) {
+                addLog(`❌ Erreur: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+        
+        window.runMultipleSimulation = async function() {
+            const count = parseInt(document.getElementById('count-input').value);
+            const strategy = document.getElementById('strategy-multiple').value;
+            
+            showLoading();
+            addLog(`📊 Début simulation multiple: ${count} parties avec ${strategy}`, 'info');
+            
+            try {
+                const analysis = await autoSimulator.simulateMultipleGames(count, strategy);
+                const report = autoSimulator.generateReport(analysis);
+                showResults(report);
+                addLog(`✅ Simulation multiple terminée: ${report.summary.winRate} taux de victoire`, 'success');
+            } catch (error) {
+                addLog(`❌ Erreur: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+        
+        window.compareStrategies = async function() {
+            const gamesPerStrategy = parseInt(document.getElementById('games-per-strategy').value);
+            
+            showLoading();
+            addLog(`🔬 Comparaison des stratégies: ${gamesPerStrategy} parties chacune`, 'info');
+            
+            try {
+                const results = await autoSimulator.compareStrategies(gamesPerStrategy);
+                showComparisonResults(results);
+                addLog(`✅ Comparaison terminée`, 'success');
+            } catch (error) {
+                addLog(`❌ Erreur: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+        
+        window.testAllStrategies = async function() {
+            const gamesPerStrategy = parseInt(document.getElementById('games-per-strategy').value);
+            
+            showLoading();
+            addLog(`🧪 Test complet: ${gamesPerStrategy} parties par stratégie`, 'info');
+            
+            try {
+                const results = await autoSimulator.compareStrategies(gamesPerStrategy);
+                showComparisonResults(results);
+                addLog(`✅ Test complet terminé`, 'success');
+            } catch (error) {
+                addLog(`❌ Erreur: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+        
+        window.quickSimulation = async function() {
+            showLoading();
+            addLog(`⚡ Simulation rapide: 10 parties équilibrées`, 'info');
+            
+            try {
+                const analysis = await autoSimulator.simulateMultipleGames(10, 'balanced');
+                const report = autoSimulator.generateReport(analysis);
+                showResults(report);
+                addLog(`✅ Simulation rapide terminée: ${report.summary.winRate} taux de victoire`, 'success');
+            } catch (error) {
+                addLog(`❌ Erreur: ${error.message}`, 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+        
+        window.showAvailableStrategies = function() {
+            addLog(`📋 Stratégies disponibles:`, 'info');
+            Object.entries(autoSimulator.strategies).forEach(([key, strategy]) => {
+                addLog(`  ${key}: ${strategy.name} - ${strategy.description}`, 'info');
+            });
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('log-container').innerHTML = '<div class="log-entry log-info">Log effacé.</div>';
+        };
+        
+        // Fonctions utilitaires
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('log-container');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function showResults(data) {
+            const resultsContainer = document.getElementById('results');
+            const statsGrid = document.getElementById('stats-grid');
+            const detailedResults = document.getElementById('detailed-results');
+            
+            // Afficher les statistiques de base
+            if (data.summary) {
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${data.summary.totalGames}</div>
+                        <div class="stat-label">Parties</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.summary.winRate}</div>
+                        <div class="stat-label">Taux Victoire</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.summary.averageRank}</div>
+                        <div class="stat-label">Rang Moyen</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.summary.averageGoldSpent}💰</div>
+                        <div class="stat-label">Or Dépensé</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.summary.averageRounds}</div>
+                        <div class="stat-label">Rounds Moyens</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.summary.averageDuration}</div>
+                        <div class="stat-label">Durée Moyenne</div>
+                    </div>
+                `;
+                
+                // Afficher les détails
+                let detailsHTML = '<h4>📈 Détails</h4>';
+                
+                if (data.rankDistribution) {
+                    detailsHTML += '<h5>🏆 Distribution des Rangs:</h5><ul>';
+                    Object.entries(data.rankDistribution)
+                        .sort(([,a], [,b]) => b - a)
+                        .forEach(([rank, count]) => {
+                            const percentage = ((count / data.summary.totalGames) * 100).toFixed(1);
+                            detailsHTML += `<li>${rank}: ${count} (${percentage}%)</li>`;
+                        });
+                    detailsHTML += '</ul>';
+                }
+                
+                if (data.topUnits) {
+                    detailsHTML += '<h5>⚔️ Unités Populaires:</h5><ul>';
+                    data.topUnits.forEach(unit => {
+                        detailsHTML += `<li>${unit.name}: ${unit.count} fois</li>`;
+                    });
+                    detailsHTML += '</ul>';
+                }
+                
+                if (data.topBonuses) {
+                    detailsHTML += '<h5>🎁 Bonus Populaires:</h5><ul>';
+                    data.topBonuses.forEach(bonus => {
+                        detailsHTML += `<li>${bonus.name}: ${bonus.count} fois</li>`;
+                    });
+                    detailsHTML += '</ul>';
+                }
+                
+                if (data.topSynergies) {
+                    detailsHTML += '<h5>🔗 Synergies Populaires:</h5><ul>';
+                    data.topSynergies.forEach(synergy => {
+                        detailsHTML += `<li>${synergy.name}: ${synergy.count} fois</li>`;
+                    });
+                    detailsHTML += '</ul>';
+                }
+                
+                detailedResults.innerHTML = detailsHTML;
+            } else {
+                // Résultat d'une seule partie
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${data.finalRank}</div>
+                        <div class="stat-label">Rang Final</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.victory ? 'Victoire' : 'Défaite'}</div>
+                        <div class="stat-label">Résultat</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.rounds}</div>
+                        <div class="stat-label">Rounds</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.totalDamage || 0}</div>
+                        <div class="stat-label">Dégâts Totaux</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.goldSpent}💰</div>
+                        <div class="stat-label">Or Dépensé</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${data.goldEarned}💰</div>
+                        <div class="stat-label">Or Gagné</div>
+                    </div>
+                `;
+                
+                let detailsHTML = '<h4>📈 Détails de la Partie</h4>';
+                
+                // Achats détaillés
+                detailsHTML += '<h5>🛒 Achats:</h5>';
+                if (data.unitsPurchased && data.unitsPurchased.length > 0) {
+                    detailsHTML += '<h6>Unités achetées:</h6><ul>';
+                    data.unitsPurchased.forEach(unit => {
+                        detailsHTML += `<li>${unit.name} (${unit.rarity || 'common'}) - ${unit.price}💰</li>`;
+                    });
+                    detailsHTML += '</ul>';
+                } else {
+                    detailsHTML += '<p>Aucune unité achetée</p>';
+                }
+                
+                if (data.bonusesPurchased && data.bonusesPurchased.length > 0) {
+                    detailsHTML += '<h6>Bonus achetés:</h6><ul>';
+                    data.bonusesPurchased.forEach(bonus => {
+                        detailsHTML += `<li>${bonus.id} (${bonus.rarity || 'common'}) - ${bonus.price}💰</li>`;
+                    });
+                    detailsHTML += '</ul>';
+                } else {
+                    detailsHTML += '<p>Aucun bonus acheté</p>';
+                }
+                
+                // Synergies utilisées
+                detailsHTML += '<h5>🔗 Synergies Utilisées:</h5>';
+                if (data.synergiesUsed && data.synergiesUsed.length > 0) {
+                    detailsHTML += '<ul>';
+                    data.synergiesUsed.forEach(synergy => {
+                        detailsHTML += `<li>${synergy}</li>`;
+                    });
+                    detailsHTML += '</ul>';
+                } else {
+                    detailsHTML += '<p>Aucune synergie utilisée</p>';
+                }
+                
+                // Détails de chaque round (format identique à la console)
+                if (data.roundDetails && data.roundDetails.length > 0) {
+                    detailsHTML += '<h5>📊 Détails de Chaque Round:</h5>';
+                    data.roundDetails.forEach((round, index) => {
+                        detailsHTML += `<div style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: #f9f9f9;">`;
+                        detailsHTML += `<h6 style="margin: 0 0 8px 0; color: #007bff;">🔄 Round ${round.round} - Tour ${round.tour}:</h6>`;
+                        
+                        // Dégâts infligés
+                        detailsHTML += `<p><strong>💥 Dégâts infligés:</strong> ${round.damage}</p>`;
+                        
+                        // Unités utilisées (format identique à la console)
+                        if (round.units && round.units.length > 0) {
+                            detailsHTML += `<p><strong>⚔️ Unités utilisées:</strong></p><ul>`;
+                            round.units.forEach((unit, unitIndex) => {
+                                detailsHTML += `<li>${unitIndex + 1}. ${unit.name} - 💥${unit.damage} ×⚡${unit.multiplier} = ${unit.power} puissance</li>`;
+                            });
+                            detailsHTML += `</ul>`;
+                        }
+                        
+                        // Synergies actives (format identique à la console)
+                        if (round.synergies && round.synergies.length > 0) {
+                            detailsHTML += `<p><strong>🔗 Synergies actives:</strong></p><ul>`;
+                            round.synergies.forEach((synergy, synergyIndex) => {
+                                detailsHTML += `<li>• ${synergy.name}: ${synergy.description}</li>`;
+                            });
+                            detailsHTML += `</ul>`;
+                        } else {
+                            detailsHTML += `<p><strong>❌ Aucune synergie active</strong></p>`;
+                        }
+                        
+                        // Bonus d'équipement actifs (format identique à la console)
+                        if (round.bonuses && round.bonuses.length > 0) {
+                            detailsHTML += `<p><strong>🎁 Bonus d'équipement actifs:</strong></p><ul>`;
+                            round.bonuses.forEach((bonus, bonusIndex) => {
+                                let bonusText = `${bonus.name}: `;
+                                if (bonus.damage) bonusText += `+${bonus.damage} dégâts `;
+                                if (bonus.multiplier) bonusText += `+${bonus.multiplier} multiplicateur `;
+                                if (bonus.target && bonus.target !== 'all') bonusText += `(${bonus.target})`;
+                                detailsHTML += `<li>• ${bonusText}</li>`;
+                            });
+                            detailsHTML += `</ul>`;
+                        } else {
+                            detailsHTML += `<p><strong>❌ Aucun bonus d'équipement actif</strong></p>`;
+                        }
+                        
+                        detailsHTML += `</div>`;
+                    });
+                }
+                
+                // Historique des combats
+                if (data.combatHistory && data.combatHistory.length > 0) {
+                    detailsHTML += '<h5>⚔️ Historique des Combats:</h5><ul>';
+                    data.combatHistory.forEach((combat, index) => {
+                        detailsHTML += `<li>Round ${combat.round}: ${combat.damage} dégâts (${combat.troopsUsed.join(', ')})</li>`;
+                    });
+                    detailsHTML += '</ul>';
+                }
+                
+                detailedResults.innerHTML = detailsHTML;
+            }
+            
+            resultsContainer.style.display = 'block';
+        }
+        
+        function showComparisonResults(results) {
+            const resultsContainer = document.getElementById('results');
+            const statsGrid = document.getElementById('stats-grid');
+            const detailedResults = document.getElementById('detailed-results');
+            
+            // Afficher le classement des stratégies
+            const strategies = Object.keys(results);
+            const winRates = strategies.map(s => parseFloat(results[s].summary.winRate));
+            const bestStrategy = strategies[winRates.indexOf(Math.max(...winRates))];
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${bestStrategy}</div>
+                    <div class="stat-label">Meilleure Stratégie</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${results[bestStrategy].summary.winRate}</div>
+                    <div class="stat-label">Taux Victoire Max</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${strategies.length}</div>
+                    <div class="stat-label">Stratégies Testées</div>
+                </div>
+            `;
+            
+            // Afficher le classement détaillé
+            let detailsHTML = '<h4>🏆 Classement des Stratégies</h4><table style="width: 100%; border-collapse: collapse;">';
+            detailsHTML += '<tr><th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Stratégie</th><th style="text-align: center; padding: 8px; border-bottom: 1px solid #ddd;">Taux Victoire</th><th style="text-align: center; padding: 8px; border-bottom: 1px solid #ddd;">Rang Moyen</th><th style="text-align: center; padding: 8px; border-bottom: 1px solid #ddd;">Or Dépensé</th></tr>';
+            
+            strategies
+                .sort((a, b) => parseFloat(results[b].summary.winRate) - parseFloat(results[a].summary.winRate))
+                .forEach(strategy => {
+                    const result = results[strategy];
+                    detailsHTML += `<tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">${autoSimulator.strategies[strategy].name}</td>
+                        <td style="text-align: center; padding: 8px; border-bottom: 1px solid #eee;">${result.summary.winRate}</td>
+                        <td style="text-align: center; padding: 8px; border-bottom: 1px solid #eee;">${result.summary.averageRank}</td>
+                        <td style="text-align: center; padding: 8px; border-bottom: 1px solid #eee;">${result.summary.averageGoldSpent}💰</td>
+                    </tr>`;
+                });
+            
+            detailsHTML += '</table>';
+            detailedResults.innerHTML = detailsHTML;
+            
+            resultsContainer.style.display = 'block';
+        }
+        
+        // Initialisation
+        addLog('🚀 Simulateur initialisé et prêt à l\'emploi!', 'success');
+    </script>
+
+    <!-- Éléments cachés nécessaires pour le simulateur -->
+    <div id="simulation-container" style="display: none;">
+        <!-- Éléments de base -->
+        <span id="current-rank">F-</span>
+        <span id="gold-amount">100</span>
+        <span id="gold-display">100💰</span>
+        
+        <!-- Troupes -->
+        <div id="available-troops"></div>
+        <div id="troops-display"></div>
+        <div id="header-troops"></div>
+        
+        <!-- Synergies -->
+        <div id="synergies-display"></div>
+        
+        <!-- Combat -->
+        <span id="combat-target-display">0</span>
+        <span id="combat-enemy-name">Ennemi</span>
+        <div id="combat-info"></div>
+        <span id="combat-target">0</span>
+        <div id="combat-progress" style="width: 0%"></div>
+        <div id="combat-log"></div>
+        <div id="combat-modal" class="modal"></div>
+        <img id="enemy-image" src="assets/gobelin.jpg">
+        <img id="enemy-image-modal" src="assets/gobelin.jpg">
+        
+        <!-- Boss -->
+        <div id="boss-damage-gauge" style="display: none"></div>
+        <div id="boss-damage-fill"></div>
+        <span id="boss-damage-current">0</span>
+        <span id="boss-damage-target">0</span>
+        <div id="boss-mechanic-display" style="display: none"></div>
+        <span id="boss-name">Boss</span>
+        <span id="boss-mechanic-text">Mécanique</span>
+        
+        <!-- Sections -->
+        <div id="pre-combat-section"></div>
+        <div id="combat-section"></div>
+        
+        <!-- Bonus -->
+        <div id="active-bonuses"></div>
+        
+        <!-- Consommables -->
+        <div id="consumables-display"></div>
+        
+        <!-- Magasin -->
+        <div id="pre-combat-shop"></div>
+        <div id="shop-modal" class="modal"></div>
+        
+        <!-- Modals -->
+        <div id="modal-overlay"></div>
+        <div id="troops-modal" class="modal"></div>
+        <div id="new-game-modal" class="modal"></div>
+        <div id="beta-test-modal" class="modal"></div>
+        
+        <!-- Animation -->
+        <div id="combat-animation-container" style="display: none"></div>
+        <div id="victory-animation" style="display: none"></div>
+        
+        <!-- Notifications -->
+        <div id="notification-container"></div>
+        
+        <!-- Contrôles de vitesse -->
+        <div class="speed-controls"></div>
+        <button class="speed-btn" data-speed="1">1x</button>
+        
+        <!-- Éléments pour les modals -->
+        <input id="guild-name-input" type="text" value="Guilde d'Aventuriers">
+        <button id="confirm-new-game">Confirmer</button>
+        <button id="cancel-new-game">Annuler</button>
+        <input id="new-guild-name" type="text" value="Guilde d'Aventuriers">
+        <button id="accept-beta-test">Accepter</button>
+    </div>
+</body>
+</html> 
