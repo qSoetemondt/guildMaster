@@ -13,7 +13,7 @@ import { AnimationManager } from './AnimationManager.js';
 import { DEFAULT_SYNERGY_LEVELS } from './SynergyConstants.js';
 import { BONUS_DESCRIPTIONS, calculateBonusPrice, getBonusRarity } from './BonusConstants.js';
 import { SYNERGY_DEFINITIONS, SPECIAL_SYNERGIES, calculateSynergyBonus, checkSynergyActivation } from './SynergyDefinitions.js';
-import { getBaseUnits, getShopUnits, getAllAvailableTroops, getOwnedUnits, loadOwnedUnits, updateTroopsDisplay, addTroop, drawCombatTroops, maintainCombatTroops, isPermanentUnit, selectTroopForCombat, deselectTroopFromCombat, removeUsedTroopsFromCombat, hasTroopType, updateTroopsUI, createTroopCard, updateSynergies, calculateSynergies, calculateEquipmentBonuses, applyCombatBonuses, incrementDynamicBonusTrigger } from './UnitManager.js';
+import { getBaseUnits, getShopUnits, getAllAvailableTroops, getOwnedUnits, loadOwnedUnits, updateTroopsDisplay, addTroop, drawCombatTroops, maintainCombatTroops, isPermanentUnit, selectTroopForCombat, deselectTroopFromCombat, removeUsedTroopsFromCombat, hasTroopType, updateTroopsUI, createTroopCard, updateSynergies, calculateSynergies, calculateEquipmentBonuses, applyCombatBonuses, incrementDynamicBonusTrigger, syncDynamicBonusTriggers } from './UnitManager.js';
 import { UnitSorter } from './UnitSorter.js';
 import { unlockBonus, cleanInvalidBonuses, getBonusDescriptions, updateActiveBonuses } from './ShopManager.js';
 
@@ -155,6 +155,12 @@ export class GameState {
     startNewCombat() {
         // Nettoyer l'affichage du malus de boss avant de commencer un nouveau combat
         this.bossManager.cleanBossMalusDisplay();
+        
+        // Réinitialiser les triggers de bonus dynamiques pour le nouveau combat
+        this.dynamicBonusTriggers = {};
+        
+        // Synchroniser les compteurs de trigger avec le nombre d'exemplaires possédés
+        syncDynamicBonusTriggers(this);
         
         const isBossFight = this.bossManager.isBossRank(this.rank);
         

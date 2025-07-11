@@ -830,6 +830,9 @@ export class AnimationManager {
         const finalCalculatedDamage = cumulativeDamage * cumulativeMultiplier;
         if (finalResult) finalResult.textContent = `= ${finalCalculatedDamage} dégâts`;
 
+        // Mettre à jour les dégâts totaux avec les valeurs calculées pendant l'animation
+        this.gameState.currentCombat.totalDamage = previousDamage + finalCalculatedDamage;
+
         // Mise à jour finale de la barre de progression avec le résultat calculé pendant l'animation
         const mainCounter = document.querySelector('.main-counter');
         if (mainCounter) {

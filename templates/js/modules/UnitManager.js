@@ -709,6 +709,53 @@ export function incrementDynamicBonusTrigger(bonusId, triggerSynergy, gameState)
     }
 } 
 
+// Synchroniser les compteurs de trigger des bonus dynamiques avec le nombre d'exemplaires possédés
+export function syncDynamicBonusTriggers(gameState) {
+    const bonusDescriptions = gameState.getBonusDescriptions();
+    
+    // Compter les occurrences de chaque bonus
+    const bonusCounts = {};
+    gameState.unlockedBonuses.forEach(bonusId => {
+        bonusCounts[bonusId] = (bonusCounts[bonusId] || 0) + 1;
+    });
+    
+    // Liste des bonus dynamiques qui ont des triggers
+    const dynamicBonusesWithTriggers = ['cac_cest_la_vie', 'economie_dune_vie'];
+    
+    dynamicBonusesWithTriggers.forEach(bonusId => {
+        const bonusDesc = bonusDescriptions[bonusId];
+        if (!bonusDesc || !bonusDesc.effects) return;
+        
+        const count = bonusCounts[bonusId] || 0;
+        if (count === 0) return;
+        
+        bonusDesc.effects.forEach(effect => {
+            if (effect.condition === 'synergy_trigger') {
+                // Synchroniser le compteur de trigger avec le nombre d'exemplaires
+                const triggerSynergy = effect.triggerSynergy;
+                
+                // Initialiser les états de sauvegarde si nécessaire
+                if (!gameState.dynamicBonusStates) {
+                    gameState.dynamicBonusStates = {};
+                }
+                if (!gameState.dynamicBonusStates[bonusId]) {
+                    gameState.dynamicBonusStates[bonusId] = {};
+                }
+                
+                // Mettre à jour le compteur de trigger pour qu'il soit au moins égal au nombre d'exemplaires
+                const currentTriggerCount = gameState.dynamicBonusStates[bonusId][triggerSynergy] || 0;
+                const newTriggerCount = Math.max(currentTriggerCount, count);
+                
+                if (newTriggerCount !== currentTriggerCount) {
+                    gameState.dynamicBonusStates[bonusId][triggerSynergy] = newTriggerCount;
+                    effect.triggerCount = newTriggerCount;
+                    console.log(`🎯 syncDynamicBonusTriggers: ${bonusId}.${triggerSynergy} synchronisé de ${currentTriggerCount} à ${newTriggerCount} (${count} exemplaires possédés)`);
+                }
+            }
+        });
+    });
+}
+
 // Calculer les bonus d'équipement
 export function calculateEquipmentBonuses(gameState) {
     const bonuses = [];
