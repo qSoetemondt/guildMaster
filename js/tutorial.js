@@ -1,13 +1,20 @@
-// Système de tutoriel
+/**
+ * @file Handles the in-game tutorial system.
+ */
+
+// Tutorial System Class
 class TutorialSystem {
     constructor() {
         this.currentStep = 0;
         this.tutorialSteps = this.defineTutorialSteps();
         this.isActive = false;
         this.hideModalFunction = null;
+        // Flag to prevent adding duplicate event listeners
+        this.eventListenersAdded = false;
     }
 
-    // Définir la fonction pour fermer les modals
+    /**
+ * Sets the function to be used for hiding modals.
     setHideModalFunction(hideModalFn) {
         this.hideModalFunction = hideModalFn;
     }
@@ -101,8 +108,12 @@ class TutorialSystem {
                     <p><strong>D'autres synergies sont disponibles a vous de les découvrir</strong></p>
                 `,
                 action: 'highlight',
-                target: '#synergies-display'
+                target: '#synergies-display',
+                // Add a note about the synergy display area
+                note: "Look here to see active team synergies!"
             },
+
+
             {
                 title: 'Lancement d\'un Combat',
                 content: `
@@ -191,7 +202,9 @@ class TutorialSystem {
         ];
     }
 
-    // Démarrer le tutoriel
+    /**
+ * Starts the tutorial from the beginning.
+ */
     startTutorial() {
         this.currentStep = 0;
         this.isActive = true;
@@ -199,7 +212,9 @@ class TutorialSystem {
     }
 
     // Afficher l'étape actuelle
-    showCurrentStep() {
+    /**
+ * Displays the current step of the tutorial in the modal.
+ */
         const step = this.tutorialSteps[this.currentStep];
         const content = document.getElementById('tutorial-content');
         const prevBtn = document.getElementById('tutorial-prev');
@@ -209,10 +224,7 @@ class TutorialSystem {
 
         // Mettre à jour le contenu
         content.innerHTML = `
-            <h4 style="color: #2d3436; margin-bottom: 15px;">${step.title}</h4>
-            ${step.content}
-        `;
-
+        <h4 style="color: #2d3436; margin-bottom: 15px;">${step.title}</h4>
         // Mettre à jour les boutons
         prevBtn.disabled = this.currentStep === 0;
         nextBtn.textContent = this.currentStep === this.tutorialSteps.length - 1 ? 'Terminer' : 'Suivant';
@@ -225,7 +237,9 @@ class TutorialSystem {
         }
     }
 
-    // Passer à l'étape suivante
+    /**
+ * Advances the tutorial to the next step.
+ */
     nextStep() {
         console.log(`Tentative de passage à l'étape suivante. Étape actuelle: ${this.currentStep}, Total: ${this.tutorialSteps.length}`);
         if (this.currentStep < this.tutorialSteps.length - 1) {
@@ -236,7 +250,9 @@ class TutorialSystem {
         }
     }
 
-    // Passer à l'étape précédente
+    /**
+ * Goes back to the previous step in the tutorial.
+ */
     prevStep() {
         console.log(`Tentative de passage à l'étape précédente. Étape actuelle: ${this.currentStep}`);
         if (this.currentStep > 0) {
@@ -245,7 +261,9 @@ class TutorialSystem {
         }
     }
 
-    // Terminer le tutoriel
+    /**
+ * Ends the tutorial and hides the modal.
+ */
     endTutorial() {
         this.isActive = false;
         this.removeHighlight();
@@ -260,7 +278,9 @@ class TutorialSystem {
         }
     }
 
-    // Mettre en surbrillance un élément
+    /**
+ * Highlights a specific element on the page.
+ */
     highlightElement(selector) {
         this.removeHighlight();
         
@@ -276,7 +296,9 @@ class TutorialSystem {
         }
     }
 
-    // Retirer la surbrillance
+    /**
+ * Removes the highlight from any currently highlighted element.
+ */
     removeHighlight() {
         document.querySelectorAll('*').forEach(element => {
             if (element.style.boxShadow && element.style.boxShadow.includes('rgba(255, 107, 107, 0.8)')) {
@@ -287,7 +309,11 @@ class TutorialSystem {
         });
     }
 
-    // Obtenir des conseils contextuels
+    /**
+ * Gets a contextual tip for a given element ID.
+ * @param {string} elementId - The ID of the element.
+ * @returns {string} The contextual tip message, or an empty string if none exists.
+ */
     getContextualTip(elementId) {
         const tips = {
             'recruit-btn': 'Recrutez de nouvelles unités pour renforcer votre guilde !',
@@ -303,38 +329,34 @@ class TutorialSystem {
     }
 }
 
-// Instance globale du système de tutoriel
+// Global instance of the TutorialSystem
 const tutorialSystem = new TutorialSystem();
 
-// Fonction pour initialiser le tutoriel (appelée depuis main.js)
+/**
+ * Initializes the tutorial system. Called from main.js.
+ * @param {function} hideModalFn - The function used to hide modals.
+ */
 export function initTutorialSystem(hideModalFn) {
     if (hideModalFn) {
         tutorialSystem.setHideModalFunction(hideModalFn);
     }
-    
+
+    // Add event listeners only once
+    if (!tutorialSystem.eventListenersAdded) {
+        const prevBtn = document.getElementById('tutorial-prev');
+        const nextBtn = document.getElementById('tutorial-next');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => tutorialSystem.prevStep());
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => tutorialSystem.nextStep());
+        }
+        tutorialSystem.eventListenersAdded = true;
+    }
+
     tutorialSystem.startTutorial();
-    
-    // Supprimer les anciens événements s'ils existent
-    const prevBtn = document.getElementById('tutorial-prev');
-    const nextBtn = document.getElementById('tutorial-next');
-    
-    if (prevBtn) {
-        // Cloner et remplacer le bouton pour supprimer les anciens événements
-        const newPrevBtn = prevBtn.cloneNode(true);
-        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
-        newPrevBtn.addEventListener('click', () => {
-            tutorialSystem.prevStep();
-        });
-    }
-    
-    if (nextBtn) {
-        // Cloner et remplacer le bouton pour supprimer les anciens événements
-        const newNextBtn = nextBtn.cloneNode(true);
-        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-        newNextBtn.addEventListener('click', () => {
-            tutorialSystem.nextStep();
-        });
-    }
 }
 
 // Fonction pour afficher des conseils contextuels
@@ -369,7 +391,8 @@ export function addTooltips() {
 // Exporter l'instance du système de tutoriel
 export { tutorialSystem };
 
-// Initialiser les tooltips quand le DOM est chargé
+// Initialize tooltips when the DOM is loaded.
+// Adding a slight delay to ensure game elements are present.
 document.addEventListener('DOMContentLoaded', () => {
     // Ajouter les tooltips après un délai pour laisser le temps au jeu de se charger
     setTimeout(addTooltips, 1000);
