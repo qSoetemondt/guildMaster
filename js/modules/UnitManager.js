@@ -876,6 +876,12 @@ export function calculateEquipmentBonuses(gameState) {
                 bonuses.push(dynamicBonus);
             }
         }
+        else if (bonusId === 'economie_dune_vie') {
+            const dynamicBonus = calculateDynamicBonus(bonusDesc, gameState, bonusId);
+            if (dynamicBonus) {
+                bonuses.push(dynamicBonus);
+            }
+        }
         // Bonus de base pour corps à corps
         else if (bonusId === 'corps_a_corps_bonus') {
             bonuses.push({ 
@@ -948,6 +954,25 @@ export function calculateDynamicBonus(bonusDesc, gameState, bonusId) {
             totalValue += effect.value * triggerCount;
             target = effect.target;
         }
+        else if (effect.condition === 'end_of_combat') {
+            // Effet déclenché par fin de combat
+            let triggerCount = 0;
+            
+            // Récupérer le compteur depuis les états sauvegardés
+            if (gameState.dynamicBonusStates && 
+                gameState.dynamicBonusStates[bonusId] && 
+                gameState.dynamicBonusStates[bonusId]['end_of_combat']) {
+                triggerCount = gameState.dynamicBonusStates[bonusId]['end_of_combat'];
+                console.log(`🎯 calculateDynamicBonus: Compteur fin de combat récupéré pour ${bonusId} = ${triggerCount}`);
+            } else {
+                // Fallback vers le compteur local si pas de sauvegarde
+                triggerCount = effect.triggerCount || 0;
+                console.log(`🎯 calculateDynamicBonus: Compteur fin de combat local utilisé pour ${bonusId} = ${triggerCount}`);
+            }
+            
+            totalValue += effect.value * triggerCount;
+            target = effect.target;
+        }
     });
     
     if (totalValue > 0 && target) {
@@ -958,7 +983,16 @@ export function calculateDynamicBonus(bonusDesc, gameState, bonusId) {
         };
     }
     
-        return null;
+    // Gérer les bonus d'or (sans target spécifique)
+    if (totalValue > 0 && bonusDesc.effects.some(effect => effect.type === 'gold_bonus')) {
+        return {
+            name: bonusDesc.name,
+            gold: totalValue,
+            target: 'all'
+        };
+    }
+    
+    return null;
 }
 
 // Incrémenter le compteur d'un bonus dynamique quand une synergie se déclenche

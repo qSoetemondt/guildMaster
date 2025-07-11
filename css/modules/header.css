@@ -96,6 +96,15 @@
     margin-left: 4px;
 }
 
+/* Style spécial pour les compteurs de texte (comme "combats") */
+.bonus-count.combat-counter {
+    border-radius: 4px;
+    width: auto;
+    height: auto;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+}
+
 .bonus-level {
     background: #27ae60;
     color: white;

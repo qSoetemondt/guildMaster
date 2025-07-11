@@ -323,11 +323,20 @@ export function unlockBonus(bonusId, gameState) {
                 gameState.dynamicBonusStates[bonusId] = {};
             }
             
-            // Augmenter le compteur de base (pas de trigger spécifique)
-            if (!gameState.dynamicBonusStates[bonusId]['base']) {
-                gameState.dynamicBonusStates[bonusId]['base'] = 0;
+            // Augmenter le compteur approprié selon le type de bonus
+            if (bonusId === 'cac_cest_la_vie') {
+                // Pour le CAC, augmenter le compteur de base
+                if (!gameState.dynamicBonusStates[bonusId]['base']) {
+                    gameState.dynamicBonusStates[bonusId]['base'] = 0;
+                }
+                gameState.dynamicBonusStates[bonusId]['base'] += 1;
+            } else if (bonusId === 'economie_dune_vie') {
+                // Pour l'économie, augmenter le compteur de combats terminés
+                if (!gameState.dynamicBonusStates[bonusId]['end_of_combat']) {
+                    gameState.dynamicBonusStates[bonusId]['end_of_combat'] = 0;
+                }
+                gameState.dynamicBonusStates[bonusId]['end_of_combat'] += 1;
             }
-            gameState.dynamicBonusStates[bonusId]['base'] += 1;
             
             // Mettre à jour immédiatement l'affichage du bonus dynamique
             gameState.updateActiveBonuses();
@@ -401,7 +410,7 @@ export function updateActiveBonuses(gameState) {
     console.log('Comptage des bonus:', bonusCounts);
 
     // Liste des bonus dynamiques
-    const dynamicBonuses = ['cac_cest_la_vie'];
+    const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie'];
     
     // Afficher chaque bonus avec son nombre
     Object.keys(bonusCounts).forEach(bonusId => {
@@ -421,38 +430,52 @@ export function updateActiveBonuses(gameState) {
             // Affichage spécial pour les bonus dynamiques
             let displayText = '';
             if (dynamicBonuses.includes(bonusId)) {
-                // Pour les bonus dynamiques, calculer la puissance totale du bonus
-                let totalPower = 0;
-                
-                // Récupérer la description du bonus pour calculer sa puissance
-                const bonusDesc = bonusDescriptions[bonusId];
-                if (bonusDesc && bonusDesc.effects) {
-                    bonusDesc.effects.forEach(effect => {
-                        if (effect.condition === 'base') {
-                            // Valeur de base + améliorations d'achat
-                            let baseValue = effect.value;
-                            if (gameState.dynamicBonusStates && 
-                                gameState.dynamicBonusStates[bonusId] && 
-                                gameState.dynamicBonusStates[bonusId]['base']) {
-                                baseValue += gameState.dynamicBonusStates[bonusId]['base'];
+                if (bonusId === 'cac_cest_la_vie') {
+                    // Pour le CAC, calculer la puissance totale du bonus
+                    let totalPower = 0;
+                    
+                    // Récupérer la description du bonus pour calculer sa puissance
+                    const bonusDesc = bonusDescriptions[bonusId];
+                    if (bonusDesc && bonusDesc.effects) {
+                        bonusDesc.effects.forEach(effect => {
+                            if (effect.condition === 'base') {
+                                // Valeur de base + améliorations d'achat
+                                let baseValue = effect.value;
+                                if (gameState.dynamicBonusStates && 
+                                    gameState.dynamicBonusStates[bonusId] && 
+                                    gameState.dynamicBonusStates[bonusId]['base']) {
+                                    baseValue += gameState.dynamicBonusStates[bonusId]['base'];
+                                }
+                                totalPower += baseValue;
                             }
-                            totalPower += baseValue;
-                        }
-                        else if (effect.condition === 'synergy_trigger') {
-                            // Bonus des synergies
-                            let triggerCount = 0;
-                            if (gameState.dynamicBonusStates && 
-                                gameState.dynamicBonusStates[bonusId] && 
-                                gameState.dynamicBonusStates[bonusId][effect.triggerSynergy]) {
-                                triggerCount = gameState.dynamicBonusStates[bonusId][effect.triggerSynergy];
+                            else if (effect.condition === 'synergy_trigger') {
+                                // Bonus des synergies
+                                let triggerCount = 0;
+                                if (gameState.dynamicBonusStates && 
+                                    gameState.dynamicBonusStates[bonusId] && 
+                                    gameState.dynamicBonusStates[bonusId][effect.triggerSynergy]) {
+                                    triggerCount = gameState.dynamicBonusStates[bonusId][effect.triggerSynergy];
+                                }
+                                totalPower += effect.value * triggerCount;
                             }
-                            totalPower += effect.value * triggerCount;
-                        }
-                    });
+                        });
+                    }
+                    
+                    const powerText = totalPower > 0 ? ` <span class="bonus-count">+${totalPower}</span>` : '';
+                    displayText = `${rarityIcon} ${bonus.icon} ${bonus.name}${powerText}`;
+                } else if (bonusId === 'economie_dune_vie') {
+                    // Pour l'économie, afficher le nombre de combats terminés
+                    let combatCount = 0;
+                    if (gameState.dynamicBonusStates && 
+                        gameState.dynamicBonusStates[bonusId] && 
+                        gameState.dynamicBonusStates[bonusId]['end_of_combat']) {
+                        combatCount = gameState.dynamicBonusStates[bonusId]['end_of_combat'];
+                    }
+                    
+                    // Toujours afficher le compteur, même s'il est à 0 (pour montrer qu'il existe)
+                    const combatText = ` <span class="bonus-count">+${combatCount}</span>`;
+                    displayText = `${rarityIcon} ${bonus.icon} ${bonus.name}${combatText}`;
                 }
-                
-                const powerText = totalPower > 0 ? ` <span class="bonus-count">+${totalPower}</span>` : '';
-                displayText = `${rarityIcon} ${bonus.icon} ${bonus.name}${powerText}`;
             } else {
                 // Pour les bonus normaux, afficher le nombre d'exemplaires
                 const countText = count > 1 ? ` <span class="bonus-count">×${count}</span>` : '';

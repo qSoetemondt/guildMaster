@@ -145,6 +145,26 @@ export const BONUS_DESCRIPTIONS = {
                 triggerCount: 0
             }
         ]
+    },
+    'economie_dune_vie' : {
+        name: 'Economie d\'une vie',
+        description: 'Ce bonus donne +5 d\'or par combat. Il augmente de +2 d\'or par combat',
+        icon: '💰',
+        rarity: 'epic',
+        basePrice: 80,
+        effects: [
+            {
+                type: 'gold_bonus',
+                value: 5,
+                condition: 'base'
+            },
+            {
+                type: 'gold_bonus',
+                value: 2,
+                condition: 'end_of_combat',
+                triggerCount: 0
+            }
+        ]
     }
 };
 

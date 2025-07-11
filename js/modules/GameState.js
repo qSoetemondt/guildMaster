@@ -553,7 +553,10 @@ export class GameState {
             const wealthBonus = this.calculateWealthBonus();
             this.addGold(wealthBonus);
             
-            // Calculer les bonus d'or des bonus d'équipement
+            // Incrémenter les compteurs de fin de combat pour les bonus dynamiques AVANT de calculer les bonus d'or
+            this.incrementEndOfCombatCounters();
+            
+            // Calculer les bonus d'or des bonus d'équipement (après l'incrémentation)
             const equipmentGoldBonus = this.calculateEquipmentGoldBonus();
             this.addGold(equipmentGoldBonus);
             
@@ -895,10 +898,18 @@ export class GameState {
             bonusCounts[bonusId] = (bonusCounts[bonusId] || 0) + 1;
         });
         
-        // Bonus d'or uniquement
+        // Bonus d'or statiques
         if (bonusCounts['gold_bonus']) {
             totalBonus = 25 * bonusCounts['gold_bonus'];
         }
+        
+        // Bonus d'or dynamiques
+        const equipmentBonuses = this.calculateEquipmentBonuses();
+        equipmentBonuses.forEach(bonus => {
+            if (bonus.gold) {
+                totalBonus += bonus.gold;
+            }
+        });
         
         return totalBonus;
     }
@@ -988,6 +999,32 @@ export class GameState {
     // Appliquer les bonus après combat
     applyCombatBonuses() {
         applyCombatBonuses(this);
+    }
+    
+    // Incrémenter les compteurs de fin de combat pour les bonus dynamiques
+    incrementEndOfCombatCounters() {
+        if (!this.dynamicBonusStates) {
+            this.dynamicBonusStates = {};
+        }
+        
+        // Liste des bonus qui ont des compteurs de fin de combat
+        const endOfCombatBonuses = ['economie_dune_vie'];
+        
+        endOfCombatBonuses.forEach(bonusId => {
+            if (this.unlockedBonuses.includes(bonusId)) {
+                if (!this.dynamicBonusStates[bonusId]) {
+                    this.dynamicBonusStates[bonusId] = {};
+                }
+                
+                // Incrémenter le compteur de fin de combat
+                if (!this.dynamicBonusStates[bonusId]['end_of_combat']) {
+                    this.dynamicBonusStates[bonusId]['end_of_combat'] = 0;
+                }
+                this.dynamicBonusStates[bonusId]['end_of_combat'] += 1;
+                
+                console.log(`🎯 incrementEndOfCombatCounters: ${bonusId} compteur = ${this.dynamicBonusStates[bonusId]['end_of_combat']}`);
+            }
+        });
     }
 
     // Débloquer un bonus
