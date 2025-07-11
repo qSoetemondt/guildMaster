@@ -388,6 +388,40 @@ export class ShopManager {
                 const totalPrice = sellPrice * count;
                 totalGain += totalPrice;
                 
+                // Calculer la description dynamique pour les bonus dynamiques
+                let dynamicDescription = bonus.description;
+                if (bonusId === 'cac_cest_la_vie' && bonus.effects) {
+                    let totalValue = 0;
+                    let triggerCount = 0;
+                    let baseValue = 0;
+                    
+                    bonus.effects.forEach(effect => {
+                        if (effect.condition === 'base') {
+                            // Valeur de base + améliorations d'achat
+                            baseValue = effect.value;
+                            if (gameState.dynamicBonusStates && 
+                                gameState.dynamicBonusStates[bonusId] && 
+                                gameState.dynamicBonusStates[bonusId]['base']) {
+                                baseValue += gameState.dynamicBonusStates[bonusId]['base'];
+                            }
+                            totalValue += baseValue;
+                        }
+                        else if (effect.condition === 'synergy_trigger') {
+                            // Récupérer le compteur depuis les états sauvegardés
+                            if (gameState.dynamicBonusStates && 
+                                gameState.dynamicBonusStates[bonusId] && 
+                                gameState.dynamicBonusStates[bonusId][effect.triggerSynergy]) {
+                                triggerCount = gameState.dynamicBonusStates[bonusId][effect.triggerSynergy];
+                            } else {
+                                triggerCount = effect.triggerCount || 0;
+                            }
+                            totalValue += effect.value * triggerCount;
+                        }
+                    });
+                    
+                    dynamicDescription = `Augmente les multiplicateurs de +${totalValue} des unités de corps à corps. +1 bonus supplémentaire à chaque activation de Formation Corps à Corps. (Actuellement : +${triggerCount} activations)`;
+                }
+                
                 const bonusElement = document.createElement('div');
                 bonusElement.className = 'sell-bonus-item';
                 bonusElement.innerHTML = `
@@ -395,7 +429,7 @@ export class ShopManager {
                         <div class="sell-bonus-name">
                             ${bonus.icon} ${bonus.name}
                         </div>
-                        <div class="sell-bonus-description">${bonus.description}</div>
+                        <div class="sell-bonus-description">${dynamicDescription}</div>
                         <div class="sell-bonus-count">Quantité disponible : ${count}</div>
                     </div>
                     <div class="sell-bonus-controls">
@@ -659,9 +693,6 @@ export class ShopManager {
                     gameState.currentCombat.bossName === 'Quilegan') {
                     gameState.updateExistingCombatProgress();
                 }
-                
-                // Mettre à jour l'affichage du malus de boss si il existe
-                gameState.updateBossMalusDisplay();
                 
                 return true;
             }
