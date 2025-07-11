@@ -511,7 +511,7 @@ export class SimulationEngine {
                 if (canAfford && worthBuying) {
                     console.log(`🛒 ACHAT BONUS: ${bonus.name} (${bonus.bonusId}) pour ${bonus.price} or`);
                     gameState.unlockBonus(bonus.bonusId);
-                    gameState.shopManager.spendGold(gameState, bonus.price);
+ gameState.shopManager.purchaseBonus(bonus.bonusId, gameState);
                     gameState.gameStats.bonusesPurchased++;
                     gameLog.push(`Achat bonus: ${bonus.name} (${bonus.bonusId}) - ${bonus.price} or`);
                     purchasesMade = true;

@@ -13,9 +13,9 @@ import { AnimationManager } from './AnimationManager.js';
 import { DEFAULT_SYNERGY_LEVELS } from './SynergyConstants.js';
 import { BONUS_DESCRIPTIONS, calculateBonusPrice, getBonusRarity } from './BonusConstants.js';
 import { SYNERGY_DEFINITIONS, SPECIAL_SYNERGIES, calculateSynergyBonus, checkSynergyActivation } from './SynergyDefinitions.js';
-import { getBaseUnits, getShopUnits, getAllAvailableTroops, getOwnedUnits, loadOwnedUnits, updateTroopsDisplay, addTroop, drawCombatTroops, maintainCombatTroops, isPermanentUnit, selectTroopForCombat, deselectTroopFromCombat, removeUsedTroopsFromCombat, hasTroopType, updateTroopsUI, createTroopCard, updateSynergies, calculateSynergies, calculateEquipmentBonuses, applyCombatBonuses, incrementDynamicBonusTrigger, syncDynamicBonusTriggers } from './UnitManager.js';
+import { getBaseUnits, getShopUnits, getAllAvailableTroops, getOwnedUnits, loadOwnedUnits, updateTroopsDisplay, addTroop, drawCombatTroops, maintainCombatTroops, isPermanentUnit, selectTroopForCombat, deselectTroopFromCombat, removeUsedTroopsFromCombat, hasTroopType, updateTroopsUI, createTroopCard, updateSynergies, calculateSynergies, calculateEquipmentBonuses, applyCombatBonuses, incrementDynamicBonusTrigger, syncDynamicBonusTriggers, getUnitImage, getUnitDisplayName, getUnitRarity, getUnitType, getUnitDamage, getUnitMultiplier } from './UnitManager.js';
 import { UnitSorter } from './UnitSorter.js';
-import { unlockBonus, cleanInvalidBonuses, getBonusDescriptions, updateActiveBonuses } from './ShopManager.js';
+import { getBonusDescriptions, updateActiveBonuses } from './ShopManager.js';
 
 export class GameState {
     constructor() {
@@ -593,8 +593,6 @@ export class GameState {
         this.shopManager.resetShop();
         
         // Réinitialiser le coût de rafraîchissement après chaque combat
-        this.shopManager.shopRefreshCount = 0;
-        this.shopManager.shopRefreshCost = 10;
 
         // Nettoyer l'affichage du malus de boss
         this.bossManager.cleanBossMalusDisplay();
@@ -1032,16 +1030,6 @@ export class GameState {
 
     // Débloquer un bonus
     unlockBonus(bonusId) {
-        return unlockBonus(bonusId, this);
-    }
-
-    // Nettoyer les bonus invalides
-    cleanInvalidBonuses() {
-        cleanInvalidBonuses(this);
-    }
-
-    // Mise à jour de l'interface
-    updateUI() {
         // Mettre à jour les informations de base
         document.getElementById('current-rank').textContent = this.rank;
         document.getElementById('gold-amount').textContent = this.gold;
@@ -1051,6 +1039,10 @@ export class GameState {
         if (guildNameInput) {
             guildNameInput.value = this.guildName;
         }
+    }
+
+    // Nettoyer les bonus invalides
+    cleanInvalidBonuses() {
         
         // Mettre à jour l'affichage des troupes dans le header
         this.updateTroopsDisplay();
@@ -1072,6 +1064,10 @@ export class GameState {
 
         // Mettre à jour l'affichage des consommables
         this.updateConsumablesDisplay();
+    }
+
+    // Mise à jour de l'interface
+    updateUI() {
     }
 
     // Mettre à jour la jauge de dégâts pour les boss
@@ -1882,7 +1878,7 @@ export class GameState {
             
             allBonusIds.forEach(bonusId => {
                 if (!this.unlockedBonuses.includes(bonusId)) {
-                    this.unlockedBonuses.push(bonusId);
+                    this.shopManager.purchaseBonus(bonusId, this);
                 }
             });
             

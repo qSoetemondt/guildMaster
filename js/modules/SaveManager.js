@@ -171,7 +171,7 @@ export class SaveManager {
             }
             
             // Nettoyer les bonus invalides au chargement
-            gameState.cleanInvalidBonuses();
+            gameState.shopManager.cleanBonuses(gameState);
             
             gameState.updateUI();
             gameState.updateConsumablesDisplay();

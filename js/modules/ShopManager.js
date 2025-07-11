@@ -291,6 +291,8 @@ export class ShopManager {
         this.currentShopPurchasedBonuses = [];
         this.currentShopPurchasedUnits = [];
         this.currentShopPurchasedConsumables = [];
+ this.shopRefreshCount = 0;
+ this.shopRefreshCost = 10;
     }
 
     // Rafraîchir le magasin
@@ -730,6 +732,78 @@ export class ShopManager {
         }
         return false;
     }
+
+    // Débloquer un bonus (déplacé depuis l'export)
+    purchaseBonus(bonusId, gameState) {
+        // Vérifier que le bonus existe dans les descriptions
+        const bonusDescriptions = getBonusDescriptions();
+        if (!bonusDescriptions[bonusId]) {
+            console.error(`Tentative de débloquer un bonus invalide: ${bonusId}`);
+            return false;
+        }
+
+        // Liste des bonus dynamiques qui ne peuvent avoir qu'un seul exemplaire
+        const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie'];
+
+        // Vérifier si c'est un bonus dynamique
+        if (dynamicBonuses.includes(bonusId)) {
+            // Vérifier si le bonus existe déjà
+            const existingIndex = gameState.unlockedBonuses.indexOf(bonusId);
+            if (existingIndex !== -1) {
+                // Le bonus existe déjà, augmenter sa valeur au lieu d'ajouter un exemplaire
+                // Initialiser les états dynamiques si nécessaire
+                if (!gameState.dynamicBonusStates) {
+                    gameState.dynamicBonusStates = {};
+                }
+                if (!gameState.dynamicBonusStates[bonusId]) {
+                    gameState.dynamicBonusStates[bonusId] = {};
+                }
+
+                // Augmenter le compteur approprié selon le type de bonus
+                if (bonusId === 'cac_cest_la_vie') {
+                    if (!gameState.dynamicBonusStates[bonusId]['base']) {
+                        gameState.dynamicBonusStates[bonusId]['base'] = 0;
+                    }
+                    gameState.dynamicBonusStates[bonusId]['base'] += 1;
+                } else if (bonusId === 'economie_dune_vie') {
+                    if (!gameState.dynamicBonusStates[bonusId]['end_of_combat']) {
+                        gameState.dynamicBonusStates[bonusId]['end_of_combat'] = 0;
+                    }
+                    gameState.dynamicBonusStates[bonusId]['end_of_combat'] += 1;
+                }
+            } else {
+                gameState.unlockedBonuses.push(bonusId);
+            }
+        } else {
+            gameState.unlockedBonuses.push(bonusId);
+        }
+
+        // Initialiser les états dynamiques pour les bonus dynamiques si nouvellement ajoutés
+        if (dynamicBonuses.includes(bonusId) && !gameState.dynamicBonusStates?.[bonusId]) {
+            if (!gameState.dynamicBonusStates) {
+                gameState.dynamicBonusStates = {};
+            }
+            gameState.dynamicBonusStates[bonusId] = {};
+            if (bonusId === 'cac_cest_la_vie') gameState.dynamicBonusStates[bonusId]['base'] = 0;
+            if (bonusId === 'economie_dune_vie') gameState.dynamicBonusStates[bonusId]['end_of_combat'] = 0;
+        }
+
+        return true;
+    }
+
+    // Nettoyer les bonus invalides (déplacé depuis l'export)
+ cleanBonuses(gameState) {
+        const bonusDescriptions = getBonusDescriptions();
+        const validBonuses = Object.keys(bonusDescriptions);
+
+        // Filtrer les bonus invalides
+        const invalidBonuses = gameState.unlockedBonuses.filter(bonusId => !validBonuses.includes(bonusId));
+
+        if (invalidBonuses.length > 0) {
+            console.warn('Bonus invalides détectés et supprimés:', invalidBonuses);
+            gameState.unlockedBonuses = gameState.unlockedBonuses.filter(bonusId => validBonuses.includes(bonusId));
+        }
+    }
 }
 
 // Définitions centralisées des bonus
@@ -737,90 +811,6 @@ export function getBonusDescriptions() {
     return BONUS_DESCRIPTIONS;
 }
 
-// Débloquer un bonus
-export function unlockBonus(bonusId, gameState) {
-    // Vérifier que le bonus existe dans les descriptions
-    const bonusDescriptions = gameState.getBonusDescriptions();
-    if (!bonusDescriptions[bonusId]) {
-        console.error(`Tentative de débloquer un bonus invalide: ${bonusId}`);
-        return false;
-    }
-    
-    // Liste des bonus dynamiques qui ne peuvent avoir qu'un seul exemplaire
-    const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie'];
-    
-    // Vérifier si c'est un bonus dynamique
-    if (dynamicBonuses.includes(bonusId)) {
-        // Vérifier si le bonus existe déjà
-        const existingIndex = gameState.unlockedBonuses.indexOf(bonusId);
-        if (existingIndex !== -1) {
-            // Le bonus existe déjà, augmenter sa valeur au lieu d'ajouter un exemplaire
-            // Initialiser les états dynamiques si nécessaire
-            if (!gameState.dynamicBonusStates) {
-                gameState.dynamicBonusStates = {};
-            }
-            if (!gameState.dynamicBonusStates[bonusId]) {
-                gameState.dynamicBonusStates[bonusId] = {};
-            }
-            
-            // Augmenter le compteur approprié selon le type de bonus
-            if (bonusId === 'cac_cest_la_vie') {
-                // Pour le CAC, augmenter le compteur de base
-                if (!gameState.dynamicBonusStates[bonusId]['base']) {
-                    gameState.dynamicBonusStates[bonusId]['base'] = 0;
-                }
-                gameState.dynamicBonusStates[bonusId]['base'] += 1;
-            } else if (bonusId === 'economie_dune_vie') {
-                // Pour l'économie, augmenter le compteur de combats terminés
-                if (!gameState.dynamicBonusStates[bonusId]['end_of_combat']) {
-                    gameState.dynamicBonusStates[bonusId]['end_of_combat'] = 0;
-                }
-                gameState.dynamicBonusStates[bonusId]['end_of_combat'] += 1;
-            }
-            
-            // Mettre à jour immédiatement l'affichage du bonus dynamique
-            gameState.updateActiveBonuses();
-            
-            gameState.showNotification('Bonus dynamique amélioré !', 'success');
-        } else {
-            // Premier exemplaire du bonus dynamique
-            gameState.unlockedBonuses.push(bonusId);
-            
-            // Initialiser les états dynamiques
-            if (!gameState.dynamicBonusStates) {
-                gameState.dynamicBonusStates = {};
-            }
-            if (!gameState.dynamicBonusStates[bonusId]) {
-                gameState.dynamicBonusStates[bonusId] = {};
-            }
-            gameState.dynamicBonusStates[bonusId]['base'] = 0;
-            
-            gameState.showNotification('Bonus dynamique débloqué !', 'success');
-        }
-    } else {
-        // Bonus normal, permettre l'empilement
-        gameState.unlockedBonuses.push(bonusId);
-        gameState.showNotification('Bonus débloqué !', 'success');
-    }
-        
-    // Mettre à jour l'interface immédiatement pour afficher le nouveau bonus
-    gameState.updateActiveBonuses();
-    return true;
-} 
-
-// Nettoyer les bonus invalides
-export function cleanInvalidBonuses(gameState) {
-    const bonusDescriptions = gameState.getBonusDescriptions();
-    const validBonuses = Object.keys(bonusDescriptions);
-    
-    // Filtrer les bonus invalides
-    const invalidBonuses = gameState.unlockedBonuses.filter(bonusId => !validBonuses.includes(bonusId));
-    
-    if (invalidBonuses.length > 0) {
-        console.warn('Bonus invalides détectés et supprimés:', invalidBonuses);
-        gameState.unlockedBonuses = gameState.unlockedBonuses.filter(bonusId => validBonuses.includes(bonusId));
-    }
-} 
 
 // Mettre à jour les bonus actifs
 export function updateActiveBonuses(gameState, shopManager = null) {

@@ -303,7 +303,7 @@ export class AutoSimulator {
                 });
                 break;
             case 'bonus':
-                gameState.unlockBonus(item.bonusId);
+                gameState.shopManager.purchaseBonus(item.bonusId, gameState);
                 gameStats.bonusesPurchased.push({
                     id: item.bonusId,
                     price: item.price,

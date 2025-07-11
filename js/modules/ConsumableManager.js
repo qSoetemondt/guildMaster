@@ -159,8 +159,6 @@ export class ConsumableManager {
         switch (consumable.effect) {
             case 'refreshShop':
                 // Relancer le magasin gratuitement
-                gameState.shopManager.shopRefreshCount = 0; // Réinitialiser le compteur
-                gameState.shopManager.shopRefreshCost = 10; // Réinitialiser le coût
                 gameState.shopManager.resetShop();
                 gameState.shopManager.generateShopItems(gameState);
                 gameState.shopManager.updatePreCombatShop(gameState);

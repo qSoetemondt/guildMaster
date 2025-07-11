@@ -69,7 +69,7 @@ window.unlockAllBonuses = function() {
         const bonusDescriptions = gameState.getBonusDescriptions();
         Object.keys(bonusDescriptions).forEach(bonusId => {
             if (!gameState.unlockedBonuses.includes(bonusId)) {
-                gameState.unlockBonus(bonusId);
+                gameState.shopManager.purchaseBonus(bonusId, gameState);
             }
         });
         gameState.notificationManager.showAllBonusesUnlocked();
