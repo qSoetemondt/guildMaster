@@ -120,6 +120,31 @@ export const BONUS_DESCRIPTIONS = {
         icon: '🏛️',
         rarity: 'legendary',
         basePrice: 100
+    },
+    
+    // Bonus dynamiques
+    'cac_cest_la_vie': {
+        name: 'Le CAC c\'est la vie',
+        description: 'Augmente les multiplicateurs de +1 des unités de corps à corps. +1 bonus supplémentaire à chaque activation de Formation Corps à Corps.',
+        icon: '🥊',
+        rarity: 'epic',
+        basePrice: 80,
+        effects: [
+            {
+                type: 'multiplier_bonus',
+                target: 'melee_units',
+                value: 1,
+                condition: 'base'
+            },
+            {
+                type: 'multiplier_bonus',
+                target: 'melee_units',
+                value: 1,
+                condition: 'synergy_trigger',
+                triggerSynergy: 'formation_corps_a_corps',
+                triggerCount: 0
+            }
+        ]
     }
 };
 

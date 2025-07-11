@@ -312,6 +312,52 @@ body {
     animation: bonusCountPulse 2s infinite;
 }
 
+/* Styles pour la modal de détail des bonus */
+.bonus-detail-info {
+    margin-bottom: 20px;
+}
+
+.bonus-detail-info > div {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #007bff;
+}
+
+.bonus-rarity {
+    border-left-color: #6f42c1 !important;
+}
+
+.bonus-description {
+    border-left-color: #28a745 !important;
+}
+
+.bonus-quantity {
+    border-left-color: #ffc107 !important;
+}
+
+.bonus-price {
+    border-left-color: #dc3545 !important;
+}
+
+.bonus-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+.bonus-actions .btn {
+    min-width: 120px;
+}
+
+.sell-bonus-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 @keyframes bonusCountPulse {
     0%, 100% {
         transform: scale(1);
@@ -3871,4 +3917,28 @@ body.transform-mode * {
 
 body.transform-mode .troop-icon {
     cursor: pointer !important;
+}
+
+/* Animation pour l'augmentation des bonus dynamiques */
+@keyframes bonusIncrease {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    20% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    80% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+}
+
+.dynamic-bonus-animation {
+    animation: bonusIncrease 1s ease-out;
 }

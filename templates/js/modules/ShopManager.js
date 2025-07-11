@@ -374,8 +374,16 @@ export function updateActiveBonuses(gameState) {
             
             bonusElement.innerHTML = `
                 ${rarityIcon} ${bonus.icon} ${bonus.name}${countText}
-                <div class="bonus-tooltip">${bonus.description}${count > 1 ? ` - ${count} fois` : ''}</div>
             `;
+            
+            // Ajouter un événement de clic pour ouvrir la modal
+            bonusElement.addEventListener('click', () => {
+                showBonusModal(bonusId, bonus, count, gameState);
+            });
+            
+            // Ajouter un curseur pointer pour indiquer que c'est cliquable
+            bonusElement.style.cursor = 'pointer';
+            
             bonusesContainer.appendChild(bonusElement);
             console.log(`Bonus affiché: ${bonus.name} (count: ${count}, rarity: ${rarity})`);
         } else {
@@ -391,6 +399,135 @@ export function updateActiveBonuses(gameState) {
                 <div class="bonus-tooltip">Bonus non défini: ${bonusId}</div>
             `;
             bonusesContainer.appendChild(bonusElement);
+        }
+    });
+}
+
+// Afficher la modal de détail d'un bonus
+function showBonusModal(bonusId, bonus, count, gameState) {
+    // Créer la modal
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'bonus-detail-modal';
+    
+    // Calculer le prix de vente
+    const buyPrice = calculateBonusPrice(bonusId);
+    const sellPrice = Math.floor(buyPrice / 2);
+    
+    // Déterminer la rareté
+    const rarity = getBonusRarity(bonusId);
+    const rarityIcon = getRarityIcon(rarity);
+    const rarityName = getRarityDisplayName(rarity);
+    
+    // Calculer la description dynamique pour les bonus dynamiques
+    let dynamicDescription = bonus.description;
+    if (bonusId === 'cac_cest_la_vie' && bonus.effects) {
+        let totalValue = 0;
+        let triggerCount = 0;
+        
+        bonus.effects.forEach(effect => {
+            if (effect.condition === 'base') {
+                totalValue += effect.value;
+            }
+            else if (effect.condition === 'synergy_trigger') {
+                // Récupérer le compteur depuis les états sauvegardés
+                if (gameState.dynamicBonusStates && 
+                    gameState.dynamicBonusStates[bonusId] && 
+                    gameState.dynamicBonusStates[bonusId][effect.triggerSynergy]) {
+                    triggerCount = gameState.dynamicBonusStates[bonusId][effect.triggerSynergy];
+                } else {
+                    triggerCount = effect.triggerCount || 0;
+                }
+                totalValue += effect.value * triggerCount;
+            }
+        });
+        
+        dynamicDescription = `Augmente les multiplicateurs de +${totalValue} des unités de corps à corps. +1 bonus supplémentaire à chaque activation de Formation Corps à Corps. (Actuellement : +${triggerCount} activations)`;
+    }
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3>${rarityIcon} ${bonus.icon} ${bonus.name}</h3>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="bonus-detail-info">
+                    <div class="bonus-rarity">
+                        <strong>Rareté :</strong> ${rarityIcon} ${rarityName}
+                    </div>
+                    <div class="bonus-description">
+                        <strong>Description :</strong><br>
+                        ${dynamicDescription}
+                    </div>
+                    <div class="bonus-quantity">
+                        <strong>Quantité possédée :</strong> ${count}
+                    </div>
+                    <div class="bonus-price">
+                        <strong>Prix de vente :</strong> ${sellPrice}💰 (50% du prix d'achat)
+                    </div>
+                </div>
+                <div class="bonus-actions">
+                    <button class="btn secondary close-modal-btn">Fermer</button>
+                    <button class="btn danger sell-bonus-btn" ${count === 0 ? 'disabled' : ''}>
+                        Vendre 1 exemplaire (${sellPrice}💰)
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Ajouter la modal au DOM
+    document.body.appendChild(modal);
+    
+    // Gérer la fermeture
+    const closeBtn = modal.querySelector('.close-btn');
+    const closeModalBtn = modal.querySelector('.close-modal-btn');
+    const sellBtn = modal.querySelector('.sell-bonus-btn');
+    
+    const closeModal = () => {
+        modal.remove();
+    };
+    
+    closeBtn.addEventListener('click', closeModal);
+    closeModalBtn.addEventListener('click', closeModal);
+    
+    // Gérer la vente
+    sellBtn.addEventListener('click', () => {
+        if (count > 0) {
+            // Retirer un exemplaire du bonus
+            const bonusIndex = gameState.unlockedBonuses.indexOf(bonusId);
+            if (bonusIndex !== -1) {
+                gameState.unlockedBonuses.splice(bonusIndex, 1);
+                
+                // Ajouter l'or
+                gameState.addGold(sellPrice);
+                
+                // Mettre à jour l'affichage
+                updateActiveBonuses(gameState);
+                
+                // Fermer la modal
+                closeModal();
+                
+                // Notification
+                gameState.showNotification(`Bonus vendu ! +${sellPrice} or`, 'success');
+            }
+        }
+    });
+    
+    // Fermer avec Échap
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+    
+    // Fermer en cliquant sur l'overlay
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
         }
     });
 } 

@@ -12,7 +12,7 @@ import { BossManager } from './BossManager.js';
 import { DEFAULT_SYNERGY_LEVELS } from './SynergyConstants.js';
 import { BONUS_DESCRIPTIONS, calculateBonusPrice, getBonusRarity } from './BonusConstants.js';
 import { SYNERGY_DEFINITIONS, SPECIAL_SYNERGIES, calculateSynergyBonus, checkSynergyActivation } from './SynergyDefinitions.js';
-import { getBaseUnits, getShopUnits, getAllAvailableTroops, getOwnedUnits, loadOwnedUnits, updateTroopsDisplay, addTroop, drawCombatTroops, maintainCombatTroops, isPermanentUnit, selectTroopForCombat, deselectTroopFromCombat, removeUsedTroopsFromCombat, hasTroopType, updateTroopsUI, createTroopCard, updateSynergies, calculateSynergies, calculateEquipmentBonuses, applyCombatBonuses } from './UnitManager.js';
+import { getBaseUnits, getShopUnits, getAllAvailableTroops, getOwnedUnits, loadOwnedUnits, updateTroopsDisplay, addTroop, drawCombatTroops, maintainCombatTroops, isPermanentUnit, selectTroopForCombat, deselectTroopFromCombat, removeUsedTroopsFromCombat, hasTroopType, updateTroopsUI, createTroopCard, updateSynergies, calculateSynergies, calculateEquipmentBonuses, applyCombatBonuses, incrementDynamicBonusTrigger } from './UnitManager.js';
 import { unlockBonus, cleanInvalidBonuses, getBonusDescriptions, updateActiveBonuses } from './ShopManager.js';
 
 export class GameState {
@@ -29,6 +29,7 @@ export class GameState {
         this.combatHistory = [];
         this.isFirstTime = true;
         this.unlockedBonuses = []; // Bonus débloqués via le magasin
+        this.dynamicBonusStates = {}; // États des bonus dynamiques (compteurs, etc.)
         
         // Initialiser les gestionnaires
         this.notificationManager = new NotificationManager();
@@ -285,6 +286,9 @@ export class GameState {
                     if (synergy.bonus.multiplier) unitMultiplier += synergy.bonus.multiplier;
                 }
             });
+            
+            // Les bonus dynamiques seront incrémentés pendant l'animation de combat
+            // pour permettre une animation visuelle de l'augmentation
             
             // Appliquer les bonus d'équipement
             const equipmentBonuses = this.calculateEquipmentBonuses();

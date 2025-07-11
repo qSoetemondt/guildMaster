@@ -556,6 +556,120 @@ export function calculateSynergies(troops = null, gameState) {
     }
 
     return synergies;
+}
+
+// Calculer les bonus dynamiques avec effets multiples
+export function calculateDynamicBonus(bonusDesc, gameState, bonusId) {
+    if (!bonusDesc.effects) {
+        return null;
+    }
+    
+    let totalValue = 0;
+    let target = null;
+    
+    bonusDesc.effects.forEach(effect => {
+        if (effect.condition === 'base') {
+            // Effet de base : toujours appliqué
+            totalValue += effect.value;
+            target = effect.target;
+        }
+        else if (effect.condition === 'synergy_trigger') {
+            // Effet déclenché par synergie
+            let triggerCount = 0;
+            
+            // Récupérer le compteur depuis les états sauvegardés
+            if (gameState.dynamicBonusStates && 
+                gameState.dynamicBonusStates[bonusId] && 
+                gameState.dynamicBonusStates[bonusId][effect.triggerSynergy]) {
+                triggerCount = gameState.dynamicBonusStates[bonusId][effect.triggerSynergy];
+                console.log(`🎯 calculateDynamicBonus: Compteur récupéré depuis sauvegarde pour ${bonusId}.${effect.triggerSynergy} = ${triggerCount}`);
+            } else {
+                // Fallback vers le compteur local si pas de sauvegarde
+                triggerCount = effect.triggerCount || 0;
+                console.log(`🎯 calculateDynamicBonus: Compteur local utilisé pour ${bonusId}.${effect.triggerSynergy} = ${triggerCount}`);
+            }
+            
+            totalValue += effect.value * triggerCount;
+            target = effect.target;
+        }
+    });
+    
+    if (totalValue > 0 && target) {
+        return {
+            name: bonusDesc.name,
+            multiplier: totalValue,
+            target: target === 'melee_units' ? 'Corps à corps' : target
+        };
+    }
+    
+    return null;
+}
+
+// Incrémenter le compteur d'un bonus dynamique quand une synergie se déclenche
+export function incrementDynamicBonusTrigger(bonusId, triggerSynergy, gameState) {
+    // Vérifier si le bonus est débloqué
+    if (!gameState.unlockedBonuses.includes(bonusId)) {
+        return;
+    }
+    
+    // Récupérer la description du bonus
+    const bonusDescriptions = gameState.getBonusDescriptions();
+    const bonusDesc = bonusDescriptions[bonusId];
+    
+    if (!bonusDesc || !bonusDesc.effects) {
+        return;
+    }
+    
+    // Trouver l'effet avec le trigger correspondant
+    const triggerEffect = bonusDesc.effects.find(effect => 
+        effect.condition === 'synergy_trigger' && 
+        effect.triggerSynergy === triggerSynergy
+    );
+    
+    if (triggerEffect) {
+        // Vérifier si ce bonus a déjà été incrémenté ce round
+        const roundKey = `round_${gameState.currentCombat.round || 1}`;
+        const bonusRoundKey = `${bonusId}_${triggerSynergy}_${roundKey}`;
+        
+        if (gameState.dynamicBonusTriggers && gameState.dynamicBonusTriggers[bonusRoundKey]) {
+            // Déjà incrémenté ce round, ne rien faire
+            console.log(`🎯 incrementDynamicBonusTrigger: Déjà incrémenté ce round pour ${bonusId}.${triggerSynergy}`);
+            return;
+        }
+        
+        // Récupérer le compteur actuel depuis les états sauvegardés
+        let currentCount = 0;
+        if (gameState.dynamicBonusStates && 
+            gameState.dynamicBonusStates[bonusId] && 
+            gameState.dynamicBonusStates[bonusId][triggerSynergy]) {
+            currentCount = gameState.dynamicBonusStates[bonusId][triggerSynergy];
+            console.log(`🎯 incrementDynamicBonusTrigger: Compteur actuel depuis sauvegarde = ${currentCount}`);
+        } else {
+            currentCount = triggerEffect.triggerCount || 0;
+            console.log(`🎯 incrementDynamicBonusTrigger: Compteur actuel depuis effet = ${currentCount}`);
+        }
+        
+        // Incrémenter le compteur
+        const newCount = currentCount + 1;
+        triggerEffect.triggerCount = newCount;
+        
+        // Sauvegarder l'état du bonus dynamique
+        if (!gameState.dynamicBonusStates) {
+            gameState.dynamicBonusStates = {};
+        }
+        if (!gameState.dynamicBonusStates[bonusId]) {
+            gameState.dynamicBonusStates[bonusId] = {};
+        }
+        gameState.dynamicBonusStates[bonusId][triggerSynergy] = newCount;
+        
+        // Marquer comme incrémenté ce round
+        if (!gameState.dynamicBonusTriggers) {
+            gameState.dynamicBonusTriggers = {};
+        }
+        gameState.dynamicBonusTriggers[bonusRoundKey] = true;
+        
+        console.log(`🎯 Bonus dynamique "${bonusDesc.name}" : compteur incrémenté de ${currentCount} à ${newCount} (synergie "${triggerSynergy}" - round ${gameState.currentCombat.round || 1})`);
+    }
 } 
 
 // Calculer les bonus d'équipement
@@ -676,6 +790,13 @@ export function calculateEquipmentBonuses(gameState) {
                 multiplier: 3 * count, 
                 target: 'all' 
             });
+        }
+        // Bonus dynamiques avec effets multiples
+        else if (bonusId === 'cac_cest_la_vie') {
+            const dynamicBonus = calculateDynamicBonus(bonusDesc, gameState, bonusId);
+            if (dynamicBonus) {
+                bonuses.push(dynamicBonus);
+            }
         }
         // Bonus de base pour corps à corps
         else if (bonusId === 'corps_a_corps_bonus') {

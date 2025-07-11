@@ -21,6 +21,7 @@ export class SaveManager {
             combatHistory: gameState.combatHistory,
             isFirstTime: gameState.isFirstTime,
             unlockedBonuses: gameState.unlockedBonuses,
+            dynamicBonusStates: gameState.dynamicBonusStates || {},
             currentCombat: gameState.currentCombat,
             currentShopItems: gameState.shopManager.currentShopItems,
             currentShopPurchasedUnits: gameState.shopManager.currentShopPurchasedUnits,
@@ -70,6 +71,13 @@ export class SaveManager {
             // Initialiser les bonus si pas présents
             if (!gameState.unlockedBonuses) {
                 gameState.unlockedBonuses = [];
+            }
+            
+            // Restaurer les états des bonus dynamiques
+            if (data.dynamicBonusStates) {
+                gameState.dynamicBonusStates = data.dynamicBonusStates;
+            } else {
+                gameState.dynamicBonusStates = {};
             }
             
             // Initialiser le combat si pas présent
