@@ -1347,4 +1347,36 @@ export class AnimationManager {
         const unit = allUnits.find(u => u.name === unitName);
         return unit ? unit.icon : '❓';
     }
+
+    // === ANIMATIONS DE DUPLICATION ===
+
+    /**
+     * Jouer l'animation de duplication d'unité
+     * @param {string} unitName - Nom de l'unité dupliquée
+     * @param {GameState} gameState - L'état du jeu
+     */
+    playDuplicateAnimation(unitName, gameState) {
+        // Créer l'élément d'animation
+        const animationElement = document.createElement('div');
+        animationElement.className = 'duplicate-animation';
+        animationElement.innerHTML = `
+            <div class="duplicate-content">
+                <div class="duplicate-icon">🪞</div>
+                <div class="duplicate-text">${this.getUnitIcon(unitName, gameState)} ${unitName}</div>
+                <div class="duplicate-effect">+1</div>
+            </div>
+        `;
+        
+        document.body.appendChild(animationElement);
+        
+        // Animation CSS
+        setTimeout(() => {
+            animationElement.classList.add('show');
+        }, 100);
+        
+        // Supprimer après l'animation
+        setTimeout(() => {
+            animationElement.remove();
+        }, 2000);
+    }
 } 

@@ -145,6 +145,14 @@ export class ConsumableManager {
                 price: Math.ceil(30 * 1.75), // 53
                 effect: 'upgradeSynergy',
                 rarity: 'rare'
+            },
+            duplicateUnit: {
+                name: 'Miroir de Duplication',
+                description: 'Duplique une unité de votre choix',
+                icon: '🪞',
+                price: Math.ceil(100 * 1.75), // 175
+                effect: 'duplicateUnit',
+                rarity: 'legendary'
             }
         };
     }
@@ -193,12 +201,13 @@ export class ConsumableManager {
         
         if (success) {
             // Pour les consommables qui ne nécessitent pas d'action supplémentaire, les supprimer immédiatement
-            if (consumable.effect !== 'transformUnit' && consumable.effect !== 'upgradeSynergy') {
+            if (consumable.effect !== 'transformUnit' && consumable.effect !== 'upgradeSynergy' && consumable.effect !== 'duplicateUnit') {
                 this.consumables.splice(consumableIndex, 1);
                 this.updateConsumablesDisplay(gameState);
             }
             // Pour l'épée de transformation, le consommable sera supprimé après la transformation effective
             // Pour le cristal de synergie, le consommable sera supprimé après la sélection de la synergie
+            // Pour la duplication, le consommable sera supprimé après la duplication effective
            // gameState.showNotification(`${consumable.name} utilisé !`, 'success');
             return true;
         } else {
@@ -231,6 +240,11 @@ export class ConsumableManager {
                 this.showSynergyUpgradeModal(gameState);
                 return true;
             
+            case 'duplicateUnit':
+                // Activer le mode duplication avec curseur personnalisé
+                this.activateDuplicateMode(consumable, gameState);
+                return true;
+            
             default:
                 console.error(`Effet de consommable inconnu: ${consumable.effect}`);
                 return false;
@@ -244,42 +258,38 @@ export class ConsumableManager {
 
     // Ajouter un consommable au magasin
     addConsumableToShop() {
-        // 80% de chance d'avoir un consommable dans le magasin (augmenté pour plus de visibilité)
-        if (Math.random() < 0.8) {
-            const consumableTypes = Object.keys(this.CONSUMABLES_TYPES);
+        const consumableTypes = Object.keys(this.CONSUMABLES_TYPES);
+        
+        // 25% de chance d'avoir spécifiquement le consommable d'amélioration de synergie
+        if (Math.random() < 0.25) {
+            const consumableTemplate = this.CONSUMABLES_TYPES['upgradeSynergy'];
+            return {
+                type: 'consumable',
+                id: `consumable_upgradeSynergy`,
+                name: consumableTemplate.name,
+                description: consumableTemplate.description,
+                icon: consumableTemplate.icon,
+                price: consumableTemplate.price,
+                consumableType: 'upgradeSynergy',
+                rarity: consumableTemplate.rarity
+            };
+        } else {
+            // Sinon, sélectionner aléatoirement parmi tous les autres consommables
+            const otherTypes = consumableTypes.filter(type => type !== 'upgradeSynergy');
+            const randomType = otherTypes[Math.floor(Math.random() * otherTypes.length)];
+            const consumableTemplate = this.CONSUMABLES_TYPES[randomType];
             
-            // 25% de chance d'avoir spécifiquement le consommable d'amélioration de synergie
-            if (Math.random() < 0.25) {
-                const consumableTemplate = this.CONSUMABLES_TYPES['upgradeSynergy'];
-                return {
-                    type: 'consumable',
-                    id: `consumable_upgradeSynergy`,
-                    name: consumableTemplate.name,
-                    description: consumableTemplate.description,
-                    icon: consumableTemplate.icon,
-                    price: consumableTemplate.price,
-                    consumableType: 'upgradeSynergy',
-                    rarity: consumableTemplate.rarity
-                };
-            } else {
-                // Sinon, sélectionner aléatoirement parmi tous les autres consommables
-                const otherTypes = consumableTypes.filter(type => type !== 'upgradeSynergy');
-                const randomType = otherTypes[Math.floor(Math.random() * otherTypes.length)];
-                const consumableTemplate = this.CONSUMABLES_TYPES[randomType];
-                
-                return {
-                    type: 'consumable',
-                    id: `consumable_${randomType}`,
-                    name: consumableTemplate.name,
-                    description: consumableTemplate.description,
-                    icon: consumableTemplate.icon,
-                    price: consumableTemplate.price,
-                    consumableType: randomType,
-                    rarity: consumableTemplate.rarity
-                };
-            }
+            return {
+                type: 'consumable',
+                id: `consumable_${randomType}`,
+                name: consumableTemplate.name,
+                description: consumableTemplate.description,
+                icon: consumableTemplate.icon,
+                price: consumableTemplate.price,
+                consumableType: randomType,
+                rarity: consumableTemplate.rarity
+            };
         }
-        return null;
     }
 
     // Vérifier si le joueur a un consommable d'un type spécifique
@@ -466,5 +476,88 @@ export class ConsumableManager {
     getConsumableIcon(consumableType) {
         const consumableData = this.CONSUMABLES_TYPES[consumableType];
         return consumableData ? consumableData.icon : '❓';
+    }
+
+    // ===== GESTION DU MODE DUPLICATION =====
+    
+    // Activer le mode duplication avec curseur personnalisé
+    activateDuplicateMode(consumable, gameState) {
+        // Stocker le consommable de duplication actif
+        this.activeDuplicateConsumable = consumable;
+        
+        // Changer le curseur avec l'icône du consommable
+        gameState.uiManager.setDuplicateCursor(consumable);
+        
+        // Ajouter les événements de clic sur les troupes du header
+        gameState.uiManager.addDuplicateClickListeners(gameState);
+        
+        // Afficher une notification
+        gameState.notificationManager.showNotification('Cliquez sur une unité dans le header pour la dupliquer', 'info');
+    }
+
+    // Dupliquer une unité depuis la modal des troupes
+    duplicateUnitFromModal(unitName, gameState) {
+        // Vérifier si l'utilisateur a un consommable de duplication
+        const duplicateConsumables = this.consumables.filter(c => c.type === 'duplicateUnit');
+        
+        if (duplicateConsumables.length === 0) {
+            gameState.notificationManager.showConsumableError('Vous devez posséder un Miroir de Duplication pour dupliquer des unités !');
+            return;
+        }
+
+        // Vérifier si l'unité existe dans le pool global
+        const globalPool = createGlobalUnitPool(gameState);
+        const sourceUnits = globalPool.filter(unit => unit.name === unitName);
+        
+        if (sourceUnits.length === 0) {
+            gameState.notificationManager.showConsumableError(`Aucune unité "${unitName}" trouvée !`);
+            return;
+        }
+
+        // Ajouter une copie de l'unité au pool global
+        gameState.ownedUnits[unitName] = (gameState.ownedUnits[unitName] || 0) + 1;
+        
+        // Nettoyer le cache des unités car les quantités ont changé
+        clearUnitCache();
+
+        // Consommer le consommable de duplication
+        if (this.activeDuplicateConsumable) {
+            const consumableIndex = this.consumables.findIndex(c => c.id === this.activeDuplicateConsumable.id);
+            if (consumableIndex !== -1) {
+                this.consumables.splice(consumableIndex, 1);
+            }
+            // Réinitialiser la référence
+            this.activeDuplicateConsumable = null;
+        } else {
+            // Fallback : supprimer le premier consommable de duplication trouvé
+            const consumableIndex = this.consumables.findIndex(c => c.type === 'duplicateUnit');
+            if (consumableIndex !== -1) {
+                this.consumables.splice(consumableIndex, 1);
+            }
+        }
+
+        // Jouer une animation de duplication
+        gameState.animationManager.playDuplicateAnimation(unitName, gameState);
+
+        // Mettre à jour l'affichage
+        gameState.updateUI();
+        this.updateConsumablesDisplay(gameState);
+
+        // Fermer la modal des troupes
+        ModalManager.hideModal('troops-modal');
+
+        // Notification de succès
+        gameState.notificationManager.showUnitAdded(unitName);
+    }
+
+    // Annuler le mode duplication
+    cancelDuplicateMode(gameState) {
+        // Réinitialiser le consommable de duplication actif
+        this.activeDuplicateConsumable = null;
+        
+        // Restaurer l'interface utilisateur
+        if (gameState && gameState.uiManager) {
+            gameState.uiManager.cancelDuplicateMode(gameState);
+        }
     }
 } 

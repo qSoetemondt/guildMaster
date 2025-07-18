@@ -93,11 +93,52 @@ export class ShopManager {
         }
         const shopItems = this.currentShopItems;
         
-        // Créer et ajouter chaque item
-        shopItems.forEach(item => {
+        // Séparer les items par type
+        const unitItems = shopItems.filter(item => item.type === 'unit');
+        const bonusItems = shopItems.filter(item => item.type === 'bonus');
+        const consumableItems = shopItems.filter(item => item.type === 'consumable');
+        
+        // Créer les sections du shop
+        this.createShopSection(shopContainer, 'unit', 'Unités', unitItems, gameState);
+        this.createShopSection(shopContainer, 'bonus', 'Bonus d\'Équipement', bonusItems, gameState);
+        this.createShopSection(shopContainer, 'consumable', 'Consommables', consumableItems, gameState);
+    }
+
+    // Créer une section du shop
+    createShopSection(container, type, title, items, gameState) {
+        if (items.length === 0) return;
+        
+        const section = document.createElement('div');
+        section.className = `shop-section shop-section-${type}`;
+        
+        const sectionHeader = document.createElement('div');
+        sectionHeader.className = 'shop-section-header';
+        
+        // Icônes spécifiques pour chaque type
+        const typeIcons = {
+            'unit': '⚔️',
+            'bonus': '🎁',
+            'consumable': '🧪'
+        };
+        
+        sectionHeader.innerHTML = `
+            <h5 class="shop-section-title">
+                ${typeIcons[type] || ''} ${title}
+            </h5>
+            <span class="shop-section-count">${items.length} item${items.length > 1 ? 's' : ''}</span>
+        `;
+        section.appendChild(sectionHeader);
+        
+        const sectionGrid = document.createElement('div');
+        sectionGrid.className = 'shop-section-grid';
+        
+        items.forEach(item => {
             const itemElement = this.createShopItemElement(item, gameState);
-            shopContainer.appendChild(itemElement);
+            sectionGrid.appendChild(itemElement);
         });
+        
+        section.appendChild(sectionGrid);
+        container.appendChild(section);
     }
 
     // Extraire le calcul du prix des unités
@@ -156,31 +197,113 @@ export class ShopManager {
 
     // Extraire la gestion des consommables
     addConsumableItems(gameState, allItems) {
-        const consumableItem = gameState.addConsumableToShop();
-        if (consumableItem) {
-            allItems.push(consumableItem);
+        // Garantir qu'il y ait toujours au moins 2-3 consommables disponibles
+        const consumableCount = Math.floor(Math.random() * 2) + 2; // 2-3 consommables
+        
+        for (let i = 0; i < consumableCount; i++) {
+            const consumableItem = gameState.addConsumableToShop();
+            if (consumableItem) {
+                allItems.push(consumableItem);
+            }
         }
         return allItems;
     }
 
-    // Extraire la sélection et mélange des items avec pondération par rareté
+    // Extraire la sélection et mélange des items avec équilibre entre types
     selectAndShuffleItems(allItems) {
-        // Garantir qu'un consommable soit inclus s'il a été généré
+        // Séparer les items par type
+        const unitItems = allItems.filter(item => item.type === 'unit');
+        const bonusItems = allItems.filter(item => item.type === 'bonus');
         const consumableItems = allItems.filter(item => item.type === 'consumable');
-        const nonConsumableItems = allItems.filter(item => item.type !== 'consumable');
         
-        // Sélectionner les items avec pondération par rareté (incluant les consommables)
-        const selectedItems = this.selectItemsByRarity(allItems, 8);
+        const selectedItems = [];
+        const maxItems = 5;
         
-        // Si on a un consommable, l'inclure et prendre 7 autres items
-        if (consumableItems.length > 0) {
-            const selectedConsumable = consumableItems[0]; // Prendre le premier consommable
-            const selectedNonConsumables = selectedItems.filter(item => item.type !== 'consumable').slice(0, 7);
-            return [selectedConsumable, ...selectedNonConsumables];
-        } else {
-            // Sinon, prendre 8 items normaux
-            return selectedItems.slice(0, 8);
+        // Fonction pour sélectionner des items d'une catégorie
+        const selectFromCategory = (items, count) => {
+            return this.selectItemsByRarity(items, Math.min(count, items.length));
+        };
+        
+        // Fonction pour compléter avec des items d'autres catégories
+        const fillRemainingSlots = (targetCount) => {
+            const remaining = targetCount - selectedItems.length;
+            if (remaining <= 0) return;
+            
+            // Créer un pool d'items disponibles non encore sélectionnés
+            const availableItems = [];
+            
+            // Ajouter les unités non sélectionnées
+            const selectedUnitNames = selectedItems.filter(item => item.type === 'unit').map(item => item.name);
+            const availableUnits = unitItems.filter(item => !selectedUnitNames.includes(item.name));
+            availableItems.push(...availableUnits);
+            
+            // Ajouter les bonus non sélectionnés
+            const selectedBonusIds = selectedItems.filter(item => item.type === 'bonus').map(item => item.bonusId);
+            const availableBonuses = bonusItems.filter(item => !selectedBonusIds.includes(item.bonusId));
+            availableItems.push(...availableBonuses);
+            
+            // Ajouter les consommables non sélectionnés
+            const selectedConsumableTypes = selectedItems.filter(item => item.type === 'consumable').map(item => item.consumableType);
+            const availableConsumables = consumableItems.filter(item => !selectedConsumableTypes.includes(item.consumableType));
+            availableItems.push(...availableConsumables);
+            
+            // Sélectionner les items restants
+            const additionalItems = this.selectItemsByRarity(availableItems, remaining);
+            selectedItems.push(...additionalItems);
+        };
+        
+        // Créer un pool d'items disponibles avec pondération par type
+        const availableItems = [];
+        const typeWeights = {
+            'unit': unitItems.length,
+            'bonus': bonusItems.length,
+            'consumable': consumableItems.length * 4 // Quadrupler le poids des consommables
+        };
+        
+        // Ajouter tous les items avec leur poids
+        unitItems.forEach(item => availableItems.push({ item, weight: typeWeights.unit }));
+        bonusItems.forEach(item => availableItems.push({ item, weight: typeWeights.bonus }));
+        consumableItems.forEach(item => availableItems.push({ item, weight: typeWeights.consumable }));
+        
+        // Sélectionner 5 items avec pondération par type
+        for (let i = 0; i < maxItems; i++) {
+            if (availableItems.length === 0) break;
+            
+            // Calculer le poids total
+            const totalWeight = availableItems.reduce((sum, { weight }) => sum + weight, 0);
+            
+            // Sélectionner un item selon le poids
+            let random = Math.random() * totalWeight;
+            let selectedIndex = 0;
+            
+            for (let j = 0; j < availableItems.length; j++) {
+                random -= availableItems[j].weight;
+                if (random <= 0) {
+                    selectedIndex = j;
+                    break;
+                }
+            }
+            
+            // Ajouter l'item sélectionné
+            selectedItems.push(availableItems[selectedIndex].item);
+            
+            // Retirer l'item sélectionné et ajuster les poids
+            availableItems.splice(selectedIndex, 1);
+            
+            // Réduire les poids pour éviter de sur-représenter un type
+            const selectedType = selectedItems[selectedItems.length - 1].type;
+            availableItems.forEach(({ item }) => {
+                if (item.type === selectedType) {
+                    item.weight = Math.max(1, item.weight * 0.7); // Réduire le poids de 30%
+                }
+            });
         }
+        
+        // Compléter jusqu'à 5 items si nécessaire
+        fillRemainingSlots(maxItems);
+        
+        // S'assurer qu'on a exactement 5 items
+        return selectedItems.slice(0, maxItems);
     }
 
     // Sélectionner les items avec pondération par rareté

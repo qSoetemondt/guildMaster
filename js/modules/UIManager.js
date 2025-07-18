@@ -1560,17 +1560,291 @@ export class UIManager {
             return false;
         }
         
-        // Vérifier qu'on n'a pas déjà transformé toutes les unités de base
-        if (!gameState.transformedBaseUnits[troopName]) {
-            gameState.transformedBaseUnits[troopName] = 0;
+        return true;
+    }
+
+    // ===== GESTION DU MODE DUPLICATION =====
+    
+    // Changer le curseur avec l'icône du consommable de duplication
+    setDuplicateCursor(consumable, gameState) {
+        // Utiliser un curseur en forme de cible/sélecteur très visible
+        document.body.style.cursor = `16 16, crosshair`;
+        
+        // Ajouter une classe pour le style du curseur
+        document.body.classList.add('duplicate-mode');
+        
+        // Ajouter des effets visuels pour indiquer le mode duplication
+        this.addDuplicateModeVisuals(consumable, gameState);
+    }
+    
+    // Ajouter des effets visuels pour le mode duplication
+    addDuplicateModeVisuals(consumable, gameState) {
+        // Trouver l'élément consommable cliqué
+        const consumableElements = document.querySelectorAll('.consumable-icon-header');
+        let clickedElement = null;
+        
+        // Chercher l'élément qui correspond au consommable cliqué
+        consumableElements.forEach(element => {
+            if (element.textContent === consumable.icon) {
+                clickedElement = element;
+            }
+        });
+        
+        // Créer une notification visible
+        const notification = document.createElement('div');
+        notification.id = 'duplicate-notification';
+        
+        // Positionner la notification à gauche du consommable cliqué
+        if (clickedElement) {
+            const rect = clickedElement.getBoundingClientRect();
+            notification.style.position = 'fixed';
+            notification.style.left = `${rect.left - 350}px`; // 350px à gauche du consommable
+            notification.style.top = `${rect.top}px`;
+            notification.style.zIndex = '10000';
         }
         
-        const maxTransformations = baseUnit.quantity || 5;
-        if (gameState.transformedBaseUnits[troopName] >= maxTransformations) {
+        notification.innerHTML = `
+            <div class="duplicate-notification-content">
+                <div class="duplicate-icon">${consumable.icon}</div>
+                <div class="duplicate-text">
+                    <div class="duplicate-title">Mode Duplication</div>
+                    <div class="duplicate-description">Cliquez sur une unité pour la dupliquer</div>
+                </div>
+                <button class="duplicate-cancel" onclick="gameState.consumableManager.cancelDuplicateMode(gameState)">✕</button>
+            </div>
+        `;
+        document.body.appendChild(notification);
+        
+        // Ajouter un gestionnaire d'événements pour fermer avec Échap
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                this.cancelDuplicateMode(gameState);
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        
+        // Nettoyer l'événement quand la notification est fermée via le bouton
+        const cancelBtn = notification.querySelector('.duplicate-cancel');
+        if (cancelBtn) {
+            const originalOnClick = cancelBtn.onclick;
+            cancelBtn.onclick = (e) => {
+                document.removeEventListener('keydown', handleEscape);
+                if (originalOnClick) originalOnClick.call(this, e);
+            };
+        }
+        
+        // Ajouter un effet de pulsation sur les troupes
+        const troopIcons = document.querySelectorAll('.troop-icon');
+        troopIcons.forEach(icon => {
+            icon.classList.add('duplicate-target');
+        });
+        
+        // Ajouter un overlay semi-transparent sur toute la page
+        const overlay = document.createElement('div');
+        overlay.id = 'duplicate-overlay';
+        document.body.appendChild(overlay);
+    }
+    
+    // Annuler le mode duplication
+    cancelDuplicateMode(gameState = null) {
+        // Restaurer le curseur normal
+        document.body.style.cursor = 'default';
+        document.body.classList.remove('duplicate-mode');
+        
+        // Supprimer la notification
+        const notification = document.getElementById('duplicate-notification');
+        if (notification) {
+            notification.remove();
+        }
+        
+        // Supprimer l'overlay
+        const overlay = document.getElementById('duplicate-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        
+        // Retirer les effets sur les troupes
+        const troopIcons = document.querySelectorAll('.troop-icon');
+        troopIcons.forEach(icon => {
+            icon.classList.remove('duplicate-target');
+        });
+        
+        // Retirer les effets sur les troupes du header
+        const headerTroopIcons = document.querySelectorAll('.troop-icon-header');
+        headerTroopIcons.forEach(icon => {
+            icon.classList.remove('duplicate-target');
+        });
+        
+        // Réinitialiser le mode duplication
+        if (gameState) {
+            gameState.consumableManager.activeDuplicateConsumable = null;
+        } else {
+            // Fallback pour les appels depuis le HTML
+            if (window.gameState && window.gameState.consumableManager) {
+                window.gameState.consumableManager.activeDuplicateConsumable = null;
+            }
+        }
+    }
+    
+    // Ajouter les événements de clic sur les troupes du header pour la duplication
+    addDuplicateClickListeners(gameState) {
+        const troopsContainer = document.getElementById('troops-display');
+        if (!troopsContainer) return;
+        
+        // Supprimer les anciens listeners
+        this.removeDuplicateClickListeners(gameState);
+        
+        // Ajouter les nouveaux listeners
+        const troopIcons = troopsContainer.querySelectorAll('.troop-icon-header');
+        troopIcons.forEach(icon => {
+            icon.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleTroopDuplicateClick(icon, gameState);
+            });
+        });
+    }
+    
+    // Supprimer les événements de clic de duplication
+    removeDuplicateClickListeners(gameState) {
+        const troopsContainer = document.getElementById('troops-display');
+        if (!troopsContainer) return;
+        
+        const troopIcons = troopsContainer.querySelectorAll('.troop-icon-header');
+        troopIcons.forEach(icon => {
+            icon.removeEventListener('click', this.handleTroopDuplicateClick);
+        });
+    }
+    
+    // Gérer le clic sur une troupe pour la duplication
+    handleTroopDuplicateClick(troopIcon, gameState) {
+        if (!gameState.consumableManager.activeDuplicateConsumable) return;
+        
+        const troopName = troopIcon.getAttribute('data-troop-name');
+        
+        // Vérifier si l'unité peut être dupliquée
+        if (!this.canDuplicateUnit(troopName, gameState)) {
+            gameState.notificationManager.showConsumableError(`Impossible de dupliquer cette unité !`);
+            return;
+        }
+        
+        // Afficher la modal de confirmation
+        this.showDuplicateConfirmationModal(troopName, gameState);
+        
+        // Annuler le mode duplication après avoir affiché la modal
+        this.cancelDuplicateMode(gameState);
+    }
+    
+    // Vérifier si une unité peut être dupliquée
+    canDuplicateUnit(troopName, gameState) {
+        console.log('=== DEBUG DUPLICATION ===');
+        console.log('Unité à dupliquer:', troopName);
+        
+        // Vérifier si l'utilisateur a un consommable de duplication
+        const duplicateConsumables = gameState.consumableManager.consumables.filter(c => c.type === 'duplicateUnit');
+        console.log('Consommables de duplication trouvés:', duplicateConsumables.length);
+        
+        if (duplicateConsumables.length === 0) {
+            console.log('❌ Pas de consommable de duplication');
             return false;
         }
         
+        // Vérifier si l'unité existe dans le pool global
+        // Utiliser la méthode correcte pour obtenir le pool d'unités
+        const baseUnits = gameState.getBaseUnits();
+        const availableTroops = gameState.getAllAvailableTroops();
+        const allUnits = [...baseUnits, ...availableTroops];
+        
+        console.log('Unités de base:', baseUnits.length);
+        console.log('Unités disponibles:', availableTroops.length);
+        console.log('Total d\'unités:', allUnits.length);
+        
+        const sourceUnits = allUnits.filter(unit => unit.name === troopName);
+        console.log('Unités trouvées avec ce nom:', sourceUnits.length);
+        
+        if (sourceUnits.length === 0) {
+            console.log('❌ Aucune unité trouvée avec ce nom');
+            console.log('Noms d\'unités disponibles:', allUnits.map(u => u.name));
+            return false;
+        }
+        
+        console.log('✅ Unités trouvées:', sourceUnits.map(u => u.name));
         return true;
+    }
+    
+    // Afficher la modal de confirmation de duplication
+    showDuplicateConfirmationModal(unitName, gameState) {
+        // Compter les unités actuelles en utilisant ownedUnits
+        const currentCount = gameState.ownedUnits[unitName] || 0;
+        const newCount = currentCount + 1;
+        
+        // Obtenir l'icône de l'unité
+        const unitIcon = this.getUnitIcon(unitName, gameState);
+        
+        const modalContent = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Confirmer la duplication</h3>
+                    <button class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="duplicate-confirmation-details">
+                        <div class="duplicate-icon">🪞</div>
+                        <div class="duplicate-description">
+                            <div class="duplicate-title">Miroir de Duplication</div>
+                            <div class="duplicate-effect">Une copie de l'unité sera ajoutée à votre pool</div>
+                        </div>
+                    </div>
+                    <div class="duplicate-preview">
+                        <div class="duplicate-before">
+                            <span class="duplicate-count">${currentCount}</span>
+                            <span class="duplicate-unit-icon">${unitIcon}</span>
+                            <span class="duplicate-unit">${unitName}</span>
+                        </div>
+                        <div class="duplicate-arrow">➜</div>
+                        <div class="duplicate-after">
+                            <span class="duplicate-count">${newCount}</span>
+                            <span class="duplicate-unit-icon">${unitIcon}</span>
+                            <span class="duplicate-unit">${unitName}</span>
+                        </div>
+                    </div>
+                    <div class="duplicate-confirmation-actions">
+                        <button class="btn secondary" id="cancel-duplicate">Annuler</button>
+                        <button class="btn primary" id="confirm-duplicate">Dupliquer</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Créer la modal si elle n'existe pas
+        let modal = document.getElementById('duplicate-confirmation-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'duplicate-confirmation-modal';
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
+        
+        modal.innerHTML = modalContent;
+        
+        // Ajouter les gestionnaires d'événements
+        const closeBtn = modal.querySelector('.close-btn');
+        const cancelBtn = modal.querySelector('#cancel-duplicate');
+        const confirmBtn = modal.querySelector('#confirm-duplicate');
+        
+        closeBtn.addEventListener('click', () => ModalManager.hideModal('duplicate-confirmation-modal'));
+        cancelBtn.addEventListener('click', () => ModalManager.hideModal('duplicate-confirmation-modal'));
+        
+        confirmBtn.addEventListener('click', () => {
+            // Fermer la modal immédiatement
+            ModalManager.hideModal('duplicate-confirmation-modal');
+            // Effectuer la duplication
+            gameState.consumableManager.duplicateUnitFromModal(unitName, gameState);
+        });
+        
+        // Afficher la modal
+        ModalManager.showModal('duplicate-confirmation-modal');
     }
     
     // Afficher la modal de confirmation de transformation
