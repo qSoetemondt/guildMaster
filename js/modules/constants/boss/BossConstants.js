@@ -1,6 +1,13 @@
 // Boss disponibles
 
-
+// Constantes pour les malus de boss
+export const BOSS_MALUS_VALUES = {
+    GOLEM_DAMAGE_REDUCTION: 50,    // -50% de dégâts corps à corps
+    DRAGON_DAMAGE_REDUCTION: 30,   // -30% de dégâts distance
+    LICHE_DAMAGE_REDUCTION: 2,     // -2 dégâts corps à corps
+    TITAN_MULTIPLIER_REDUCTION: 50, // -50% multiplicateurs (réduits de moitié)
+    DEMON_DAMAGE_BONUS: 50         // +50% de dégâts magiques
+};
 
 // Fonction pour obtenir le nom traduit d'un boss
 export function getBossDisplayName(bossName) {

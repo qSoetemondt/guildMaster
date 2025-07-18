@@ -1,5 +1,7 @@
 // Gestionnaire de sauvegarde et chargement pour GuildMaster
 import { NotificationManager } from './NotificationManager.js';
+import { RANKS } from './constants/index.js';
+
 export class SaveManager {
     constructor() {
         this.saveKey = 'guildMasterSave';
@@ -230,7 +232,7 @@ export class SaveManager {
 
     // Créer une nouvelle partie
     newGame(gameState) {
-        gameState.rank = 'F-';
+        gameState.rank = RANKS[0];
         gameState.rankProgress = 0;
         gameState.rankTarget = 100;
         gameState.gold = 100;

@@ -1,6 +1,12 @@
 // Définitions centralisées des bonus d'équipement
 
-
+// Constantes pour les valeurs d'effets de bonus
+export const BONUS_EFFECT_VALUES = {
+    CAC_CEST_LA_VIE_SYNERGY_TRIGGER: 2,  // +2 multiplicateur quand Formation Corps à Corps est activée
+    ECONOMIE_DUNE_VIE_COMBAT_BONUS: 3,    // +3 or par combat pour Economie d'une vie
+    POSITION_QUATRE_MULTIPLIER: 2,        // ×2 multiplicateur pour Position Quatre
+    PREMIERE_POSITION_SYNERGY: 2          // ×2 pour les synergies en première position
+};
 
 // Fonction pour obtenir le nom traduit d'un bonus
 export function getBonusDisplayName(bonusId) {
@@ -198,7 +204,7 @@ export const BONUS_DESCRIPTIONS = {
             {
                 type: 'multiplier_bonus',
                 target: 'melee_units',
-                value: 2,
+                value: BONUS_EFFECT_VALUES.CAC_CEST_LA_VIE_SYNERGY_TRIGGER,
                 condition: 'synergy_trigger',
                 triggerSynergy: 'formation_corps_a_corps',
                 triggerCount: 0

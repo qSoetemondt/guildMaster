@@ -1,6 +1,9 @@
 // Gestionnaire d'animations pour GuildMaster
 import { getTypeDisplayString } from '../utils/TypeUtils.js';
 import { incrementDynamicBonusTrigger } from './UnitManager.js';
+import { RARITY_LEVELS } from './constants/game/RarityUtils.js';
+import { BOSS_MALUS_VALUES } from './constants/boss/BossConstants.js';
+import { BONUS_EFFECT_VALUES } from './constants/shop/BonusConstants.js';
 
 export class AnimationManager {
     constructor(gameState) {
@@ -494,10 +497,10 @@ export class AnimationManager {
             for (const bonusElement of bonusElements) {
                 const bonusName = bonusElement.querySelector('.bonus-name');
                 if (bonusName && bonusName.textContent.includes('Le CAC c\'est la vie')) {
-                    // Créer une animation +1 sur ce bonus
+                    // Créer une animation avec la valeur depuis les constantes
                     const plusOneElement = document.createElement('div');
                     plusOneElement.className = 'bonus-increase-animation';
-                    plusOneElement.textContent = '+1';
+                    plusOneElement.textContent = `+${BONUS_EFFECT_VALUES.CAC_CEST_LA_VIE_SYNERGY_TRIGGER}`;
                     plusOneElement.style.cssText = `
                         position: absolute;
                         top: -20px;
@@ -602,15 +605,15 @@ export class AnimationManager {
                 const countDisplay = bonusCount > 1 ? ` <span class="bonus-count">×${bonusCount}</span>` : '';
                 
                 // Déterminer la rareté du bonus en fonction du nom
-                let rarity = 'common';
+                let rarity = RARITY_LEVELS.COMMON;
                 if (['Épée Aiguisée', 'Arc Renforcé', 'Grimoire Magique', 'Bonus Or', 'Bonus Corps à Corps', 'Bonus Distance', 'Bonus Magique'].includes(bonus.name)) {
-                    rarity = 'common';
+                    rarity = RARITY_LEVELS.COMMON;
                 } else if (['Amulette de Force', 'Cristal de Précision', 'Orbe Mystique', 'Potion de Force', 'Élixir de Puissance'].includes(bonus.name)) {
-                    rarity = 'uncommon';
+                    rarity = RARITY_LEVELS.UNCOMMON;
                 } else if (['Armure Légendaire', 'Arc Divin', 'Baguette Suprême'].includes(bonus.name)) {
-                    rarity = 'rare';
+                    rarity = RARITY_LEVELS.RARE;
                 } else if (['Relique Ancienne', 'Position Quatre'].includes(bonus.name)) {
-                    rarity = 'legendary';
+                    rarity = RARITY_LEVELS.LEGENDARY;
                 }
                 
                 // Ajouter la classe de rareté à l'élément
@@ -822,30 +825,30 @@ export class AnimationManager {
                 if (mechanic.includes('corps à corps') && this.gameState.hasTroopType(troop, 'Corps à corps')) {
                     if (mechanic.includes('-50%')) {
                         await this.sleep(150);
-                        this.showMalusAnimation(unitElement, '-50%', 'damage', currentDamage);
+                        this.showMalusAnimation(unitElement, `-${BOSS_MALUS_VALUES.GOLEM_DAMAGE_REDUCTION}%`, 'damage', currentDamage);
                         this.updateUnitStat(unitElement, 'damage', currentDamage);
                     }
                     if (mechanic.includes('-2')) {
                         await this.sleep(150);
-                        this.showMalusAnimation(unitElement, '-2', 'damage', currentDamage);
+                        this.showMalusAnimation(unitElement, `-${BOSS_MALUS_VALUES.LICHE_DAMAGE_REDUCTION}`, 'damage', currentDamage);
                         this.updateUnitStat(unitElement, 'damage', currentDamage);
                     }
                 }
                 if (mechanic.includes('distance') && this.gameState.hasTroopType(troop, 'Distance')) {
                     if (mechanic.includes('-30%')) {
                         await this.sleep(150);
-                        this.showMalusAnimation(unitElement, '-30%', 'damage', currentDamage);
+                        this.showMalusAnimation(unitElement, `-${BOSS_MALUS_VALUES.DRAGON_DAMAGE_REDUCTION}%`, 'damage', currentDamage);
                         this.updateUnitStat(unitElement, 'damage', currentDamage);
                     }
                 }
                 if (mechanic.includes('multiplicateurs')) {
                     await this.sleep(150);
-                    this.showMalusAnimation(unitElement, '-50%', 'multiplier', currentMultiplier);
+                    this.showMalusAnimation(unitElement, `-${BOSS_MALUS_VALUES.TITAN_MULTIPLIER_REDUCTION}%`, 'multiplier', currentMultiplier);
                     this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
                 }
                 if (mechanic.includes('magiques') && this.gameState.hasTroopType(troop, 'Magique')) {
                     await this.sleep(150);
-                    this.showBonusAnimation(unitElement, '+50%', 'damage', currentDamage);
+                    this.showBonusAnimation(unitElement, `+${BOSS_MALUS_VALUES.DEMON_DAMAGE_BONUS}%`, 'damage', currentDamage);
                     this.updateUnitStat(unitElement, 'damage', currentDamage);
                 }
                 

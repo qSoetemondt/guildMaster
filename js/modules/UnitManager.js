@@ -616,8 +616,8 @@ export function calculateEquipmentBonuses(gameState) {
         else if (bonusId === 'relique_ancienne') {
             bonuses.push({ 
                 name: bonusDesc.name,
-                damage: 10 * count, 
-                multiplier: 3 * count, 
+                damage: 25 * count, 
+                multiplier: 5 * count, 
                 target: 'all' 
             });
         }

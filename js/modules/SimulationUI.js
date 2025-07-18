@@ -1,5 +1,6 @@
 // Interface utilisateur pour les simulations d'équilibrage
 import { ModalManager } from './ModalManager.js';
+import { RANKS } from './constants/index.js';
 
 
 export class SimulationUI {
@@ -322,7 +323,7 @@ export class SimulationUI {
     // Mettre à jour le graphique des rangs
     updateRankChart(rankDistribution) {
         const chartDiv = document.getElementById('rank-chart');
-        const ranks = ['F-', 'F', 'F+', 'E-', 'E', 'E+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S'];
+        const ranks = RANKS;
         
         let chartHTML = '<div class="rank-bars">';
         ranks.forEach(rank => {

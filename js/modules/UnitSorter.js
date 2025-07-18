@@ -1,4 +1,6 @@
 // Module de tri des unités
+import { RARITY_ORDER } from './constants/game/RarityUtils.js';
+
 export class UnitSorter {
     constructor() {
         this.currentSort = 'none';
@@ -213,9 +215,8 @@ export class UnitSorter {
 
             case 'rarity':
                 sorted.sort((a, b) => {
-                    const rarityOrder = { 'common': 1, 'uncommon': 2, 'rare': 3, 'epic': 4, 'legendary': 5 };
-                    const aRarity = rarityOrder[a.rarity] || 0;
-                    const bRarity = rarityOrder[b.rarity] || 0;
+                    const aRarity = RARITY_ORDER[a.rarity] || 0;
+                    const bRarity = RARITY_ORDER[b.rarity] || 0;
                     return this.sortDirection === 'ascending' ? aRarity - bRarity : bRarity - aRarity;
                 });
                 break;

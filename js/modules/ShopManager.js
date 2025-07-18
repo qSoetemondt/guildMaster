@@ -1,7 +1,7 @@
 // Gestionnaire de magasin pour GuildMaster
 import { BASE_UNITS } from './constants/units/UnitConstants.js';
 import { BONUS_DESCRIPTIONS, calculateBonusPrice, getBonusRarity } from './constants/shop/BonusConstants.js';
-import { getRarityIcon, getRarityColor, getRarityDisplayName } from './constants/game/RarityUtils.js';
+import { getRarityIcon, getRarityColor, getRarityDisplayName, RARITY_LEVELS, RARITY_BASE_PRICES, RARITY_CHANCES } from './constants/game/RarityUtils.js';
 import { getTypeDisplayString } from '../utils/TypeUtils.js';
 import { ModalManager } from './ModalManager.js';
 import { clearUnitCache } from './UnitManager.js';
@@ -143,16 +143,7 @@ export class ShopManager {
 
     // Extraire le calcul du prix des unités
     calculateUnitPrice(unit) {
-        let basePrice = 25; // Prix de base
-        
-        // Ajuster le prix selon la rareté
-        switch (unit.rarity) {
-            case 'common': basePrice = 25; break;
-            case 'uncommon': basePrice = 30; break;
-            case 'rare': basePrice = 50; break;
-            case 'epic': basePrice = 60; break;
-            case 'legendary': basePrice = 100; break;
-        }
+        let basePrice = RARITY_BASE_PRICES[unit.rarity] || RARITY_BASE_PRICES[RARITY_LEVELS.COMMON]; // Prix de base selon la rareté
         
         // Ajuster selon les stats (dégâts + multiplicateur)
         const statBonus = Math.floor((unit.damage + unit.multiplier) / 2);
@@ -308,14 +299,8 @@ export class ShopManager {
 
     // Sélectionner les items avec pondération par rareté
     selectItemsByRarity(items, count) {
-        // Définir les pourcentages de chance par rareté
-        const rarityChances = {
-            'common': 0.40,      // 40%
-            'uncommon': 0.25,    // 25%
-            'rare': 0.18,        // 18%
-            'epic': 0.12,        // 12%
-            'legendary': 0.05    // 5%
-        };
+        // Utiliser les pourcentages de chance par rareté depuis les constantes
+        const rarityChances = RARITY_CHANCES;
 
         const selectedItems = [];
         const itemsByRarity = {};
@@ -354,11 +339,11 @@ export class ShopManager {
                 itemsByRarity[selectedRarity].splice(randomIndex, 1);
             } else {
                 // Si pas d'item de cette rareté, prendre un item commun
-                if (itemsByRarity['common'] && itemsByRarity['common'].length > 0) {
-                    const randomIndex = Math.floor(Math.random() * itemsByRarity['common'].length);
-                    const selectedItem = itemsByRarity['common'][randomIndex];
+                if (itemsByRarity[RARITY_LEVELS.COMMON] && itemsByRarity[RARITY_LEVELS.COMMON].length > 0) {
+                    const randomIndex = Math.floor(Math.random() * itemsByRarity[RARITY_LEVELS.COMMON].length);
+                    const selectedItem = itemsByRarity[RARITY_LEVELS.COMMON][randomIndex];
                     selectedItems.push(selectedItem);
-                    itemsByRarity['common'].splice(randomIndex, 1);
+                    itemsByRarity[RARITY_LEVELS.COMMON].splice(randomIndex, 1);
                 } else {
                     // Fallback : prendre le premier item disponible
                     for (const rarity in itemsByRarity) {

@@ -1,4 +1,6 @@
 // Gestionnaire de debug pour GuildMaster
+import { RANKS } from './constants/index.js';
+
 export class DebugManager {
     constructor(gameState) {
         this.gameState = gameState;
@@ -93,7 +95,6 @@ export class DebugManager {
 
         // Fonction pour lister tous les rangs
         this.debugFunctions.set('listRanks', () => {
-            const RANKS = ['F-', 'F', 'F+', 'E-', 'E', 'E+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S-', 'S', 'S+'];
             console.log(`📋 Tous les rangs : ${RANKS.join(', ')}`);
             return RANKS;
         });

@@ -1,5 +1,6 @@
 // Moteur de simulation pour l'analyse d'équilibrage
 import { GameState } from './GameState.js';
+import { RANKS } from './constants/index.js';
 
 export class SimulationEngine {
     constructor() {
@@ -118,7 +119,7 @@ export class SimulationEngine {
             let roundCount = 0;
             const maxRounds = this.simulationConfig.maxRounds;
             
-            while (gameState.rank !== 'S' && roundCount < maxRounds) {
+            while (gameState.rank !== RANKS[RANKS.length - 1] && roundCount < maxRounds) {
                 roundCount++;
                 
                 // Phase de recrutement automatique
@@ -146,7 +147,7 @@ export class SimulationEngine {
             
             const result = {
                 gameIndex,
-                success: gameState.rank === 'S',
+                success: gameState.rank === RANKS[RANKS.length - 1],
                 finalRank: gameState.rank,
                 finalRankProgress: gameState.rankProgress,
                 gold: gameState.gold,
@@ -846,15 +847,13 @@ export class SimulationEngine {
 
     // Calculer le rang moyen
     calculateAverageRank(results) {
-        const rankValues = {
-            'F-': 1, 'F': 2, 'F+': 3, 'E-': 4, 'E': 5, 'E+': 6,
-            'D-': 7, 'D': 8, 'D+': 9, 'C-': 10, 'C': 11, 'C+': 12,
-            'B-': 13, 'B': 14, 'B+': 15, 'A-': 16, 'A': 17, 'A+': 18, 'S': 19
-        };
+        const rankValues = {};
+        RANKS.forEach((rank, index) => {
+            rankValues[rank] = index + 1;
+        });
         
         const averageValue = this.calculateAverage(results.map(r => rankValues[r.finalRank] || 1), '');
-        const ranks = Object.keys(rankValues);
-        return ranks[Math.floor(averageValue) - 1] || 'F-';
+        return RANKS[Math.floor(averageValue) - 1] || RANKS[0];
     }
 
     // Calculer la distribution des rangs
@@ -1206,7 +1205,7 @@ export class SimulationEngine {
         
         // Afficher tous les rangs atteints
         console.log('\n📊 DISTRIBUTION DES RANGS:');
-        const allRanks = ['F-', 'F', 'F+', 'E-', 'E', 'E+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S'];
+        const allRanks = RANKS;
         allRanks.forEach(rank => {
             const count = stats.rankDistribution[rank] || 0;
             if (count > 0) {

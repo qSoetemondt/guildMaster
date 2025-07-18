@@ -1,4 +1,5 @@
 import { ModalManager } from './ModalManager.js';
+import { RANKS } from './constants/index.js';
 
 export class StatisticsManager {
     constructor(gameState) {
@@ -18,7 +19,7 @@ export class StatisticsManager {
             bestTurnDamage: 0,
             bestTurnRound: 0,
             totalDamageDealt: 0,
-            highestRank: 'F-',
+            highestRank: RANKS[0],
             startTime: Date.now()
         };
     }
@@ -209,7 +210,7 @@ export class StatisticsManager {
             bestTurnDamage: 0,
             bestTurnRound: 0,
             totalDamageDealt: 0,
-            highestRank: 'F-',
+            highestRank: RANKS[0],
             startTime: Date.now()
         };
     }

@@ -1,5 +1,6 @@
 // Gestionnaire de consommables pour GuildMaster
 import { ModalManager } from './ModalManager.js';
+import { RARITY_LEVELS } from './constants/game/RarityUtils.js';
 import { createGlobalUnitPool, clearUnitCache } from './UnitManager.js';
 
 
@@ -55,7 +56,7 @@ export class ConsumableManager {
                 icon: '🔄',
                 price: Math.ceil(10 * 1.75), // 18
                 effect: 'refreshShop',
-                rarity: 'common'
+                rarity: RARITY_LEVELS.COMMON
             },
             transformSword: {
                 name: 'Épée',
@@ -64,7 +65,7 @@ export class ConsumableManager {
                 price: Math.ceil(15 * 1.75), // 27
                 effect: 'transformUnit',
                 targetUnit: 'Épéiste',
-                rarity: 'common'
+                rarity: RARITY_LEVELS.COMMON
             },
             transformArcher: {
                 name: 'Arc',
@@ -73,7 +74,7 @@ export class ConsumableManager {
                 price: Math.ceil(15 * 1.75), // 27
                 effect: 'transformUnit',
                 targetUnit: 'Archer',
-                rarity: 'common'
+                rarity: RARITY_LEVELS.COMMON
             },
             transformLancier: {
                 name: 'Lance',
@@ -82,7 +83,7 @@ export class ConsumableManager {
                 price: Math.ceil(15 * 1.75), // 27
                 effect: 'transformUnit',
                 targetUnit: 'Lancier',
-                rarity: 'common'
+                rarity: RARITY_LEVELS.COMMON
             },
             transformPaysan: {
                 name: 'Fourche',
@@ -91,7 +92,7 @@ export class ConsumableManager {
                 price: Math.ceil(5 * 1.75), // 9
                 effect: 'transformUnit',
                 targetUnit: 'Paysan',
-                rarity: 'common'
+                rarity: RARITY_LEVELS.COMMON
             },
             transformMagicienBleu: {
                 name: 'Livre bleu',
@@ -100,7 +101,7 @@ export class ConsumableManager {
                 price: Math.ceil(15 * 1.75), // 27
                 effect: 'transformUnit',
                 targetUnit: 'Magicien Bleu',
-                rarity: 'uncommon'
+                rarity: RARITY_LEVELS.UNCOMMON
             },
             transformMagicienRouge: {
                 name: 'Livre rouge',
@@ -109,7 +110,7 @@ export class ConsumableManager {
                 price: Math.ceil(15 * 1.75), // 27
                 effect: 'transformUnit',
                 targetUnit: 'Magicien Rouge',
-                rarity: 'uncommon'
+                rarity: RARITY_LEVELS.UNCOMMON
             },
             transformBarbare: {
                 name: 'Hache',
@@ -118,7 +119,7 @@ export class ConsumableManager {
                 price: Math.ceil(25 * 1.75), // 44
                 effect: 'transformUnit',
                 targetUnit: 'Barbare',
-                rarity: 'rare'
+                rarity: RARITY_LEVELS.RARE
             },
             transformSorcier: {
                 name: 'Orbe',
@@ -127,7 +128,7 @@ export class ConsumableManager {
                 price: Math.ceil(50 * 1.75), // 88
                 effect: 'transformUnit',
                 targetUnit: 'Sorcier',
-                rarity: 'epic'
+                rarity: RARITY_LEVELS.EPIC
             },
             transformFronde: {
                 name: 'Fronde',
@@ -136,7 +137,7 @@ export class ConsumableManager {
                 price: Math.ceil(50 * 1.75), // 88
                 effect: 'transformUnit',
                 targetUnit: 'Frondeur',
-                rarity: 'epic'
+                rarity: RARITY_LEVELS.EPIC
             },
             upgradeSynergy: {
                 name: 'Cristal de Synergie',
@@ -144,15 +145,15 @@ export class ConsumableManager {
                 icon: '💎',
                 price: Math.ceil(30 * 1.75), // 53
                 effect: 'upgradeSynergy',
-                rarity: 'rare'
+                rarity: RARITY_LEVELS.RARE
             },
             duplicateUnit: {
                 name: 'Miroir de Duplication',
                 description: 'Duplique une unité de votre choix',
                 icon: '🪞',
-                price: Math.ceil(100 * 1.75), // 175
+                price: Math.ceil(80 * 1.27), // 102
                 effect: 'duplicateUnit',
-                rarity: 'legendary'
+                rarity: RARITY_LEVELS.LEGENDARY
             }
         };
     }
@@ -178,7 +179,7 @@ export class ConsumableManager {
             icon: consumableTemplate.icon,
             effect: consumableTemplate.effect,
             targetUnit: consumableTemplate.targetUnit,
-            rarity: consumableTemplate.rarity || 'common'
+            rarity: consumableTemplate.rarity || RARITY_LEVELS.COMMON
         };
 
         this.consumables.push(consumable);

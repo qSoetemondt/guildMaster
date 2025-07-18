@@ -3,6 +3,42 @@
  * Centralise les fonctions getRarityIcon, getRarityColor et getRarityDisplayName
  */
 
+// Constantes pour les raretés
+export const RARITY_LEVELS = {
+    COMMON: 'common',
+    UNCOMMON: 'uncommon', 
+    RARE: 'rare',
+    EPIC: 'epic',
+    LEGENDARY: 'legendary'
+};
+
+// Ordre des raretés pour le tri
+export const RARITY_ORDER = {
+    [RARITY_LEVELS.COMMON]: 1,
+    [RARITY_LEVELS.UNCOMMON]: 2,
+    [RARITY_LEVELS.RARE]: 3,
+    [RARITY_LEVELS.EPIC]: 4,
+    [RARITY_LEVELS.LEGENDARY]: 5
+};
+
+// Prix de base par rareté
+export const RARITY_BASE_PRICES = {
+    [RARITY_LEVELS.COMMON]: 25,
+    [RARITY_LEVELS.UNCOMMON]: 30,
+    [RARITY_LEVELS.RARE]: 50,
+    [RARITY_LEVELS.EPIC]: 60,
+    [RARITY_LEVELS.LEGENDARY]: 100
+};
+
+// Pourcentages de chance par rareté
+export const RARITY_CHANCES = {
+    [RARITY_LEVELS.COMMON]: 0.40,      // 40%
+    [RARITY_LEVELS.UNCOMMON]: 0.25,    // 25%
+    [RARITY_LEVELS.RARE]: 0.18,        // 18%
+    [RARITY_LEVELS.EPIC]: 0.12,        // 12%
+    [RARITY_LEVELS.LEGENDARY]: 0.05    // 5%
+};
+
 /**
  * Retourne l'icône correspondant à la rareté
  * @param {string} rarity - La rareté ('common', 'uncommon', 'rare', 'epic', 'legendary')
@@ -10,13 +46,13 @@
  */
 export function getRarityIcon(rarity) {
     const icons = {
-        'common': '⚪',
-        'uncommon': '🟢',
-        'rare': '🔵',
-        'epic': '🟣',
-        'legendary': '🟡'
+        [RARITY_LEVELS.COMMON]: '⚪',
+        [RARITY_LEVELS.UNCOMMON]: '🟢',
+        [RARITY_LEVELS.RARE]: '🔵',
+        [RARITY_LEVELS.EPIC]: '🟣',
+        [RARITY_LEVELS.LEGENDARY]: '🟡'
     };
-    return icons[rarity] || '⚪';
+    return icons[rarity] || icons[RARITY_LEVELS.COMMON];
 }
 
 /**
@@ -26,13 +62,13 @@ export function getRarityIcon(rarity) {
  */
 export function getRarityColor(rarity) {
     const colors = {
-        'common': '#666666',
-        'uncommon': '#00b894',
-        'rare': '#74b9ff',
-        'epic': '#a29bfe',
-        'legendary': '#fdcb6e'
+        [RARITY_LEVELS.COMMON]: '#666666',
+        [RARITY_LEVELS.UNCOMMON]: '#00b894',
+        [RARITY_LEVELS.RARE]: '#74b9ff',
+        [RARITY_LEVELS.EPIC]: '#a29bfe',
+        [RARITY_LEVELS.LEGENDARY]: '#fdcb6e'
     };
-    return colors[rarity] || '#666666';
+    return colors[rarity] || colors[RARITY_LEVELS.COMMON];
 }
 
 /**
@@ -42,11 +78,11 @@ export function getRarityColor(rarity) {
  */
 export function getRarityDisplayName(rarity) {
     const displayNames = {
-        'common': 'Normale',
-        'uncommon': 'Commune',
-        'rare': 'Rare',
-        'epic': 'Épique',
-        'legendary': 'Légendaire'
+        [RARITY_LEVELS.COMMON]: 'Normale',
+        [RARITY_LEVELS.UNCOMMON]: 'Commune',
+        [RARITY_LEVELS.RARE]: 'Rare',
+        [RARITY_LEVELS.EPIC]: 'Épique',
+        [RARITY_LEVELS.LEGENDARY]: 'Légendaire'
     };
-    return displayNames[rarity] || 'Normale';
+    return displayNames[rarity] || displayNames[RARITY_LEVELS.COMMON];
 } 
