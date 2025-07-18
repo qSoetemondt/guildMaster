@@ -636,9 +636,12 @@ export function calculateEquipmentBonuses(gameState) {
         }
         // Bonus de position (4ème position)
         else if (bonusId === 'position_quatre') {
+            // Calculer le multiplicateur : 2 + (count - 1) * 0.5, arrondi au supérieur
+            // 1 exemplaire = 2, 2 exemplaires = 3, 3 exemplaires = 3, 4 exemplaires = 4, etc.
+            const positionMultiplier = Math.ceil(2 + (count - 1) * 1);
             const positionBonus = { 
                 name: bonusDesc.name,
-                positionMultiplier: 2 * count, 
+                positionMultiplier: positionMultiplier, 
                 target: 'fourth_position',
                 type: 'position_bonus'
             };

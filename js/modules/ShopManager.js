@@ -640,7 +640,7 @@ export function unlockBonus(bonusId, gameState) {
     }
     
     // Liste des bonus dynamiques qui ne peuvent avoir qu'un seul exemplaire
-    const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie', 'position_quatre'];
+    const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie'];
     
     // Vérifier si c'est un bonus dynamique
     if (dynamicBonuses.includes(bonusId)) {
@@ -669,9 +669,6 @@ export function unlockBonus(bonusId, gameState) {
                     gameState.dynamicBonusStates[bonusId]['end_of_combat'] = 0;
                 }
                 gameState.dynamicBonusStates[bonusId]['end_of_combat'] += 1;
-            } else if (bonusId === 'position_quatre') {
-                // Pour Position Quatre, pas de compteur spécial nécessaire
-                // Le bonus s'applique automatiquement en combat
             }
             
             // Mettre à jour immédiatement l'affichage du bonus dynamique
@@ -742,7 +739,7 @@ export function updateActiveBonuses(gameState, shopManager = null) {
     });
 
     // Liste des bonus dynamiques
-    const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie', 'position_quatre'];
+    const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie'];
     
     // Afficher chaque bonus avec son nombre
     Object.keys(bonusCounts).forEach(bonusId => {
@@ -804,11 +801,8 @@ export function updateActiveBonuses(gameState, shopManager = null) {
                     }
                     
                     // Toujours afficher le compteur, même s'il est à 0 (pour montrer qu'il existe)
-                    const combatText = ` <span class="bonus-count">+${combatCount}</span>`;
+                                        const combatText = ` <span class="bonus-count">+${combatCount}</span>`;
                     displayText = `${bonus.icon} ${bonus.name}${combatText}`;
-                } else if (bonusId === 'position_quatre') {
-                    // Pour Position Quatre, afficher le nom du bonus, pas la target
-                    displayText = `${bonus.icon} ${bonus.name}`;
                 }
             } else {
                 // Pour les bonus normaux, afficher le nombre d'exemplaires
@@ -920,8 +914,10 @@ function showBonusModal(bonusId, bonus, count, gameState) {
         dynamicDescription = `Ce bonus donne +${totalValue} d'or par combat. Il augmente de +2 d'or par combat terminé. (Actuellement : +${combatCount} combats terminés)`;
     }
     else if (bonusId === 'position_quatre') {
-        // Pour Position Quatre, afficher la description de base
-        dynamicDescription = bonus.description;
+        // Pour Position Quatre, calculer le multiplicateur en fonction du nombre d'exemplaires
+        const count = gameState.unlockedBonuses.filter(id => id === bonusId).length;
+        const positionMultiplier = Math.ceil(2 + (count - 1) * 1);
+        dynamicDescription = `L'unité en 4ème position voit son multiplicateur multiplié par ${positionMultiplier}. +1 à chaque achat supplémentaire (arrondi au supérieur).`;
     }
     
     // Créer le contenu de la modal

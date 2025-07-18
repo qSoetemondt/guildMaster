@@ -77,7 +77,7 @@ export class BossManager {
         
         if (mechanic.includes('corps à corps') && this.gameState.hasTroopType(troop, 'Corps à corps')) {
             if (mechanic.includes('-50%')) {
-                return Math.floor(damage * 0.5);
+                return Math.ceil(damage * 0.5);
             }
             if (mechanic.includes('-2')) {
                 return Math.max(0, damage - 2);
@@ -86,12 +86,12 @@ export class BossManager {
         
         if (mechanic.includes('distance') && this.gameState.hasTroopType(troop, 'Distance')) {
             if (mechanic.includes('-30%')) {
-                return Math.floor(damage * 0.7);
+                return Math.ceil(damage * 0.7);
             }
         }
         
         if (mechanic.includes('magiques') && this.gameState.hasTroopType(troop, 'Magique')) {
-            return Math.floor(damage * 1.5);
+            return Math.ceil(damage * 1.5);
         }
         
         // Effet spécial du boss Quilegan : bloque les relances, bonus et synergies tant qu'aucun bonus n'est vendu
@@ -110,7 +110,7 @@ export class BossManager {
         const mechanic = this.gameState.currentCombat.bossMechanic;
         
         if (mechanic.includes('multiplicateurs')) {
-            const newMultiplier = Math.floor(multiplier * 0.5);
+            const newMultiplier = Math.ceil(multiplier * 0.5);
             return newMultiplier;
         }
         

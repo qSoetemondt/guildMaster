@@ -951,6 +951,11 @@ export class UIManager {
                     
                     dynamicDescription = `Ce bonus donne +${totalValue} d'or par combat. Il augmente de +2 d'or par combat terminé. (Actuellement : +${combatCount} combats terminés)`;
                 }
+                else if (bonusId === 'position_quatre') {
+                    // Pour Position Quatre, calculer le multiplicateur en fonction du nombre d'exemplaires
+                    const positionMultiplier = Math.ceil(2 + (count - 1) * 1);
+                    dynamicDescription = `L'unité en 4ème position voit son multiplicateur multiplié par ${positionMultiplier}. +1 à chaque achat supplémentaire (arrondi au supérieur).`;
+                }
                 
                 const bonusElement = document.createElement('div');
                 bonusElement.className = 'sell-bonus-item';

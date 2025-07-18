@@ -229,7 +229,7 @@ export const BONUS_DESCRIPTIONS = {
     // Bonus légendaire basé sur la position
     'position_quatre': {
         name: 'Position Quatre',
-        description: 'L\'unité en 4ème position voit son multiplicateur multiplié par 2',
+        description: 'L\'unité en 4ème position voit son multiplicateur multiplié. +1 à chaque achat supplémentaire (arrondi au supérieur).',
         icon: '🎯',
         rarity: 'legendary',
         basePrice: 120,
