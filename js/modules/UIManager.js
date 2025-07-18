@@ -147,6 +147,10 @@ export class UIManager {
             return;
         }
 
+        // Créer le conteneur pour la grille
+        const synergiesGrid = document.createElement('div');
+        synergiesGrid.className = 'synergies-container';
+
         // Ajouter les synergies une par une
         synergies.forEach(synergy => {
             const synergyElement = document.createElement('div');
@@ -156,8 +160,11 @@ export class UIManager {
                 <div class="synergy-name">${synergy.name}</div>
                 <div class="synergy-effect">${synergy.description}</div>
             `;
-            synergiesContainer.appendChild(synergyElement);
+            synergiesGrid.appendChild(synergyElement);
         });
+
+        // Ajouter le conteneur de grille au conteneur principal
+        synergiesContainer.appendChild(synergiesGrid);
     }
 
     // Mettre à jour les bonus actifs

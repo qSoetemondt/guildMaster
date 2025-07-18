@@ -1599,27 +1599,35 @@ div.unit-card.selected.rarity-common {
 }
 
 /* Styles pour les synergies dans la section de préparation au combat */
+.team-synergies .synergies-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
 .team-synergies .synergy-item {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 10px;
-    margin: 5px 0;
+    padding: 8px;
+    margin: 0;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     opacity: 1;
     transform: none;
+    font-size: 0.9rem;
 }
 
 .synergy-name {
     font-weight: bold;
-    font-size: 1.1em;
-    margin-bottom: 5px;
+    font-size: 1em;
+    margin-bottom: 3px;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
 .synergy-description {
-    font-size: 0.9em;
+    font-size: 0.8em;
     opacity: 0.9;
+    line-height: 1.2;
 }
 
 .no-synergies {
@@ -2154,6 +2162,25 @@ div.unit-card.selected.rarity-common {
 
 /* Responsive */
 @media (max-width: 768px) {
+    .team-synergies .synergies-container {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+    
+    .team-synergies .synergy-item {
+        padding: 10px;
+        font-size: 0.95rem;
+    }
+    
+    .synergy-name {
+        font-size: 1.05em;
+        margin-bottom: 4px;
+    }
+    
+    .synergy-description {
+        font-size: 0.85em;
+    }
+    
     .title-container h1 {
         font-size: 2rem;
     }
