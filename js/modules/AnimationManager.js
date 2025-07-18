@@ -345,7 +345,10 @@ export class AnimationManager {
                 if (bonus.positionMultiplier) {
                     bonusText += `×${bonus.positionMultiplier} multiplicateur 4ème position `;
                 }
-                if (bonus.target !== 'all' && bonus.target !== 'fourth_position') {
+                if (bonus.synergyMultiplier) {
+                    bonusText += `les synergies de la première position sont comptées ${bonus.synergyMultiplier} fois `;
+                }
+                if (bonus.target !== 'all' && bonus.target !== 'fourth_position' && bonus.target !== 'first_position') {
                     bonusText += `(${bonus.target})`;
                 }
                 
@@ -582,7 +585,10 @@ export class AnimationManager {
                 if (bonus.positionMultiplier) {
                     bonusText += `×${bonus.positionMultiplier} multiplicateur 4ème position `;
                 }
-                if (bonus.target !== 'all' && bonus.target !== 'fourth_position') {
+                if (bonus.synergyMultiplier) {
+                    bonusText += `×${bonus.synergyMultiplier} synergie première position `;
+                }
+                if (bonus.target !== 'all' && bonus.target !== 'fourth_position' && bonus.target !== 'first_position') {
                     bonusText += `(${bonus.target})`;
                 }
                 

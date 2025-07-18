@@ -241,6 +241,23 @@ export const BONUS_DESCRIPTIONS = {
                 condition: 'base'
             }
         ]
+    },
+    
+    // Bonus épique basé sur la première position
+    'premiere_position': {
+        name: 'Première Position',
+        description: 'L\'unité en première position compte double pour les synergies',
+        icon: '👑',
+        rarity: 'epic',
+        basePrice: 90,
+        effects: [
+            {
+                type: 'synergy_multiplier',
+                target: 'first_position',
+                value: 2,
+                condition: 'base'
+            }
+        ]
     }
 };
 

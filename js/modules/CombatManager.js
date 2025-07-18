@@ -557,7 +557,7 @@ export class CombatManager {
         }
         
         // Liste des bonus qui ont des compteurs de fin de combat
-        const endOfCombatBonuses = ['economie_dune_vie', 'position_quatre'];
+        const endOfCombatBonuses = ['economie_dune_vie', 'position_quatre', 'premiere_position'];
         
         endOfCombatBonuses.forEach(bonusId => {
             if (this.gameState.unlockedBonuses.includes(bonusId)) {

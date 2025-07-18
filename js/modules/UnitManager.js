@@ -332,15 +332,26 @@ export function calculateSynergies(troops = null, gameState) {
     // Utiliser les troupes passées en paramètre ou les troupes sélectionnées
     const troopsToCheck = troops || gameState.selectedTroops;
     
+    // Vérifier si le bonus "Première Position" est actif
+    const firstPositionBonus = gameState.calculateEquipmentBonuses().find(bonus => bonus.type === 'synergy_bonus');
+    const hasFirstPositionBonus = firstPositionBonus && firstPositionBonus.target === 'first_position';
+    
     // Compter les types de troupes
     const typeCounts = {};
-    troopsToCheck.forEach(troop => {
+    troopsToCheck.forEach((troop, index) => {
+        let multiplier = 1;
+        
+        // Si le bonus "Première Position" est actif et que c'est la première unité (index 0)
+        if (hasFirstPositionBonus && index === 0) {
+            multiplier = firstPositionBonus.synergyMultiplier;
+        }
+        
         if (Array.isArray(troop.type)) {
             troop.type.forEach(type => {
-                typeCounts[type] = (typeCounts[type] || 0) + 1;
+                typeCounts[type] = (typeCounts[type] || 0) + (1 * multiplier);
             });
         } else {
-            typeCounts[troop.type] = (typeCounts[troop.type] || 0) + 1;
+            typeCounts[troop.type] = (typeCounts[troop.type] || 0) + (1 * multiplier);
         }
     });
 
@@ -633,6 +644,16 @@ export function calculateEquipmentBonuses(gameState) {
             };
             bonuses.push(positionBonus);
         }
+        // Bonus de première position (synergie double)
+        else if (bonusId === 'premiere_position') {
+            const firstPositionBonus = { 
+                name: bonusDesc.name,
+                synergyMultiplier: 2 * count, 
+                target: 'first_position',
+                type: 'synergy_bonus'
+            };
+            bonuses.push(firstPositionBonus);
+        }
         // Bonus de base pour corps à corps
         else if (bonusId === 'corps_a_corps_bonus') {
             bonuses.push({ 
@@ -753,7 +774,7 @@ export function syncDynamicBonusTriggers(gameState) {
     });
     
     // Liste des bonus dynamiques qui ont des triggers
-    const dynamicBonusesWithTriggers = ['cac_cest_la_vie', 'economie_dune_vie', 'position_quatre'];
+    const dynamicBonusesWithTriggers = ['cac_cest_la_vie', 'economie_dune_vie', 'position_quatre', 'premiere_position'];
     
     dynamicBonusesWithTriggers.forEach(bonusId => {
         const bonusDesc = bonusDescriptions[bonusId];
