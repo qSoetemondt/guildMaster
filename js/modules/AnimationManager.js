@@ -670,26 +670,22 @@ export class AnimationManager {
             const typeDisplay = getTypeDisplayString(troop.type);
             
                     // Nom de l'unité et labels
-            const translatedName = troop.name;
-            const translatedDamageLabel = 'Dégâts';
-            const translatedMultiplierLabel = 'Multiplicateur';
-            
             unitElement.innerHTML = `
                 <div class="unit-slide-info">
                     <div class="unit-slide-icon">${troop.icon}</div>
                     <div class="unit-slide-details">
-                        <div class="unit-slide-name">${translatedName}</div>
+                        <div class="unit-slide-name">${troop.name}</div>
                         <div class="unit-slide-types">${typeDisplay}</div>
                     </div>
                 </div>
                 <div class="unit-stats-animated">
                     <div class="unit-stat-item">
                         <div class="unit-stat-value" id="unit-${troop.id}-damage">${troop.damage}</div>
-                        <div class="unit-stat-label">${translatedDamageLabel}</div>
+                        <div class="unit-stat-label">Dégâts</div>
                     </div>
                     <div class="unit-stat-item">
                         <div class="unit-stat-value" id="unit-${troop.id}-multiplier">${troop.multiplier}</div>
-                        <div class="unit-stat-label">${translatedMultiplierLabel}</div>
+                        <div class="unit-stat-label">Multiplicateur</div>
                     </div>
                 </div>
             `;
@@ -708,18 +704,18 @@ export class AnimationManager {
                     <div class="unit-slide-info">
                         <div class="unit-slide-icon">${troop.icon}</div>
                         <div class="unit-slide-details">
-                            <div class="unit-slide-name">${translatedName}</div>
+                            <div class="unit-slide-name">${troop.name}</div>
                             <div class="unit-slide-types">${typeDisplay}</div>
                         </div>
                     </div>
                     <div class="unit-stats-animated">
                         <div class="unit-stat-item">
                             <div class="unit-stat-value" id="unit-${troop.id}-damage-mobile">${troop.damage}</div>
-                            <div class="unit-stat-label">${translatedDamageLabel}</div>
+                            <div class="unit-stat-label">Dégâts</div>
                         </div>
                         <div class="unit-stat-item">
                             <div class="unit-stat-value" id="unit-${troop.id}-multiplier-mobile">${troop.multiplier}</div>
-                            <div class="unit-stat-label">${translatedMultiplierLabel}</div>
+                            <div class="unit-stat-label">Multiplicateur</div>
                         </div>
                     </div>
                 `;

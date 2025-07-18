@@ -1,6 +1,6 @@
 // Gestionnaire de magasin pour GuildMaster
-import { BASE_UNITS } from './UnitConstants.js';
-import { BONUS_DESCRIPTIONS, calculateBonusPrice, getBonusRarity } from './BonusConstants.js';
+import { BASE_UNITS } from './constants/units/UnitConstants.js';
+import { BONUS_DESCRIPTIONS, calculateBonusPrice, getBonusRarity } from './constants/shop/BonusConstants.js';
 import { getRarityIcon, getRarityColor, getRarityDisplayName } from './constants/game/RarityUtils.js';
 import { getTypeDisplayString } from '../utils/TypeUtils.js';
 import { ModalManager } from './ModalManager.js';

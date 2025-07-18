@@ -244,6 +244,12 @@ export class SimulationEngine {
         
         // Compter les types actuels
         troops.forEach(troop => {
+            // Vérification de sécurité
+            if (!troop || !troop.type || typeof troop.damage === 'undefined' || typeof troop.multiplier === 'undefined') {
+                console.error('Troop invalide dans analyzeTeamNeeds:', troop);
+                return;
+            }
+            
             if (troop.type.includes('Corps à corps')) needs.melee++;
             if (troop.type.includes('Distance')) needs.ranged++;
             if (troop.type.includes('Magique')) needs.magical++;
@@ -267,6 +273,7 @@ export class SimulationEngine {
 
     // Sélectionner l'unité optimale selon les besoins
     selectOptimalUnit(needs, availableGold) {
+        // Utiliser les vraies unités du jeu
         const allUnits = [
             { name: 'Épéiste', type: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, cost: 10, rarity: 'common' },
             { name: 'Archer', type: ['Distance', 'Physique'], damage: 4, multiplier: 3, cost: 12, rarity: 'common' },
@@ -274,9 +281,20 @@ export class SimulationEngine {
             { name: 'Lancier', type: ['Corps à corps', 'Physique'], damage: 4, multiplier: 3, cost: 12, rarity: 'common' },
             { name: 'Paysan', type: ['Corps à corps', 'Physique'], damage: 2, multiplier: 1, cost: 5, rarity: 'common' },
             { name: 'Soigneur', type: ['Soigneur', 'Magique'], damage: 1, multiplier: 1, cost: 8, rarity: 'common' },
+            { name: 'Magicien Rouge', type: ['Distance', 'Magique'], damage: 6, multiplier: 2, cost: 20, rarity: 'uncommon' },
             { name: 'Barbare', type: ['Corps à corps', 'Physique'], damage: 7, multiplier: 1, cost: 20, rarity: 'uncommon' },
-            { name: 'Sorcier', type: ['Distance', 'Magique'], damage: 5, multiplier: 3, cost: 25, rarity: 'rare' },
-            { name: 'Fronde', type: ['Distance', 'Physique'], damage: 2, multiplier: 5, cost: 30, rarity: 'rare' }
+            { name: 'Viking', type: ['Corps à corps', 'Physique'], damage: 6, multiplier: 2, cost: 18, rarity: 'uncommon' },
+            { name: 'Paladin', type: ['Corps à corps', 'Physique'], damage: 8, multiplier: 2, cost: 25, rarity: 'rare' },
+            { name: 'Assassin', type: ['Corps à corps', 'Physique'], damage: 3, multiplier: 6, cost: 30, rarity: 'rare' },
+            { name: 'Mage', type: ['Distance', 'Magique'], damage: 5, multiplier: 4, cost: 35, rarity: 'rare' },
+            { name: 'Frondeur', type: ['Distance', 'Physique'], damage: 2, multiplier: 5, cost: 30, rarity: 'rare' },
+            { name: 'Chevalier', type: ['Corps à corps', 'Physique'], damage: 9, multiplier: 1, cost: 40, rarity: 'epic' },
+            { name: 'Arbalétrier', type: ['Distance', 'Physique'], damage: 8, multiplier: 2, cost: 45, rarity: 'epic' },
+            { name: 'Sorcier', type: ['Distance', 'Magique'], damage: 4, multiplier: 5, cost: 50, rarity: 'epic' },
+            { name: 'Berserker', type: ['Corps à corps', 'Physique'], damage: 10, multiplier: 1, cost: 55, rarity: 'epic' },
+            { name: 'Archer d\'Élite', type: ['Distance', 'Physique'], damage: 6, multiplier: 4, cost: 80, rarity: 'legendary' },
+            { name: 'Mage Suprême', type: ['Distance', 'Magique', 'Corps à corps'], damage: 7, multiplier: 5, cost: 90, rarity: 'legendary' },
+            { name: 'Champion', type: ['Corps à corps', 'Physique', 'Magique'], damage: 12, multiplier: 2, cost: 100, rarity: 'legendary' }
         ];
         
         // Filtrer par coût
@@ -382,6 +400,12 @@ export class SimulationEngine {
         
         // Calculer le score de chaque troupe
         const scoredTroops = availableTroops.map(troop => {
+            // Vérification de sécurité
+            if (!troop || typeof troop.damage === 'undefined' || typeof troop.multiplier === 'undefined') {
+                console.error('Troop invalide dans selectOptimalCombatTroops:', troop);
+                return { ...troop, score: 0 };
+            }
+            
             let score = troop.damage * troop.multiplier;
             
             // Bonus pour les synergies
@@ -466,7 +490,7 @@ export class SimulationEngine {
             return;
         }
         
-        // Générer des items de magasin
+        // Générer des items de magasin (utilise la même logique que le shop normal)
         const shopItems = gameState.shopManager.generateShopItems(gameState);
         
         let purchasesMade = false;
@@ -483,15 +507,16 @@ export class SimulationEngine {
             }
             
             bonusItems.forEach(bonus => {
-                const canAfford = gameState.gold >= bonus.price;
+                // Vérifier la disponibilité comme dans le shop normal
+                const availability = gameState.shopManager.checkItemAvailability(bonus, gameState);
                 const worthBuying = this.isBonusWorthBuying(bonus, gameState);
                 
-                if (canAfford && worthBuying) {
-                    gameState.unlockBonus(bonus.bonusId);
-                    gameState.shopManager.spendGold(gameState, bonus.price);
-                    gameState.gameStats.bonusesPurchased++;
-                    gameLog.push(`Achat bonus: ${bonus.name} (${bonus.bonusId}) - ${bonus.price} or`);
-                    purchasesMade = true;
+                if (availability.isAvailable && worthBuying) {
+                    if (gameState.unlockBonus(bonus.bonusId)) {
+                        gameState.gameStats.bonusesPurchased++;
+                        gameLog.push(`Achat bonus: ${bonus.name} (${bonus.bonusId}) - ${bonus.price} or`);
+                        purchasesMade = true;
+                    }
                 }
             });
         }
@@ -500,22 +525,23 @@ export class SimulationEngine {
         const consumableItems = shopItems.filter(item => item.type === 'consumable');
         if (consumableItems.length > 0) {
             consumableItems.forEach(consumable => {
-                const canAfford = gameState.gold >= consumable.price;
+                // Vérifier la disponibilité comme dans le shop normal
+                const availability = gameState.shopManager.checkItemAvailability(consumable, gameState);
                 const worthBuying = this.isConsumableWorthBuying(consumable, gameState);
                 
-                if (canAfford && worthBuying) {
-                    gameState.addConsumable(consumable.consumableType);
-                    gameState.shopManager.spendGold(gameState, consumable.price);
-                    gameState.gameStats.consumablesPurchased = (gameState.gameStats.consumablesPurchased || 0) + 1;
-                    
-                    // Suivre les consommables achetés
-                    if (!gameState.purchasedConsumables[consumable.consumableType]) {
-                        gameState.purchasedConsumables[consumable.consumableType] = 0;
+                if (availability.isAvailable && worthBuying) {
+                    if (gameState.addConsumable(consumable.consumableType)) {
+                        gameState.gameStats.consumablesPurchased = (gameState.gameStats.consumablesPurchased || 0) + 1;
+                        
+                        // Suivre les consommables achetés
+                        if (!gameState.purchasedConsumables[consumable.consumableType]) {
+                            gameState.purchasedConsumables[consumable.consumableType] = 0;
+                        }
+                        gameState.purchasedConsumables[consumable.consumableType]++;
+                        
+                        gameLog.push(`Achat consommable: ${consumable.name} (${consumable.price} or)`);
+                        purchasesMade = true;
                     }
-                    gameState.purchasedConsumables[consumable.consumableType]++;
-                    
-                    gameLog.push(`Achat consommable: ${consumable.name} (${consumable.price} or)`);
-                    purchasesMade = true;
                 }
             });
         }
@@ -524,23 +550,23 @@ export class SimulationEngine {
         const unitItems = shopItems.filter(item => item.type === 'unit');
         if (unitItems.length > 0) {
             unitItems.forEach(unit => {
-                const canAfford = gameState.gold >= unit.price;
-                const hasSpace = gameState.availableTroops.length < 15;
+                // Vérifier la disponibilité comme dans le shop normal
+                const availability = gameState.shopManager.checkItemAvailability(unit, gameState);
                 const worthBuying = this.isUnitWorthBuying(unit, gameState);
                 
-                if (canAfford && hasSpace && worthBuying) {
-                    gameState.addTroop(unit);
-                    gameState.shopManager.spendGold(gameState, unit.price);
-                    gameState.gameStats.unitsPurchased++;
-                    
-                    // Suivre les unités achetées
-                    if (!gameState.purchasedUnits[unit.name]) {
-                        gameState.purchasedUnits[unit.name] = 0;
+                if (availability.isAvailable && worthBuying) {
+                    if (gameState.addTroop(unit)) {
+                        gameState.gameStats.unitsPurchased++;
+                        
+                        // Suivre les unités achetées
+                        if (!gameState.purchasedUnits[unit.name]) {
+                            gameState.purchasedUnits[unit.name] = 0;
+                        }
+                        gameState.purchasedUnits[unit.name]++;
+                        
+                        gameLog.push(`Achat unité: ${unit.name} (${unit.price} or)`);
+                        purchasesMade = true;
                     }
-                    gameState.purchasedUnits[unit.name]++;
-                    
-                    gameLog.push(`Achat unité: ${unit.name} (${unit.price} or)`);
-                    purchasesMade = true;
                 }
             });
         }
@@ -1168,6 +1194,28 @@ export class SimulationEngine {
     displaySummary() {
         const stats = this.globalStats;
         
-        // Résumé silencieux - les données sont disponibles via les propriétés
+        console.log('\n📊 RÉSULTATS DE LA SIMULATION');
+        console.log('===============================');
+        console.log(`🎮 Parties simulées: ${stats.totalGames}`);
+        console.log(`🏆 Taux de victoire: ${(stats.winRate * 100).toFixed(2)}%`);
+        console.log(`📈 Rang moyen: ${stats.averageRankReached}`);
+        console.log(`💰 Or gagné moyen: ${Math.floor(stats.averageGoldEarned)}`);
+        console.log(`⚔️ Combats gagnés moyens: ${Math.floor(stats.averageCombatWon)}`);
+        console.log(`💀 Combats perdus moyens: ${Math.floor(stats.averageCombatLost)}`);
+        console.log(`⏱️ Durée moyenne: ${(stats.averageGameDuration / 1000).toFixed(2)}s`);
+        
+        // Afficher tous les rangs atteints
+        console.log('\n📊 DISTRIBUTION DES RANGS:');
+        const allRanks = ['F-', 'F', 'F+', 'E-', 'E', 'E+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S'];
+        allRanks.forEach(rank => {
+            const count = stats.rankDistribution[rank] || 0;
+            if (count > 0) {
+                const percentage = ((count / stats.totalGames) * 100).toFixed(1);
+                const bar = '█'.repeat(Math.floor(count / stats.totalGames * 20));
+                console.log(`  ${rank}: ${count} parties (${percentage}%) ${bar}`);
+            }
+        });
+        
+        console.log('\n===============================');
     }
 } 

@@ -1,6 +1,5 @@
 // Gestion centralisée des unités pour GuildMaster
-import { BASE_UNITS } from './UnitConstants.js';
-import { ALL_UNITS } from './UnitConstants.js';
+import { BASE_UNITS, ALL_UNITS } from './constants/units/UnitConstants.js';
 import { getTypeDisplayString } from '../utils/TypeUtils.js';
 import { getRarityDisplayName, getRarityColor, getRarityIcon } from './constants/game/RarityUtils.js';
 

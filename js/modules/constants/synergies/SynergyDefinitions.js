@@ -6,7 +6,7 @@ export const SYNERGY_DEFINITIONS = {
         description: '+{bonus} multiplicateur pour toutes les unités corps à corps (Niveau {level})',
         requiredType: 'Corps à corps',
         requiredCount: 3,
-        baseBonus: 2,
+        baseBonus: 3,
         bonusType: 'multiplier',
         target: 'Corps à corps'
     },
@@ -37,8 +37,8 @@ export const SYNERGY_DEFINITIONS = {
         description: '+{damage} dégâts et +{multiplier} multiplicateur pour toutes les unités corps à corps (Niveau {level})',
         requiredType: 'Corps à corps',
         requiredCount: 5,
-        baseDamageBonus: 5,
-        baseMultiplierBonus: 3,
+        baseDamageBonus: 6,
+        baseMultiplierBonus: 5,
         bonusType: 'mixed',
         target: 'Corps à corps'
     },
@@ -81,7 +81,7 @@ export const SYNERGY_DEFINITIONS = {
         description: '+{bonus} dégâts pour toutes les unités physiques (Niveau {level})',
         requiredType: 'Physique',
         requiredCount: 6,
-        baseBonus: 4,
+        baseBonus: 12,
         bonusType: 'damage',
         target: 'Physique'
     }
@@ -105,7 +105,7 @@ export const SPECIAL_SYNERGIES = {
         requiredTypes: ['Corps à corps', 'Distance', 'Soigneur'],
         requiredCounts: [1, 1, 1],
         bonusType: 'fixed',
-        damageBonus: 2,
+        damageBonus: 3,
         multiplierBonus: 2,
         target: 'all',
         isSpecial: true

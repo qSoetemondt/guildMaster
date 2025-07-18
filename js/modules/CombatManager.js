@@ -1,6 +1,6 @@
 // CombatManager.js - Gestion centralisée du combat
 import { ModalManager } from './ModalManager.js';
-import { getEnemyImage, getEnemyData, getEnemyName as getEnemyNameFromConstants } from './GameConstants.js';
+import { getEnemyImage, getEnemyData, getEnemyName as getEnemyNameFromConstants } from './constants/combat/GameConstants.js';
 import { drawCombatTroops, maintainCombatTroops, selectTroopForCombat, deselectTroopFromCombat, removeUsedTroopsFromCombat, isPermanentUnit, calculateSynergies, hasTroopType, calculateEquipmentBonuses, applyCombatBonuses } from './UnitManager.js';
 
 export class CombatManager {

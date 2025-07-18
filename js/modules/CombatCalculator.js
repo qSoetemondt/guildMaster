@@ -18,6 +18,12 @@ export class CombatCalculator {
         let totalMultiplier = 0;
         
         for (const troop of troops) {
+            // Vérification de sécurité pour éviter les erreurs
+            if (!troop || typeof troop.damage === 'undefined' || typeof troop.multiplier === 'undefined') {
+                console.error('Troop invalide dans calculateTurnDamage:', troop);
+                continue;
+            }
+            
             // Vérifier si la troupe a déjà été utilisée dans ce rang
             if (this.gameState.usedTroopsThisCombat.includes(troop.id)) {
                 continue; // Passer cette troupe
@@ -90,13 +96,19 @@ export class CombatCalculator {
      * @returns {Object} - Les dégâts et multiplicateur de l'unité avec tous les bonus
      */
     calculateTroopDamageWithBonuses(troop, troopsList = null) {
+        // Vérification de sécurité pour éviter les erreurs
+        if (!troop || typeof troop.damage === 'undefined' || typeof troop.multiplier === 'undefined') {
+            console.error('Troop invalide dans calculateTroopDamageWithBonuses:', troop);
+            return { damage: 0, multiplier: 0 };
+        }
+        
         let damage = troop.damage;
         let multiplier = troop.multiplier;
         
         // Appliquer les bonus d'équipement
         const equipmentBonuses = this.calculateEquipmentBonuses();
         equipmentBonuses.forEach(bonus => {
-            if (bonus.target === 'all' || this.gameState.hasTroopType(troop, bonus.target)) {
+            if (bonus.target === 'all' || hasTroopType(troop, bonus.target)) {
                 if (bonus.damage) damage += bonus.damage;
                 if (bonus.multiplier) multiplier += bonus.multiplier;
             }
@@ -105,7 +117,7 @@ export class CombatCalculator {
         // Appliquer les synergies
         const synergies = this.calculateSynergies(troopsList);
         synergies.forEach(synergy => {
-            if (synergy.bonus.target === 'all' || this.gameState.hasTroopType(troop, synergy.bonus.target)) {
+            if (synergy.bonus.target === 'all' || hasTroopType(troop, synergy.bonus.target)) {
                 if (synergy.bonus.damage) damage += synergy.bonus.damage;
                 if (synergy.bonus.multiplier) multiplier += synergy.bonus.multiplier;
             }

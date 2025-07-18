@@ -330,17 +330,27 @@ export class SimulationUI {
             const percentage = this.simulationEngine.globalStats.totalGames > 0 ? 
                 (count / this.simulationEngine.globalStats.totalGames * 100).toFixed(1) : 0;
             
-            chartHTML += `
-                <div class="rank-bar">
-                    <div class="rank-label">${rank}</div>
-                    <div class="rank-bar-container">
-                        <div class="rank-bar-fill" style="width: ${percentage}%"></div>
+            // Afficher seulement les rangs avec des parties
+            if (count > 0) {
+                const barWidth = Math.max(percentage * 2, 1); // Barre minimum de 1px
+                chartHTML += `
+                    <div class="rank-bar">
+                        <div class="rank-label">${rank}</div>
+                        <div class="rank-bar-container">
+                            <div class="rank-bar-fill" style="width: ${barWidth}%"></div>
+                        </div>
+                        <div class="rank-count">${count} parties (${percentage}%)</div>
                     </div>
-                    <div class="rank-count">${count}</div>
-                </div>
-            `;
+                `;
+            }
         });
         chartHTML += '</div>';
+        
+        // Ajouter un résumé des rangs atteints
+        const achievedRanks = Object.keys(rankDistribution).filter(rank => rankDistribution[rank] > 0);
+        if (achievedRanks.length > 0) {
+            chartHTML += `<div class="rank-summary">Rangs atteints: ${achievedRanks.join(', ')}</div>`;
+        }
         
         chartDiv.innerHTML = chartHTML;
     }

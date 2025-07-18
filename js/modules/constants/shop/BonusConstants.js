@@ -90,7 +90,7 @@ export const BONUS_DESCRIPTIONS = {
     // Bonus d'équipement communs
     'epee_aiguisee': { 
         name: 'Épée Aiguisée', 
-        description: '+2 dégâts pour les unités corps à corps', 
+        description: '+3 dégâts pour les unités corps à corps', 
         icon: '⚔️',
         rarity: 'common',
         basePrice: 25

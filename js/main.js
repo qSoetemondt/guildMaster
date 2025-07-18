@@ -50,6 +50,13 @@ document.head.appendChild(style);
 // Initialiser le jeu quand le DOM est prêt
 document.addEventListener('DOMContentLoaded', function() {
     initGame();
+    // Ajout du bouton Simulation
+    const simulationBtn = document.getElementById('simulation-btn');
+    if (simulationBtn) {
+        simulationBtn.addEventListener('click', function() {
+            window.open('simulator.html', '_blank');
+        });
+    }
 });
 
 // Exposer les fonctions globales pour Electron
