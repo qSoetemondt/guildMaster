@@ -342,7 +342,10 @@ export class AnimationManager {
                 if (bonus.multiplier) {
                     bonusText += `+${bonus.multiplier} multiplicateur `;
                 }
-                if (bonus.target !== 'all') {
+                if (bonus.positionMultiplier) {
+                    bonusText += `×${bonus.positionMultiplier} multiplicateur 4ème position `;
+                }
+                if (bonus.target !== 'all' && bonus.target !== 'fourth_position') {
                     bonusText += `(${bonus.target})`;
                 }
                 
@@ -363,7 +366,7 @@ export class AnimationManager {
                     rarity = 'uncommon';
                 } else if (['Armure Légendaire', 'Arc Divin', 'Baguette Suprême'].includes(bonus.name)) {
                     rarity = 'rare';
-                } else if (['Relique Ancienne'].includes(bonus.name)) {
+                } else if (['Relique Ancienne', 'Position Quatre'].includes(bonus.name)) {
                     rarity = 'legendary';
                 }
                 
@@ -576,7 +579,10 @@ export class AnimationManager {
                 if (bonus.multiplier) {
                     bonusText += `+${bonus.multiplier} multiplicateur `;
                 }
-                if (bonus.target !== 'all') {
+                if (bonus.positionMultiplier) {
+                    bonusText += `×${bonus.positionMultiplier} multiplicateur 4ème position `;
+                }
+                if (bonus.target !== 'all' && bonus.target !== 'fourth_position') {
                     bonusText += `(${bonus.target})`;
                 }
                 
@@ -597,7 +603,7 @@ export class AnimationManager {
                     rarity = 'uncommon';
                 } else if (['Armure Légendaire', 'Arc Divin', 'Baguette Suprême'].includes(bonus.name)) {
                     rarity = 'rare';
-                } else if (['Relique Ancienne'].includes(bonus.name)) {
+                } else if (['Relique Ancienne', 'Position Quatre'].includes(bonus.name)) {
                     rarity = 'legendary';
                 }
                 
@@ -655,11 +661,38 @@ export class AnimationManager {
         // On part de la progression précédente
         let progressionTotal = previousDamage;
 
-        for (const troop of troopsUsed) {
-            // Utiliser CombatCalculator pour obtenir les dégâts et multiplicateur de base
-            const baseStats = this.gameState.combatCalculator.calculateTroopDamageWithBonuses(troop, troopsUsed);
-            let currentDamage = baseStats.damage;
-            let currentMultiplier = baseStats.multiplier;
+        for (let i = 0; i < troopsUsed.length; i++) {
+            const troop = troopsUsed[i];
+            
+            // Calculer les dégâts et multiplicateur comme dans calculateTurnDamage
+            let currentDamage = troop.damage;
+            let currentMultiplier = troop.multiplier;
+            
+            // Appliquer les synergies
+            const synergies = this.gameState.calculateSynergies(troopsUsed);
+            synergies.forEach(synergy => {
+                if (synergy.bonus.target === 'all' || this.gameState.hasTroopType(troop, synergy.bonus.target)) {
+                    if (synergy.bonus.damage) currentDamage += synergy.bonus.damage;
+                    if (synergy.bonus.multiplier) currentMultiplier += synergy.bonus.multiplier;
+                }
+            });
+            
+            // Appliquer les bonus d'équipement (sauf position)
+            const equipmentBonuses = this.gameState.calculateEquipmentBonuses();
+            equipmentBonuses.forEach(bonus => {
+                if (bonus.type !== 'position_bonus') {
+                    if (bonus.target === 'all' || this.gameState.hasTroopType(troop, bonus.target)) {
+                        if (bonus.damage) currentDamage += bonus.damage;
+                        if (bonus.multiplier) currentMultiplier += bonus.multiplier;
+                    }
+                }
+            });
+            
+            // Appliquer les mécaniques de boss
+            if (this.gameState.currentCombat.isBossFight) {
+                currentDamage = this.gameState.bossManager.applyBossMechanics(currentDamage, troop);
+                currentMultiplier = this.gameState.bossManager.applyBossMechanicsToMultiplier(currentMultiplier, troop);
+            }
             
             // Création de l'élément d'unité avec l'ID correct
             const unitElement = document.createElement('div');
@@ -669,7 +702,7 @@ export class AnimationManager {
             // Créer le contenu HTML de l'unité
             const typeDisplay = getTypeDisplayString(troop.type);
             
-                    // Nom de l'unité et labels
+            // Nom de l'unité et labels
             unitElement.innerHTML = `
                 <div class="unit-slide-info">
                     <div class="unit-slide-icon">${troop.icon}</div>
@@ -727,24 +760,24 @@ export class AnimationManager {
             unitElement.classList.add('active');
             
             // Animer les bonus d'équipement si ils ont été appliqués
-            const equipmentBonuses = this.gameState.calculateEquipmentBonuses();
             for (const bonus of equipmentBonuses) {
-                if (bonus.target === 'all' || this.gameState.hasTroopType(troop, bonus.target)) {
-                    if (bonus.damage && bonus.damage > 0) {
-                        await this.sleep(150);
-                        this.showBonusAnimation(unitElement, `+${bonus.damage}`, 'damage', currentDamage);
-                        this.updateUnitStat(unitElement, 'damage', currentDamage);
-                    }
-                    if (bonus.multiplier && bonus.multiplier > 0) {
-                        await this.sleep(150);
-                        this.showBonusAnimation(unitElement, `+${bonus.multiplier}`, 'multiplier', currentMultiplier);
-                        this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
+                if (bonus.type !== 'position_bonus') {
+                    if (bonus.target === 'all' || this.gameState.hasTroopType(troop, bonus.target)) {
+                        if (bonus.damage && bonus.damage > 0) {
+                            await this.sleep(150);
+                            this.showBonusAnimation(unitElement, `+${bonus.damage}`, 'damage', currentDamage);
+                            this.updateUnitStat(unitElement, 'damage', currentDamage);
+                        }
+                        if (bonus.multiplier && bonus.multiplier > 0) {
+                            await this.sleep(150);
+                            this.showBonusAnimation(unitElement, `+${bonus.multiplier}`, 'multiplier', currentMultiplier);
+                            this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
+                        }
                     }
                 }
             }
 
             // Animer les synergies si elles ont été appliquées
-            const synergies = this.gameState.calculateSynergies(troopsUsed);
             for (const synergy of synergies) {
                 if (synergy.bonus.target === 'all' || this.gameState.hasTroopType(troop, synergy.bonus.target)) {
                     if (synergy.bonus.damage && synergy.bonus.damage > 0) {
@@ -755,6 +788,21 @@ export class AnimationManager {
                     if (synergy.bonus.multiplier && synergy.bonus.multiplier > 0) {
                         await this.sleep(150);
                         this.showBonusAnimation(unitElement, `+${synergy.bonus.multiplier}`, 'multiplier', currentMultiplier);
+                        this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
+                    }
+                }
+            }
+
+            // Animer le bonus "Position Quatre" si c'est la 4ème unité
+            const positionBonuses = this.gameState.calculateEquipmentBonuses().filter(bonus => bonus.type === 'position_bonus');
+            if (positionBonuses.length > 0 && i === 3) { // 4ème position (index 3)
+                for (const bonus of positionBonuses) {
+                    if (bonus.target === 'fourth_position') {
+                        await this.sleep(200);
+                        // Appliquer le bonus de position
+                        const oldMultiplier = currentMultiplier;
+                        currentMultiplier = currentMultiplier * bonus.positionMultiplier;
+                        this.showBonusAnimation(unitElement, `×${bonus.positionMultiplier}`, 'multiplier', currentMultiplier);
                         this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
                     }
                 }

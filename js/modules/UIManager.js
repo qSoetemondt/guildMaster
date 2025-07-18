@@ -331,6 +331,9 @@ export class UIManager {
         const card = document.createElement('div');
         const isUsed = this.gameState.usedTroopsThisCombat.includes(troop.id);
         
+        // Obtenir l'ordre de sélection
+        const selectionOrder = this.getSelectionOrder(troop);
+        
         // Appliquer les classes CSS
         card.className = this.createTroopCardClasses(troop, isSelected, isUsed);
         
@@ -338,7 +341,7 @@ export class UIManager {
         this.applyRarityStyling(card, troop);
         
         // Générer le HTML
-        card.innerHTML = this.generateTroopCardHTML(troop, isUsed);
+        card.innerHTML = this.generateTroopCardHTML(troop, isUsed, selectionOrder);
         
         // Attacher les événements
         this.attachTroopCardEvents(card, troop, index, isSelected, isUsed);
@@ -1196,7 +1199,7 @@ export class UIManager {
     }
 
     // Générer le HTML de la carte
-    generateTroopCardHTML(troop, isUsed) {
+    generateTroopCardHTML(troop, isUsed, selectionOrder = null) {
         const typeDisplay = getTypeDisplayString(troop.type);
         const rarityHTML = troop.rarity ? 
             `<div class="unit-rarity" style="color: ${getRarityColor(troop.rarity)}; font-weight: 600; margin-top: 5px; font-size: 0.8rem;">
@@ -1205,6 +1208,10 @@ export class UIManager {
         
         const usedHTML = isUsed ? '<div class="unit-used">Utilisée</div>' : '';
         
+        // Pastille d'ordre de sélection
+        const selectionOrderHTML = selectionOrder !== null ? 
+            `<div class="selection-order-badge">${selectionOrder}/5</div>` : '';
+        
         return `
             <div class="unit-icon">${troop.icon}</div>
             <div class="unit-name">${troop.name}</div>
@@ -1212,7 +1219,14 @@ export class UIManager {
             <div class="unit-type">${typeDisplay}</div>
             ${rarityHTML}
             ${usedHTML}
+            ${selectionOrderHTML}
         `;
+    }
+
+    // Obtenir l'ordre de sélection d'une troupe
+    getSelectionOrder(troop) {
+        const selectedIndex = this.gameState.selectedTroops.findIndex(t => t.id === troop.id);
+        return selectedIndex !== -1 ? selectedIndex + 1 : null;
     }
 
     // Attacher les événements de la carte

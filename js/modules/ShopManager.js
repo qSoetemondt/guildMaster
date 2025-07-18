@@ -383,10 +383,12 @@ export class ShopManager {
         const unitItems = this.createUnitItems(gameState);
         
         // Créer tous les items disponibles
+        const bonusItems = this.createBonusItems(bonusDescriptions);
+        
         const allItems = [
             ...unitItems,
             // Bonus - générés dynamiquement à partir des définitions centralisées
-            ...this.createBonusItems(bonusDescriptions)
+            ...bonusItems
         ];
         
         // Ajouter un consommable potentiellement
@@ -638,7 +640,7 @@ export function unlockBonus(bonusId, gameState) {
     }
     
     // Liste des bonus dynamiques qui ne peuvent avoir qu'un seul exemplaire
-    const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie'];
+    const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie', 'position_quatre'];
     
     // Vérifier si c'est un bonus dynamique
     if (dynamicBonuses.includes(bonusId)) {
@@ -667,6 +669,9 @@ export function unlockBonus(bonusId, gameState) {
                     gameState.dynamicBonusStates[bonusId]['end_of_combat'] = 0;
                 }
                 gameState.dynamicBonusStates[bonusId]['end_of_combat'] += 1;
+            } else if (bonusId === 'position_quatre') {
+                // Pour Position Quatre, pas de compteur spécial nécessaire
+                // Le bonus s'applique automatiquement en combat
             }
             
             // Mettre à jour immédiatement l'affichage du bonus dynamique
@@ -737,7 +742,7 @@ export function updateActiveBonuses(gameState, shopManager = null) {
     });
 
     // Liste des bonus dynamiques
-    const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie'];
+    const dynamicBonuses = ['cac_cest_la_vie', 'economie_dune_vie', 'position_quatre'];
     
     // Afficher chaque bonus avec son nombre
     Object.keys(bonusCounts).forEach(bonusId => {
@@ -801,6 +806,9 @@ export function updateActiveBonuses(gameState, shopManager = null) {
                     // Toujours afficher le compteur, même s'il est à 0 (pour montrer qu'il existe)
                     const combatText = ` <span class="bonus-count">+${combatCount}</span>`;
                     displayText = `${bonus.icon} ${bonus.name}${combatText}`;
+                } else if (bonusId === 'position_quatre') {
+                    // Pour Position Quatre, afficher le nom du bonus, pas la target
+                    displayText = `${bonus.icon} ${bonus.name}`;
                 }
             } else {
                 // Pour les bonus normaux, afficher le nombre d'exemplaires
@@ -910,6 +918,10 @@ function showBonusModal(bonusId, bonus, count, gameState) {
         });
         
         dynamicDescription = `Ce bonus donne +${totalValue} d'or par combat. Il augmente de +2 d'or par combat terminé. (Actuellement : +${combatCount} combats terminés)`;
+    }
+    else if (bonusId === 'position_quatre') {
+        // Pour Position Quatre, afficher la description de base
+        dynamicDescription = bonus.description;
     }
     
     // Créer le contenu de la modal

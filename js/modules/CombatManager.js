@@ -416,10 +416,12 @@ export class CombatManager {
         let totalDamage = 0;
         let totalMultiplier = 0;
         
-        for (const troop of troops) {
+        // Calculer d'abord tous les dégâts et multiplicateurs de base
+        for (let i = 0; i < troops.length; i++) {
+            const troop = troops[i];
+            
             // Vérifier si la troupe a déjà été utilisée dans ce rang
             if (this.gameState.usedTroopsThisCombat.includes(troop.id)) {
-    
                 continue; // Passer cette troupe
             }
 
@@ -438,26 +440,35 @@ export class CombatManager {
             // Les bonus dynamiques seront incrémentés pendant l'animation de combat
             // pour permettre une animation visuelle de l'augmentation
             
-            // Appliquer les bonus d'équipement
+            // Appliquer les bonus d'équipement (sauf les bonus de position)
             const equipmentBonuses = this.gameState.calculateEquipmentBonuses();
             equipmentBonuses.forEach(bonus => {
-                if (bonus.target === 'all' || this.gameState.hasTroopType(troop, bonus.target)) {
-                    if (bonus.damage) unitDamage += bonus.damage;
-                    if (bonus.multiplier) unitMultiplier += bonus.multiplier;
+                if (bonus.type !== 'position_bonus') {
+                    if (bonus.target === 'all' || this.gameState.hasTroopType(troop, bonus.target)) {
+                        if (bonus.damage) unitDamage += bonus.damage;
+                        if (bonus.multiplier) unitMultiplier += bonus.multiplier;
+                    }
                 }
             });
             
             // Appliquer les mécaniques de boss (après les synergies et bonus)
             if (this.gameState.currentCombat.isBossFight) {
-    
-                
                 // Appliquer les mécaniques de boss sur les dégâts
                 unitDamage = this.gameState.bossManager.applyBossMechanics(unitDamage, troop);
                 
                 // Appliquer les mécaniques de boss sur les multiplicateurs
                 unitMultiplier = this.gameState.bossManager.applyBossMechanicsToMultiplier(unitMultiplier, troop);
-                
-
+            }
+            
+            // Appliquer le bonus "Position Quatre" si c'est la 4ème unité
+            const positionBonuses = this.gameState.calculateEquipmentBonuses().filter(bonus => bonus.type === 'position_bonus');
+            if (positionBonuses.length > 0 && i === 3) { // 4ème position (index 3)
+                positionBonuses.forEach(bonus => {
+                    if (bonus.target === 'fourth_position') {
+                        // Appliquer le bonus de position sur le multiplicateur de cette unité
+                        unitMultiplier = unitMultiplier * bonus.positionMultiplier;
+                    }
+                });
             }
             
             // Accumuler les dégâts et multiplicateurs
@@ -473,7 +484,6 @@ export class CombatManager {
         
         // Calculer le total final
         let finalDamage = totalDamage * totalMultiplier;
-
         
         // Appliquer le malus de Quilegan à la fin (après tous les calculs)
         if (this.gameState.currentCombat && this.gameState.currentCombat.isBossFight && 
@@ -547,7 +557,7 @@ export class CombatManager {
         }
         
         // Liste des bonus qui ont des compteurs de fin de combat
-        const endOfCombatBonuses = ['economie_dune_vie'];
+        const endOfCombatBonuses = ['economie_dune_vie', 'position_quatre'];
         
         endOfCombatBonuses.forEach(bonusId => {
             if (this.gameState.unlockedBonuses.includes(bonusId)) {

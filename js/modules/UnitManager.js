@@ -623,6 +623,16 @@ export function calculateEquipmentBonuses(gameState) {
                 bonuses.push(dynamicBonus);
             }
         }
+        // Bonus de position (4ème position)
+        else if (bonusId === 'position_quatre') {
+            const positionBonus = { 
+                name: bonusDesc.name,
+                positionMultiplier: 2 * count, 
+                target: 'fourth_position',
+                type: 'position_bonus'
+            };
+            bonuses.push(positionBonus);
+        }
         // Bonus de base pour corps à corps
         else if (bonusId === 'corps_a_corps_bonus') {
             bonuses.push({ 
@@ -743,7 +753,7 @@ export function syncDynamicBonusTriggers(gameState) {
     });
     
     // Liste des bonus dynamiques qui ont des triggers
-    const dynamicBonusesWithTriggers = ['cac_cest_la_vie', 'economie_dune_vie'];
+    const dynamicBonusesWithTriggers = ['cac_cest_la_vie', 'economie_dune_vie', 'position_quatre'];
     
     dynamicBonusesWithTriggers.forEach(bonusId => {
         const bonusDesc = bonusDescriptions[bonusId];
@@ -857,4 +867,9 @@ export function applyCombatBonuses(gameState) {
     
     // Les bonus de dégâts (corps_a_corps_bonus, distance_bonus, magique_bonus) 
     // sont maintenant traités comme des bonus d'équipement dans calculateEquipmentBonuses()
+    
+    // Appliquer les bonus de position en dernier (après tous les autres bonus)
+    if (bonusCounts['position_quatre']) {
+        // Ce bonus sera appliqué dans calculateTurnDamage pour s'assurer qu'il s'applique en dernier
+    }
 } 

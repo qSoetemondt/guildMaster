@@ -22,7 +22,8 @@ export function getBonusDisplayName(bonusId) {
         'baguette_supreme': 'bonus.supremeWand',
         'relique_ancienne': 'bonus.ancientRelic',
         'cac_cest_la_vie': 'bonus.meleeIsLife',
-        'economie_dune_vie': 'bonus.economyOfLife'
+        'economie_dune_vie': 'bonus.economyOfLife',
+        'position_quatre': 'bonus.positionFour'
     };
     
     const translationKey = bonusNames[bonusId];
@@ -49,7 +50,8 @@ export function getBonusDescription(bonusId) {
         'baguette_supreme': 'bonus.supremeWandDesc',
         'relique_ancienne': 'bonus.ancientRelicDesc',
         'cac_cest_la_vie': 'bonus.meleeIsLifeDesc',
-        'economie_dune_vie': 'bonus.economyOfLifeDesc'
+        'economie_dune_vie': 'bonus.economyOfLifeDesc',
+        'position_quatre': 'bonus.positionFourDesc'
     };
     
     const translationKey = bonusDescriptions[bonusId];
@@ -220,6 +222,23 @@ export const BONUS_DESCRIPTIONS = {
                 value: 3,
                 condition: 'end_of_combat',
                 triggerCount: 0
+            }
+        ]
+    },
+    
+    // Bonus légendaire basé sur la position
+    'position_quatre': {
+        name: 'Position Quatre',
+        description: 'L\'unité en 4ème position voit son multiplicateur multiplié par 2',
+        icon: '🎯',
+        rarity: 'legendary',
+        basePrice: 120,
+        effects: [
+            {
+                type: 'position_multiplier',
+                target: 'fourth_position',
+                value: 2,
+                condition: 'base'
             }
         ]
     }
