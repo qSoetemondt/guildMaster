@@ -163,24 +163,94 @@ export class ShopManager {
         return allItems;
     }
 
-    // Extraire la sélection et mélange des items
+    // Extraire la sélection et mélange des items avec pondération par rareté
     selectAndShuffleItems(allItems) {
         // Garantir qu'un consommable soit inclus s'il a été généré
         const consumableItems = allItems.filter(item => item.type === 'consumable');
         const nonConsumableItems = allItems.filter(item => item.type !== 'consumable');
         
-        // Mélanger les items non-consommables
-        const shuffledNonConsumables = nonConsumableItems.sort(() => Math.random() - 0.5);
+        // Sélectionner les items avec pondération par rareté
+        const selectedItems = this.selectItemsByRarity(nonConsumableItems, 8);
         
         // Si on a un consommable, l'inclure et prendre 7 autres items
         if (consumableItems.length > 0) {
             const selectedConsumable = consumableItems[0]; // Prendre le premier consommable
-            const selectedNonConsumables = shuffledNonConsumables.slice(0, 7);
+            const selectedNonConsumables = selectedItems.slice(0, 7);
             return [selectedConsumable, ...selectedNonConsumables];
         } else {
             // Sinon, prendre 8 items normaux
-            return shuffledNonConsumables.slice(0, 8);
+            return selectedItems.slice(0, 8);
         }
+    }
+
+    // Sélectionner les items avec pondération par rareté
+    selectItemsByRarity(items, count) {
+        // Définir les pourcentages de chance par rareté
+        const rarityChances = {
+            'common': 0.40,      // 40%
+            'uncommon': 0.25,    // 25%
+            'rare': 0.18,        // 18%
+            'epic': 0.12,        // 12%
+            'legendary': 0.05    // 5%
+        };
+
+        const selectedItems = [];
+        const itemsByRarity = {};
+
+        // Grouper les items par rareté
+        items.forEach(item => {
+            const rarity = item.rarity || 'common';
+            if (!itemsByRarity[rarity]) {
+                itemsByRarity[rarity] = [];
+            }
+            itemsByRarity[rarity].push(item);
+        });
+
+        // Sélectionner les items selon les pourcentages
+        for (let i = 0; i < count; i++) {
+            const random = Math.random();
+            let selectedRarity = 'common'; // Par défaut
+            let cumulativeChance = 0;
+
+            // Déterminer la rareté selon les pourcentages
+            for (const [rarity, chance] of Object.entries(rarityChances)) {
+                cumulativeChance += chance;
+                if (random <= cumulativeChance) {
+                    selectedRarity = rarity;
+                    break;
+                }
+            }
+
+            // Sélectionner un item de cette rareté
+            if (itemsByRarity[selectedRarity] && itemsByRarity[selectedRarity].length > 0) {
+                const randomIndex = Math.floor(Math.random() * itemsByRarity[selectedRarity].length);
+                const selectedItem = itemsByRarity[selectedRarity][randomIndex];
+                selectedItems.push(selectedItem);
+                
+                // Retirer l'item sélectionné pour éviter les doublons
+                itemsByRarity[selectedRarity].splice(randomIndex, 1);
+            } else {
+                // Si pas d'item de cette rareté, prendre un item commun
+                if (itemsByRarity['common'] && itemsByRarity['common'].length > 0) {
+                    const randomIndex = Math.floor(Math.random() * itemsByRarity['common'].length);
+                    const selectedItem = itemsByRarity['common'][randomIndex];
+                    selectedItems.push(selectedItem);
+                    itemsByRarity['common'].splice(randomIndex, 1);
+                } else {
+                    // Fallback : prendre le premier item disponible
+                    for (const rarity in itemsByRarity) {
+                        if (itemsByRarity[rarity] && itemsByRarity[rarity].length > 0) {
+                            const selectedItem = itemsByRarity[rarity][0];
+                            selectedItems.push(selectedItem);
+                            itemsByRarity[rarity].splice(0, 1);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return selectedItems;
     }
 
     generateShopItems(gameState) {

@@ -51,14 +51,14 @@ export const BASE_UNITS = [
      { name: 'Frondeur', type: ['Distance', 'Physique'], damage: 3, multiplier: 5, icon: '🪨', rarity: 'rare', quantity: 0 },
      // Unités épiques
      { name: 'Chevalier', type: ['Corps à corps', 'Physique'], damage: 10, multiplier: 3, icon: '🐎', rarity: 'epic', quantity: 0 },
-     { name: 'Arbalétrier', type: ['Distance', 'Physique'], damage: 8, multiplier: 3, icon: '🎯', rarity: 'epic', quantity: 0 },
-     { name: 'Sorcier', type: ['Distance', 'Magique'], damage: 4, multiplier: 5, icon: '🧙‍♂️', rarity: 'epic', quantity: 0 },
+     { name: 'Arbalétrier', type: ['Distance', 'Physique'], damage:7, multiplier: 4, icon: '🎯', rarity: 'epic', quantity: 0 },
+     { name: 'Sorcier', type: ['Distance', 'Magique'], damage: 5, multiplier: 5, icon: '🧙‍♂️', rarity: 'epic', quantity: 0 },
      { name: 'Berserker', type: ['Corps à corps', 'Physique'], damage: 9, multiplier: 3, icon: '😤', rarity: 'epic', quantity: 0 },
      
      // Unités légendaires
-     { name: 'Archer d\'Élite', type: ['Distance', 'Physique'], damage: 6, multiplier: 4, icon: '🎖️', rarity: 'legendary', quantity: 0 },
-     { name: 'Mage Suprême', type: ['Distance', 'Magique', 'Corps à corps'], damage: 7, multiplier: 5, icon: '👑', rarity: 'legendary', quantity: 0 },
-     { name: 'Champion', type: ['Corps à corps', 'Physique', 'Magique'], damage: 12, multiplier: 4, icon: '🏆', rarity: 'legendary', quantity: 0 }
+     { name: 'Archer d\'Élite', type: ['Distance', 'Physique'], damage: 11, multiplier: 6, icon: '🎖️', rarity: 'legendary', quantity: 0 },
+     { name: 'Mage Suprême', type: ['Distance', 'Magique', 'Corps à corps'], damage: 17, multiplier: 4, icon: '👑', rarity: 'legendary', quantity: 0 },
+     { name: 'Champion', type: ['Corps à corps', 'Physique', 'Magique'], damage: 22, multiplier: 3, icon: '🏆', rarity: 'legendary', quantity: 0 }
 ];
 
 // Toutes les unités disponibles dans le jeu

@@ -323,6 +323,8 @@ export function removeUsedTroopsFromCombat(troopsUsed, gameState) {
 
  
 
+import { SYNERGY_DEFINITIONS, SPECIAL_SYNERGIES } from './constants/synergies/SynergyDefinitions.js';
+
 // Calculer les synergies entre les troupes
 export function calculateSynergies(troops = null, gameState) {
     const synergies = [];
@@ -342,119 +344,146 @@ export function calculateSynergies(troops = null, gameState) {
         }
     });
 
-    // --- SYNERGIE SOIGNEUR ---
+    // --- SYNERGIE SOIGNEUR (SPECIAL_SYNERGIES) ---
     const healerCount = typeCounts['Soigneur'] || 0;
     if (healerCount > 0) {
+        const synergyDef = SPECIAL_SYNERGIES['Présence de Soigneur'];
         synergies.push({
-            name: 'Présence de Soigneur',
-            description: `+${healerCount} dégâts pour toute l'équipe (Soigneur)`,
-            bonus: { damage: healerCount, target: 'all' },
+            name: synergyDef.name,
+            description: `+${healerCount * 3} dégâts pour toute l'équipe (Soigneur)`,
+            bonus: { damage: healerCount * 3, target: 'all' },
             level: healerCount
         });
     }
 
-    // --- SAINTE TRINITÉ ---
+    // --- SAINTE TRINITÉ (SPECIAL_SYNERGIES) ---
     const meleeCount = typeCounts['Corps à corps'] || 0;
     const rangedCount = typeCounts['Distance'] || 0;
     if (meleeCount >= 1 && rangedCount >= 1 && healerCount >= 1) {
+        const synergyDef = SPECIAL_SYNERGIES['Sainte Trinité'];
         synergies.push({
-            name: 'Sainte Trinité',
-            description: '+2 dégâts et +2 multiplicateur pour toute l\'équipe',
-            bonus: { damage: 2, multiplier: 2, target: 'all' },
+            name: synergyDef.name,
+            description: synergyDef.description,
+            bonus: { 
+                damage: synergyDef.damageBonus, 
+                multiplier: synergyDef.multiplierBonus, 
+                target: synergyDef.target 
+            },
             level: 1
         });
     }
 
-    // Synergies de base (augmentées)
+    // Synergies de base (SYNERGY_DEFINITIONS)
     if (typeCounts['Corps à corps'] >= 3) {
+        const synergyDef = SYNERGY_DEFINITIONS['Formation Corps à Corps'];
         const level = gameState.synergyLevels['Formation Corps à Corps'] || 1;
-        const multiplierBonus = 2 + (level - 1); // +2 au niveau 1, +3 au niveau 2, etc.
+        const multiplierBonus = synergyDef.baseBonus + (level - 1);
         synergies.push({
-            name: 'Formation Corps à Corps',
-            description: `+${multiplierBonus} multiplicateur pour toutes les unités corps à corps (Niveau ${level})`,
-            bonus: { multiplier: multiplierBonus, target: 'Corps à corps' },
+            name: synergyDef.name,
+            description: synergyDef.description.replace('{bonus}', multiplierBonus).replace('{level}', level),
+            bonus: { multiplier: multiplierBonus, target: synergyDef.target },
             level: level
         });
     }
     
     if (typeCounts['Distance'] >= 3) {
+        const synergyDef = SYNERGY_DEFINITIONS['Formation Distance'];
         const level = gameState.synergyLevels['Formation Distance'] || 1;
-        const multiplierBonus = 3 + (level - 1); // +3 au niveau 1, +4 au niveau 2, etc.
+        const multiplierBonus = synergyDef.baseBonus + (level - 1);
         synergies.push({
-            name: 'Formation Distance',
-            description: `+${multiplierBonus} multiplicateur pour toutes les unités distance (Niveau ${level})`,
-            bonus: { multiplier: multiplierBonus, target: 'Distance' },
+            name: synergyDef.name,
+            description: synergyDef.description.replace('{bonus}', multiplierBonus).replace('{level}', level),
+            bonus: { multiplier: multiplierBonus, target: synergyDef.target },
             level: level
         });
     }
     
     if (typeCounts['Magique'] >= 3) {
+        const synergyDef = SYNERGY_DEFINITIONS['Formation Magique'];
         const level = gameState.synergyLevels['Formation Magique'] || 1;
-        const multiplierBonus = 4 + (level - 1); // +4 au niveau 1, +5 au niveau 2, etc.
+        const multiplierBonus = synergyDef.baseBonus + (level - 1);
         synergies.push({
-            name: 'Formation Magique',
-            description: `+${multiplierBonus} multiplicateur pour toutes les unités magiques (Niveau ${level})`,
-            bonus: { multiplier: multiplierBonus, target: 'Magique' },
+            name: synergyDef.name,
+            description: synergyDef.description.replace('{bonus}', multiplierBonus).replace('{level}', level),
+            bonus: { multiplier: multiplierBonus, target: synergyDef.target },
             level: level
         });
     }
 
-    // Synergies avancées (nouvelles et plus puissantes)
+    // Synergies avancées (SYNERGY_DEFINITIONS)
     if (typeCounts['Corps à corps'] >= 5) {
+        const synergyDef = SYNERGY_DEFINITIONS['Horde Corps à Corps'];
         const level = gameState.synergyLevels['Horde Corps à Corps'] || 1;
-        const damageBonus = 5 + (level - 1); // +5 au niveau 1, +6 au niveau 2, etc.
-        const multiplierBonus = 3 + (level - 1); // +3 au niveau 1, +4 au niveau 2, etc.
+        const damageBonus = synergyDef.baseDamageBonus + (level - 1);
+        const multiplierBonus = synergyDef.baseMultiplierBonus + (level - 1);
         synergies.push({
-            name: 'Horde Corps à Corps',
-            description: `+${damageBonus} dégâts et +${multiplierBonus} multiplicateur pour toutes les unités corps à corps (Niveau ${level})`,
-            bonus: { damage: damageBonus, multiplier: multiplierBonus, target: 'Corps à corps' },
+            name: synergyDef.name,
+            description: synergyDef.description
+                .replace('{damage}', damageBonus)
+                .replace('{multiplier}', multiplierBonus)
+                .replace('{level}', level),
+            bonus: { damage: damageBonus, multiplier: multiplierBonus, target: synergyDef.target },
             level: level
         });
     }
     
     if (typeCounts['Distance'] >= 5) {
+        const synergyDef = SYNERGY_DEFINITIONS['Volée de Flèches'];
         const level = gameState.synergyLevels['Volée de Flèches'] || 1;
-        const damageBonus = 8 + (level - 1); // +8 au niveau 1, +9 au niveau 2, etc.
-        const multiplierBonus = 4 + (level - 1); // +4 au niveau 1, +5 au niveau 2, etc.
+        const damageBonus = synergyDef.baseDamageBonus + (level - 1);
+        const multiplierBonus = synergyDef.baseMultiplierBonus + (level - 1);
         synergies.push({
-            name: 'Volée de Flèches',
-            description: `+${damageBonus} dégâts et +${multiplierBonus} multiplicateur pour toutes les unités distance (Niveau ${level})`,
-            bonus: { damage: damageBonus, multiplier: multiplierBonus, target: 'Distance' },
+            name: synergyDef.name,
+            description: synergyDef.description
+                .replace('{damage}', damageBonus)
+                .replace('{multiplier}', multiplierBonus)
+                .replace('{level}', level),
+            bonus: { damage: damageBonus, multiplier: multiplierBonus, target: synergyDef.target },
             level: level
         });
     }
     
     if (typeCounts['Magique'] >= 5) {
+        const synergyDef = SYNERGY_DEFINITIONS['Tempête Magique'];
         const level = gameState.synergyLevels['Tempête Magique'] || 1;
-        const damageBonus = 10 + (level - 1); // +10 au niveau 1, +11 au niveau 2, etc.
-        const multiplierBonus = 5 + (level - 1); // +5 au niveau 1, +6 au niveau 2, etc.
+        const damageBonus = synergyDef.baseDamageBonus + (level - 1);
+        const multiplierBonus = synergyDef.baseMultiplierBonus + (level - 1);
         synergies.push({
-            name: 'Tempête Magique',
-            description: `+${damageBonus} dégâts et +${multiplierBonus} multiplicateur pour toutes les unités magiques (Niveau ${level})`,
-            bonus: { damage: damageBonus, multiplier: multiplierBonus, target: 'Magique' },
+            name: synergyDef.name,
+            description: synergyDef.description
+                .replace('{damage}', damageBonus)
+                .replace('{multiplier}', multiplierBonus)
+                .replace('{level}', level),
+            bonus: { damage: damageBonus, multiplier: multiplierBonus, target: synergyDef.target },
             level: level
         });
     }
 
-    // Synergies mixtes (nouvelles)
+    // Synergies mixtes (SYNERGY_DEFINITIONS)
     if (typeCounts['Corps à corps'] >= 3 && typeCounts['Distance'] >= 3) {
+        const synergyDef = SYNERGY_DEFINITIONS['Tactique Mixte'];
         const level = gameState.synergyLevels['Tactique Mixte'] || 1;
-        const damageBonus = 3 + (level - 1); // +3 au niveau 1, +4 au niveau 2, etc.
+        const damageBonus = synergyDef.baseBonus + (level - 1);
         synergies.push({
-            name: 'Tactique Mixte',
-            description: `+${damageBonus} dégâts pour toutes les unités (Niveau ${level})`,
-            bonus: { damage: damageBonus, target: 'all' },
+            name: synergyDef.name,
+            description: synergyDef.description
+                .replace('{bonus}', damageBonus)
+                .replace('{level}', level),
+            bonus: { damage: damageBonus, target: synergyDef.target },
             level: level
         });
     }
     
     if (typeCounts['Physique'] >= 6) {
+        const synergyDef = SYNERGY_DEFINITIONS['Force Physique'];
         const level = gameState.synergyLevels['Force Physique'] || 1;
-        const damageBonus = 4 + (level - 1); // +4 au niveau 1, +5 au niveau 2, etc.
+        const damageBonus = synergyDef.baseBonus + (level - 1);
         synergies.push({
-            name: 'Force Physique',
-            description: `+${damageBonus} dégâts pour toutes les unités physiques (Niveau ${level})`,
-            bonus: { damage: damageBonus, target: 'Physique' },
+            name: synergyDef.name,
+            description: synergyDef.description
+                .replace('{bonus}', damageBonus)
+                .replace('{level}', level),
+            bonus: { damage: damageBonus, target: synergyDef.target },
             level: level
         });
     }

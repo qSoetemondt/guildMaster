@@ -150,21 +150,21 @@ export const BONUS_DESCRIPTIONS = {
     // Bonus d'équipement très rares
     'armure_legendaire': { 
         name: 'Armure Légendaire', 
-        description: '+5 dégâts et +2 multiplicateur pour les unités corps à corps', 
+        description: '+5 dégâts et +4 multiplicateur pour les unités corps à corps', 
         icon: '🛡️',
         rarity: 'rare',
         basePrice: 60
     },
     'arc_divin': { 
         name: 'Arc Divin', 
-        description: '+5 dégâts et +2 multiplicateur pour les unités distance', 
+        description: '+4 dégâts et +4 multiplicateur pour les unités distance', 
         icon: '🏹',
         rarity: 'rare',
         basePrice: 60
     },
     'baguette_supreme': { 
         name: 'Baguette Suprême', 
-        description: '+5 dégâts et +2 multiplicateur pour les unités magiques', 
+        description: '+6 dégâts et +3 multiplicateur pour les unités magiques', 
         icon: '🪄',
         rarity: 'rare',
         basePrice: 60
@@ -173,7 +173,7 @@ export const BONUS_DESCRIPTIONS = {
     // Bonus légendaires
     'relique_ancienne': { 
         name: 'Relique Ancienne', 
-        description: '+10 dégâts et +3 multiplicateur pour toutes les unités', 
+        description: '+25 dégâts et +5 multiplicateur pour toutes les unités', 
         icon: '🏛️',
         rarity: 'legendary',
         basePrice: 100
@@ -190,13 +190,13 @@ export const BONUS_DESCRIPTIONS = {
             {
                 type: 'multiplier_bonus',
                 target: 'melee_units',
-                value: 1,
+                value: 5,
                 condition: 'base'
             },
             {
                 type: 'multiplier_bonus',
                 target: 'melee_units',
-                value: 1,
+                value: 2,
                 condition: 'synergy_trigger',
                 triggerSynergy: 'formation_corps_a_corps',
                 triggerCount: 0
@@ -212,12 +212,12 @@ export const BONUS_DESCRIPTIONS = {
         effects: [
             {
                 type: 'gold_bonus',
-                value: 5,
+                value: 7,
                 condition: 'base'
             },
             {
                 type: 'gold_bonus',
-                value: 2,
+                value: 3,
                 condition: 'end_of_combat',
                 triggerCount: 0
             }

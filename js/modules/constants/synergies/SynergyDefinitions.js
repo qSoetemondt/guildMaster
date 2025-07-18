@@ -26,7 +26,7 @@ export const SYNERGY_DEFINITIONS = {
         description: '+{bonus} multiplicateur pour toutes les unités magiques (Niveau {level})',
         requiredType: 'Magique',
         requiredCount: 3,
-        baseBonus: 4,
+        baseBonus: 3,
         bonusType: 'multiplier',
         target: 'Magique'
     },
@@ -38,7 +38,7 @@ export const SYNERGY_DEFINITIONS = {
         requiredType: 'Corps à corps',
         requiredCount: 5,
         baseDamageBonus: 6,
-        baseMultiplierBonus: 5,
+        baseMultiplierBonus: 6,
         bonusType: 'mixed',
         target: 'Corps à corps'
     },
@@ -60,7 +60,7 @@ export const SYNERGY_DEFINITIONS = {
         requiredType: 'Magique',
         requiredCount: 5,
         baseDamageBonus: 10,
-        baseMultiplierBonus: 5,
+        baseMultiplierBonus: 3,
         bonusType: 'mixed',
         target: 'Magique'
     },
@@ -71,7 +71,7 @@ export const SYNERGY_DEFINITIONS = {
         description: '+{bonus} dégâts pour toutes les unités (Niveau {level})',
         requiredTypes: ['Corps à corps', 'Distance'],
         requiredCounts: [3, 3],
-        baseBonus: 3,
+        baseBonus: 6,
         bonusType: 'damage',
         target: 'all'
     },
@@ -91,7 +91,7 @@ export const SYNERGY_DEFINITIONS = {
 export const SPECIAL_SYNERGIES = {
     'Présence de Soigneur': {
         name: 'Présence de Soigneur',
-        description: '+{bonus} dégâts pour toute l\'équipe (Soigneur)',
+        description: '+{bonus * 3} dégâts pour toute l\'équipe (Soigneur)',
         requiredType: 'Soigneur',
         requiredCount: 1,
         bonusType: 'damage',
@@ -101,7 +101,7 @@ export const SPECIAL_SYNERGIES = {
     
     'Sainte Trinité': {
         name: 'Sainte Trinité',
-        description: '+2 dégâts et +2 multiplicateur pour toute l\'équipe',
+        description: '+5 dégâts et +3 multiplicateur pour toute l\'équipe',
         requiredTypes: ['Corps à corps', 'Distance', 'Soigneur'],
         requiredCounts: [1, 1, 1],
         bonusType: 'fixed',

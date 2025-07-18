@@ -196,8 +196,8 @@ export class CombatManager {
         }
 
         if (victory) {
-            // Récompense de base augmentée
-            const baseReward = this.gameState.currentCombat.isBossFight ? 75 : 50;
+            // Récompense de base augmentée (+18%)
+            const baseReward = this.gameState.currentCombat.isBossFight ? 89 : 59;
             this.gameState.addGold(baseReward);
             
             // Bonus de richesse

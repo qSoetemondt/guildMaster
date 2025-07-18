@@ -449,7 +449,7 @@ export class AutoSimulator {
 
     // Calculer la récompense de victoire
     calculateVictoryReward(gameState) {
-        const baseReward = 50;
+        const baseReward = 59; // Augmenté de 18% (50 * 1.18 = 59)
         const wealthBonus = gameState.calculateWealthBonus();
         const equipmentGoldBonus = gameState.calculateEquipmentGoldBonus();
         
