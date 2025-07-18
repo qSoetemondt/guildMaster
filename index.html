@@ -31,6 +31,13 @@
                     <span id="title-volume-display" class="volume-display">30%</span>
                 </div>
             </div>
+            
+            <!-- Sélecteur de langue sur l'écran de titre -->
+            <div class="title-language-selector">
+                <button id="title-language-flag-btn" class="language-flag-btn" title="Changer la langue">
+                    <span id="title-current-language-flag" class="language-flag">🇫🇷</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -40,8 +47,8 @@
         <header class="game-header">
             <div class="guild-info">
                 <div class="guild-header">
-                    <input type="text" id="guild-name-input" class="guild-name-input" value="Guilde d'Aventuriers" maxlength="30">
-                    <span class="guild-rank">Rang <span id="current-rank">F-</span></span>
+                                    <input type="text" id="guild-name-input" class="guild-name-input" value="Guilde d'Aventuriers" maxlength="30">
+                <span class="guild-rank"><span>Rang</span> <span id="current-rank">F-</span></span>
                 </div>
                 <div class="bonuses-info">
                     <span class="bonuses-label">Bonus: </span>
@@ -60,6 +67,12 @@
                     <span id="gold-amount">100</span>
                 </div>
                 
+                <!-- Sélecteur de langue avec drapeau -->
+                <div class="language-selector">
+                    <button id="language-flag-btn" class="language-flag-btn" title="Changer la langue">
+                        <span id="current-language-flag" class="language-flag">🇫🇷</span>
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -84,9 +97,8 @@
                                 <div class="objective-target">
                                     <span id="combat-target-display">0</span> points : <span id="combat-enemy-name">Troupes de gobelin</span>
                                 </div>
-                                <div id="boss-mechanic-display" class="boss-mechanic" style="display: none;">
-                                    <strong>Boss :</strong> <span id="boss-name">Nom du boss</span>
-                                    <br><strong>Mécanique :</strong> <span id="boss-mechanic-text">Mécanique du boss</span>
+                                <div id="pre-combat-boss-info" class="boss-info" style="display: none;">
+                                    <div class="boss-mechanic">Mécanique du boss</div>
                                 </div>
                             </div>
                         </div>
@@ -163,6 +175,7 @@
                         </div>
                     </div>
                     <div class="troops-selected">
+                        
                         <div class="team-synergies">
                             <h5>Synergies d'Équipe</h5>
                             <div id="synergies-display"></div>
@@ -174,10 +187,10 @@
             <!-- Section des actions -->
             <section class="actions-section">
                 <div class="action-buttons">
-                    <button id="start-combat-btn" class="btn primary">Lancer Combat</button>
-                    <button id="sell-bonuses-btn" class="btn secondary">Vendre Bonus</button>
-                    <button id="save-btn" class="btn secondary">Sauvegarder</button>
-                    <button id="menu-btn" class="btn secondary">Menu</button>
+                                    <button id="start-combat-btn" class="btn primary">Lancer Combat</button>
+                <button id="sell-bonuses-btn" class="btn secondary">Vendre Bonus</button>
+                <button id="save-btn" class="btn secondary">Sauvegarder</button>
+                <button id="menu-btn" class="btn secondary">Menu</button>
                     
                     <!-- Contrôles de musique -->
                     <div class="music-controls">
@@ -208,6 +221,8 @@
                             <span class="speed-text">4x</span>
                         </button>
                     </div>
+                    
+
                 </div>
             </section>
         </main>
@@ -238,11 +253,12 @@
                         <img id="enemy-image-modal" src="assets/gobelin.jpg" alt="Ennemi" class="enemy-image-modal">
                     </div>
                     <div class="combat-objective">
-                        <h4>Objectif: <span id="combat-target">0</span> dégâts</h4>
+                        <h4>Objectif: <span id="combat-target">0</span> <span>dégâts</span></h4>
                         <div class="progress-bar">
                             <div id="combat-progress" class="progress-fill"></div>
                         </div>
                     </div>
+
                     <div class="combat-log" id="combat-log"></div>
                 </div>
             </div>
@@ -343,7 +359,7 @@
             <div class="enemy-animation-preview">
                 <img id="enemy-image-animation" src="assets/gobelin.jpg" alt="Ennemi" class="enemy-image-animation">
             </div>
-            
+
             <!-- Compteur principal -->
             <div class="main-counter">
                 <div class="damage-display">
@@ -425,7 +441,6 @@
         
         <!-- Magasin -->
         <div id="pre-combat-shop"></div>
-        <div id="shop-modal" class="modal"></div>
         
         <!-- Modals supplémentaires -->
         <div id="troops-modal" class="modal"></div>
@@ -437,6 +452,8 @@
         <div class="speed-controls"></div>
         <button class="speed-btn" data-speed="1">1x</button>
     </div>
+
+
 
     <!-- Élément audio pour la musique -->
     <audio id="background-music" loop>

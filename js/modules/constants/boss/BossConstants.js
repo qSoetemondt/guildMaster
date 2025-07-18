@@ -1,4 +1,37 @@
 // Boss disponibles
+
+
+
+// Fonction pour obtenir le nom traduit d'un boss
+export function getBossDisplayName(bossName) {
+    const bossNames = {
+        'Golem de Pierre': 'boss.stoneGolem',
+        'Dragon de Glace': 'boss.iceDragon',
+        'Liche': 'boss.liche',
+        'Titan': 'boss.titan',
+        'Démon': 'boss.demon',
+        'Quilegan': 'boss.quilegan'
+    };
+    
+    const translationKey = bossNames[bossName];
+    return bossName;
+}
+
+// Fonction pour obtenir la mécanique traduite d'un boss
+export function getBossMechanic(bossName) {
+    const bossMechanics = {
+        'Golem de Pierre': 'boss.stoneGolemMechanic',
+        'Dragon de Glace': 'boss.iceDragonMechanic',
+        'Liche': 'boss.licheMechanic',
+        'Titan': 'boss.titanMechanic',
+        'Démon': 'boss.demonMechanic',
+        'Quilegan': 'boss.quileganMechanic'
+    };
+    
+    const translationKey = bossMechanics[bossName];
+    return bossMechanics[bossName] || '';
+}
+
 export const BOSSES = [
     { name: 'Golem de Pierre', mechanic: 'Les unités corps à corps font -50% de dégâts', targetDamage: 2500, icon: '🗿' },
     { name: 'Dragon de Glace', mechanic: 'Les unités distance font -30% de dégâts', targetDamage: 4000, icon: '❄️' },

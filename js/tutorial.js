@@ -1,15 +1,11 @@
 // Système de tutoriel
+import { ModalManager } from './modules/ModalManager.js';
+
 class TutorialSystem {
     constructor() {
         this.currentStep = 0;
         this.tutorialSteps = this.defineTutorialSteps();
         this.isActive = false;
-        this.hideModalFunction = null;
-    }
-
-    // Définir la fonction pour fermer les modals
-    setHideModalFunction(hideModalFn) {
-        this.hideModalFunction = hideModalFn;
     }
 
     // Définir les étapes du tutoriel
@@ -249,9 +245,7 @@ class TutorialSystem {
     endTutorial() {
         this.isActive = false;
         this.removeHighlight();
-        if (this.hideModalFunction) {
-            this.hideModalFunction('tutorial-modal');
-        }
+        ModalManager.hideModal('tutorial-modal');
         // gameState.showNotification('Tutoriel terminé ! Bonne chance !', 'success');
         
         // Marquer le tutoriel comme vu
@@ -308,9 +302,7 @@ const tutorialSystem = new TutorialSystem();
 
 // Fonction pour initialiser le tutoriel (appelée depuis main.js)
 export function initTutorialSystem(hideModalFn) {
-    if (hideModalFn) {
-        tutorialSystem.setHideModalFunction(hideModalFn);
-    }
+    // Le hideModalFn n'est plus nécessaire car on utilise ModalManager
     
     tutorialSystem.startTutorial();
     

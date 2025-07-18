@@ -1,4 +1,61 @@
 // Définitions centralisées des bonus d'équipement
+
+
+
+// Fonction pour obtenir le nom traduit d'un bonus
+export function getBonusDisplayName(bonusId) {
+    const bonusNames = {
+        'gold_bonus': 'bonus.goldBonus',
+        'corps_a_corps_bonus': 'bonus.meleeBonus',
+        'distance_bonus': 'bonus.rangedBonus',
+        'magique_bonus': 'bonus.magicBonus',
+        'epee_aiguisee': 'bonus.sharpSword',
+        'arc_renforce': 'bonus.reinforcedBow',
+        'grimoire_magique': 'bonus.magicGrimoire',
+        'amulette_force': 'bonus.strengthAmulet',
+        'cristal_precision': 'bonus.precisionCrystal',
+        'orbe_mystique': 'bonus.mysticOrb',
+        'potion_force': 'bonus.strengthPotion',
+        'elixir_puissance': 'bonus.powerElixir',
+        'armure_legendaire': 'bonus.legendaryArmor',
+        'arc_divin': 'bonus.divineBow',
+        'baguette_supreme': 'bonus.supremeWand',
+        'relique_ancienne': 'bonus.ancientRelic',
+        'cac_cest_la_vie': 'bonus.meleeIsLife',
+        'economie_dune_vie': 'bonus.economyOfLife'
+    };
+    
+    const translationKey = bonusNames[bonusId];
+    return bonusId;
+}
+
+// Fonction pour obtenir la description traduite d'un bonus
+export function getBonusDescription(bonusId) {
+    const bonusDescriptions = {
+        'gold_bonus': 'bonus.goldBonusDesc',
+        'corps_a_corps_bonus': 'bonus.meleeBonusDesc',
+        'distance_bonus': 'bonus.rangedBonusDesc',
+        'magique_bonus': 'bonus.magicBonusDesc',
+        'epee_aiguisee': 'bonus.sharpSwordDesc',
+        'arc_renforce': 'bonus.reinforcedBowDesc',
+        'grimoire_magique': 'bonus.magicGrimoireDesc',
+        'amulette_force': 'bonus.strengthAmuletDesc',
+        'cristal_precision': 'bonus.precisionCrystalDesc',
+        'orbe_mystique': 'bonus.mysticOrbDesc',
+        'potion_force': 'bonus.strengthPotionDesc',
+        'elixir_puissance': 'bonus.powerElixirDesc',
+        'armure_legendaire': 'bonus.legendaryArmorDesc',
+        'arc_divin': 'bonus.divineBowDesc',
+        'baguette_supreme': 'bonus.supremeWandDesc',
+        'relique_ancienne': 'bonus.ancientRelicDesc',
+        'cac_cest_la_vie': 'bonus.meleeIsLifeDesc',
+        'economie_dune_vie': 'bonus.economyOfLifeDesc'
+    };
+    
+    const translationKey = bonusDescriptions[bonusId];
+    return bonusDescriptions[bonusId] || '';
+}
+
 export const BONUS_DESCRIPTIONS = {
     // Bonus de base
     'gold_bonus': { 

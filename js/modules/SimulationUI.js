@@ -1,4 +1,7 @@
 // Interface utilisateur pour les simulations d'équilibrage
+import { ModalManager } from './ModalManager.js';
+
+
 export class SimulationUI {
     constructor(simulationEngine) {
         this.simulationEngine = simulationEngine;
@@ -19,7 +22,7 @@ export class SimulationUI {
                 <div class="modal-content simulation-modal">
                     <div class="modal-header">
                         <h2>🎯 Simulateur d'Équilibrage</h2>
-                        <button class="close-btn" onclick="window.hideModal('simulation-modal')">&times;</button>
+                        <button class="close-btn" onclick="ModalManager.hideModal('simulation-modal')">&times;</button>
                     </div>
                     
                     <div class="modal-body">
@@ -522,25 +525,29 @@ export class SimulationUI {
 
     // Obtenir le nom d'affichage d'un bonus
     getBonusDisplayName(bonusId) {
+
         const bonusNames = {
-            'gold_bonus': 'Bonus Or',
-            'corps_a_corps_bonus': 'Bonus Corps à Corps',
-            'distance_bonus': 'Bonus Distance',
-            'magique_bonus': 'Bonus Magique',
-            'epee_aiguisee': 'Épée Aiguisée',
-            'arc_renforce': 'Arc Renforcé',
-            'grimoire_magique': 'Grimoire Magique',
-            'amulette_force': 'Amulette de Force',
-            'cristal_precision': 'Cristal de Précision',
-            'orbe_mystique': 'Orbe Mystique',
-            'potion_force': 'Potion de Force',
-            'elixir_puissance': 'Élixir de Puissance',
-            'armure_legendaire': 'Armure Légendaire',
-            'arc_divin': 'Arc Divin',
-            'baguette_supreme': 'Baguette Suprême',
-            'relique_ancienne': 'Relique Ancienne'
+            'gold_bonus': 'bonus.goldBonus',
+            'corps_a_corps_bonus': 'bonus.meleeBonus',
+            'distance_bonus': 'bonus.rangedBonus',
+            'magique_bonus': 'bonus.magicBonus',
+            'epee_aiguisee': 'bonus.sharpSword',
+            'arc_renforce': 'bonus.reinforcedBow',
+            'grimoire_magique': 'bonus.magicGrimoire',
+            'amulette_force': 'bonus.strengthAmulet',
+            'cristal_precision': 'bonus.precisionCrystal',
+            'orbe_mystique': 'bonus.mysticOrb',
+            'potion_force': 'bonus.strengthPotion',
+            'elixir_puissance': 'bonus.powerElixir',
+            'armure_legendaire': 'bonus.legendaryArmor',
+            'arc_divin': 'bonus.divineBow',
+            'baguette_supreme': 'bonus.supremeWand',
+            'relique_ancienne': 'bonus.ancientRelic',
+            'cac_cest_la_vie': 'bonus.meleeIsLife',
+            'economie_dune_vie': 'bonus.economyOfLife'
         };
-        return bonusNames[bonusId] || bonusId;
+        const translationKey = bonusNames[bonusId];
+        return bonusId;
     }
 
     // Obtenir le nom d'affichage d'un consommable
@@ -626,29 +633,11 @@ export class SimulationUI {
 
     // Afficher la modal
     show() {
-        // Utiliser les fonctions globales si disponibles
-        if (typeof window.showModal === 'function') {
-            window.showModal('simulation-modal');
-        } else {
-            // Fallback : afficher directement
-            const modal = document.getElementById('simulation-modal');
-            const overlay = document.getElementById('modal-overlay');
-            if (modal) modal.classList.add('active');
-            if (overlay) overlay.style.display = 'block';
-        }
+        ModalManager.showModal('simulation-modal');
     }
 
     // Masquer la modal
     hide() {
-        // Utiliser les fonctions globales si disponibles
-        if (typeof window.hideModal === 'function') {
-            window.hideModal('simulation-modal');
-        } else {
-            // Fallback : masquer directement
-            const modal = document.getElementById('simulation-modal');
-            const overlay = document.getElementById('modal-overlay');
-            if (modal) modal.classList.remove('active');
-            if (overlay) overlay.style.display = 'none';
-        }
+        ModalManager.hideModal('simulation-modal');
     }
 } 

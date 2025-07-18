@@ -85,7 +85,7 @@ export class MusicManager {
         
         // Vérifier si l'audio est prêt
         this.audio.addEventListener('canplaythrough', () => {
-            console.log('Audio prêt à être joué');
+            // Audio prêt
         });
     }
     
@@ -110,13 +110,11 @@ export class MusicManager {
                 .then(() => {
                     this.isPlaying = true;
                     this.updatePlayButton(true);
-                    console.log('Musique démarrée');
                 })
                 .catch(error => {
                     console.error('Erreur lors du démarrage de la musique:', error);
                     // Gérer les erreurs de politique autoplay
                     if (error.name === 'NotAllowedError') {
-                        console.log('Lecture automatique bloquée par le navigateur');
                         this.showAutoplayMessage();
                     }
                 });
@@ -129,7 +127,6 @@ export class MusicManager {
         this.audio.pause();
         this.isPlaying = false;
         this.updatePlayButton(false);
-        console.log('Musique mise en pause');
     }
     
     setVolume(volume) {
@@ -157,7 +154,7 @@ export class MusicManager {
             this.titleVolumeDisplay.textContent = `${volumePercent}%`;
         }
         
-        console.log(`Volume réglé à ${volumePercent}%`);
+
     }
     
     updatePlayButton(isPlaying) {

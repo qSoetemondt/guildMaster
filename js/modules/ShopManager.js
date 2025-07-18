@@ -1,8 +1,10 @@
 // Gestionnaire de magasin pour GuildMaster
 import { BASE_UNITS } from './UnitConstants.js';
 import { BONUS_DESCRIPTIONS, calculateBonusPrice, getBonusRarity } from './BonusConstants.js';
-import { getRarityIcon, getRarityColor, getRarityDisplayName } from './RarityUtils.js';
+import { getRarityIcon, getRarityColor, getRarityDisplayName } from './constants/game/RarityUtils.js';
 import { getTypeDisplayString } from '../utils/TypeUtils.js';
+import { ModalManager } from './ModalManager.js';
+import { clearUnitCache } from './UnitManager.js';
 
 export class ShopManager {
     constructor() {
@@ -55,108 +57,24 @@ export class ShopManager {
         };
     }
 
-    // Extraire la détermination du tag de type
+    // Obtenir le tag de type d'item
     getItemTypeTag(itemType) {
         switch (itemType) {
-            case 'unit': return 'Unité';
-            case 'consumable': return 'Cons.';
-            case 'bonus': return 'Bonus';
-            default: return '';
+            case 'unit': return '⚔️';
+            case 'bonus': return '🎁';
+            case 'consumable': return '🧪';
+            default: return '❓';
         }
-    }
-
-    // Extraire la création du HTML pour un item d'unité
-    createUnitItemHTML(item) {
-        const typeDisplay = getTypeDisplayString(item.unitType);
-        const rarityHTML = item.rarity ? 
-            `<div style="margin-bottom: 10px; font-weight: 600; color: ${getRarityColor(item.rarity)}; font-size: 0.8rem;">
-                ${getRarityIcon(item.rarity)} ${getRarityDisplayName(item.rarity)}
-            </div>` : '';
-        
-        return `
-            <div class="item-type-tag" data-type="${item.type}">${this.getItemTypeTag(item.type)}</div>
-            <div style="font-size: 2rem; margin-bottom: 10px;">${item.icon}</div>
-            <div style="font-weight: 600; margin-bottom: 5px;">${item.name}</div>
-            <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">${typeDisplay}</div>
-            <div style="font-size: 0.8rem; margin-bottom: 10px;"><span class="shop-damage">${item.damage}</span> × <span class="shop-multiplier">${item.multiplier}</span></div>
-            ${rarityHTML}
-            <div class="item-price">${item.price}💰</div>
-        `;
-    }
-
-    // Extraire la création du HTML pour un item de bonus/consommable
-    createBonusConsumableItemHTML(item) {
-        const rarityHTML = item.rarity ? 
-            `<div style="margin-bottom: 10px; font-weight: 600; color: ${getRarityColor(item.rarity)}; font-size: 0.8rem;">
-                ${getRarityIcon(item.rarity)} ${getRarityDisplayName(item.rarity)}
-            </div>` : '';
-        
-        return `
-            <div class="item-type-tag" data-type="${item.type}">${this.getItemTypeTag(item.type)}</div>
-            <div style="font-size: 2rem; margin-bottom: 10px;">${item.icon}</div>
-            <div style="font-weight: 600; margin-bottom: 5px;">${item.name}</div>
-            <div style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">${item.description}</div>
-            ${rarityHTML}
-            <div class="item-price">${item.price}💰</div>
-        `;
     }
 
     // Extraire la création d'un élément d'item
     createShopItemElement(item, gameState) {
-        const itemElement = document.createElement('div');
-        
-        // Ajouter la classe de rareté
-        const rarityClass = item.rarity ? `rarity-${item.rarity}` : '';
-        itemElement.className = `shop-item ${rarityClass}`;
-        
-        // Vérifier la disponibilité
-        const availability = this.checkItemAvailability(item, gameState);
-        
-        // Griser si pas disponible
-        if (!availability.isAvailable) {
-            itemElement.style.opacity = '0.5';
-        }
-        
-        // Créer le HTML selon le type d'item
-        if (item.type === 'unit') {
-            itemElement.innerHTML = this.createUnitItemHTML(item);
-        } else {
-            itemElement.innerHTML = this.createBonusConsumableItemHTML(item);
-        }
-        
-        // Ajouter l'événement d'achat si disponible
-        if (availability.isAvailable) {
-            this.attachPurchaseEvent(itemElement, item, gameState);
-        }
-        
-        return itemElement;
+        return gameState.uiManager.createShopItemElement(item, gameState);
     }
 
     // Extraire l'attachement de l'événement d'achat
     attachPurchaseEvent(itemElement, item, gameState) {
-        itemElement.addEventListener('click', () => {
-            if (this.spendGold(gameState, item.price)) {
-                if (item.type === 'unit') {
-                    // Utiliser la nouvelle méthode pour acheter l'unité
-                    const success = this.purchaseUnit(item.name, gameState);
-                    if (success) {
-                        // Ajouter à la liste des unités achetées dans cette session
-                        this.currentShopPurchasedUnits.push(item.name);
-                    }
-                } else if (item.type === 'consumable') {
-                    // Ajouter le consommable à l'inventaire
-                    gameState.addConsumable(item.consumableType);
-                    // Ajouter à la liste des consomables achetés dans cette session
-                    this.currentShopPurchasedConsumables.push(item.consumableType);
-                } else {
-                    gameState.unlockBonus(item.bonusId);
-                    // Ajouter le bonus à la liste des bonus achetés dans cette session
-                    this.currentShopPurchasedBonuses.push(item.bonusId);
-                }
-                gameState.updateUI();
-                gameState.updateActiveBonuses(); // Forcer la mise à jour des bonus actifs
-            }
-        });
+        gameState.uiManager.attachPurchaseEvent(itemElement, item, gameState);
     }
 
     updatePreCombatShop(gameState) {
@@ -332,257 +250,36 @@ export class ShopManager {
 
     // Acheter une unité (déplacé depuis GameState)
     purchaseUnit(unitName, gameState) {
-        // Chercher d'abord dans les unités de base
-        let unit = gameState.getBaseUnits().find(u => u.name === unitName);
+        // Chercher l'unité dans toutes les unités disponibles
+        let unit = gameState.getAllAvailableTroops().find(u => u.name === unitName);
         
         if (unit) {
-            // Si c'est une unité de base, augmenter sa quantité dans ownedUnits seulement
+            // Ajouter l'unité au pool global via ownedUnits
             gameState.ownedUnits[unitName] = (gameState.ownedUnits[unitName] || 0) + 1;
+            
+            // Nettoyer le cache des unités car les quantités ont changé
+            clearUnitCache();
+            
             gameState.notificationManager.showUnitAdded(unitName);
             return true;
-        } else {
-            // Si c'est une unité spéciale, l'ajouter à ownedUnits
-            unit = gameState.getShopUnits().find(u => u.name === unitName);
-            if (unit) {
-                // Mettre à jour ownedUnits seulement (pas de modification de BASE_UNITS)
-                gameState.ownedUnits[unitName] = (gameState.ownedUnits[unitName] || 0) + 1;
-                gameState.notificationManager.showUnitAdded(unitName);
-                return true;
-            }
         }
         
         gameState.notificationManager.showUnitError(`Erreur: Unité ${unitName} non trouvée !`);
         return false;
     }
 
-    // Ouvrir la modal de vente de bonus
     openSellBonusesModal(gameState) {
-        const modal = document.getElementById('sell-bonuses-modal');
-        const bonusesList = document.getElementById('sell-bonuses-list');
-        const totalGoldGain = document.getElementById('total-gold-gain');
-        
-        if (!modal || !bonusesList) {
-            console.error('Modal de vente de bonus non trouvée');
-            return;
-        }
-        
-        // Vider la liste
-        bonusesList.innerHTML = '';
-        
-        // Compter les occurrences de chaque bonus
-        const bonusCounts = {};
-        gameState.unlockedBonuses.forEach(bonusId => {
-            bonusCounts[bonusId] = (bonusCounts[bonusId] || 0) + 1;
-        });
-        
-        const bonusDescriptions = getBonusDescriptions();
-        let totalGain = 0;
-        
-        // Créer les éléments pour chaque bonus
-        Object.keys(bonusCounts).forEach(bonusId => {
-            const bonus = bonusDescriptions[bonusId];
-            if (bonus) {
-                const count = bonusCounts[bonusId];
-                const buyPrice = calculateBonusPrice(bonusId);
-                const sellPrice = Math.floor(buyPrice / 2);
-                const totalPrice = sellPrice * count;
-                totalGain += totalPrice;
-                
-                // Calculer la description dynamique pour les bonus dynamiques
-                let dynamicDescription = bonus.description;
-                if (bonusId === 'cac_cest_la_vie' && bonus.effects) {
-                    let totalValue = 0;
-                    let triggerCount = 0;
-                    let baseValue = 0;
-                    
-                    bonus.effects.forEach(effect => {
-                        if (effect.condition === 'base') {
-                            // Valeur de base + améliorations d'achat
-                            baseValue = effect.value;
-                            if (gameState.dynamicBonusStates && 
-                                gameState.dynamicBonusStates[bonusId] && 
-                                gameState.dynamicBonusStates[bonusId]['base']) {
-                                baseValue += gameState.dynamicBonusStates[bonusId]['base'];
-                            }
-                            totalValue += baseValue;
-                        }
-                        else if (effect.condition === 'synergy_trigger') {
-                            // Récupérer le compteur depuis les états sauvegardés
-                            if (gameState.dynamicBonusStates && 
-                                gameState.dynamicBonusStates[bonusId] && 
-                                gameState.dynamicBonusStates[bonusId][effect.triggerSynergy]) {
-                                triggerCount = gameState.dynamicBonusStates[bonusId][effect.triggerSynergy];
-                            } else {
-                                triggerCount = effect.triggerCount || 0;
-                            }
-                            totalValue += effect.value * triggerCount;
-                        }
-                    });
-                    
-                    dynamicDescription = `Augmente les multiplicateurs de +${totalValue} des unités de corps à corps. +1 bonus supplémentaire à chaque activation de Formation Corps à Corps. (Actuellement : +${triggerCount} activations)`;
-                }
-                else if (bonusId === 'economie_dune_vie' && bonus.effects) {
-                    let totalValue = 0;
-                    let combatCount = 0;
-                    let baseValue = 0;
-                    
-                    bonus.effects.forEach(effect => {
-                        if (effect.condition === 'base') {
-                            // Valeur de base + améliorations d'achat
-                            baseValue = effect.value;
-                            if (gameState.dynamicBonusStates && 
-                                gameState.dynamicBonusStates[bonusId] && 
-                                gameState.dynamicBonusStates[bonusId]['base']) {
-                                baseValue += gameState.dynamicBonusStates[bonusId]['base'];
-                            }
-                            totalValue += baseValue;
-                        }
-                        else if (effect.condition === 'end_of_combat') {
-                            // Récupérer le compteur depuis les états sauvegardés
-                            if (gameState.dynamicBonusStates && 
-                                gameState.dynamicBonusStates[bonusId] && 
-                                gameState.dynamicBonusStates[bonusId]['end_of_combat']) {
-                                combatCount = gameState.dynamicBonusStates[bonusId]['end_of_combat'];
-                            } else {
-                                combatCount = effect.triggerCount || 0;
-                            }
-                            totalValue += effect.value * combatCount;
-                        }
-                    });
-                    
-                    dynamicDescription = `Ce bonus donne +${totalValue} d'or par combat. Il augmente de +2 d'or par combat terminé. (Actuellement : +${combatCount} combats terminés)`;
-                }
-                
-                const bonusElement = document.createElement('div');
-                bonusElement.className = 'sell-bonus-item';
-                bonusElement.innerHTML = `
-                    <div class="sell-bonus-info">
-                        <div class="sell-bonus-name">
-                            ${bonus.icon} ${bonus.name}
-                        </div>
-                        <div class="sell-bonus-description">${dynamicDescription}</div>
-                        <div class="sell-bonus-count">Quantité disponible : ${count}</div>
-                    </div>
-                    <div class="sell-bonus-controls">
-                        <div class="sell-quantity-controls">
-                            <button class="quantity-btn minus" data-bonus-id="${bonusId}" title="Diminuer">-</button>
-                            <input type="number" class="sell-quantity-input" value="0" min="0" max="${count}" data-bonus-id="${bonusId}" data-price="${sellPrice}">
-                            <button class="quantity-btn plus" data-bonus-id="${bonusId}" title="Augmenter">+</button>
-                        </div>
-                        <div class="sell-bonus-price">
-                            <div class="sell-bonus-price-value">${sellPrice}💰 par unité</div>
-                            <div class="sell-bonus-price-total">Total : <span class="total-price">0💰</span></div>
-                        </div>
-                    </div>
-                `;
-                
-                // Ajouter les événements pour les contrôles de quantité
-                const minusBtn = bonusElement.querySelector('.quantity-btn.minus');
-                const plusBtn = bonusElement.querySelector('.quantity-btn.plus');
-                const quantityInput = bonusElement.querySelector('.sell-quantity-input');
-                const totalPriceSpan = bonusElement.querySelector('.total-price');
-                
-                // Fonction pour mettre à jour le prix total
-                const updateTotalPrice = () => {
-                    const quantity = parseInt(quantityInput.value) || 0;
-                    const totalPrice = quantity * sellPrice;
-                    totalPriceSpan.textContent = `${totalPrice}💰`;
-                    
-                    // Mettre à jour l'apparence de l'élément
-                    bonusElement.classList.toggle('has-quantity', quantity > 0);
-                    
-                    // Mettre à jour l'état des boutons
-                    minusBtn.disabled = quantity <= 0;
-                    plusBtn.disabled = quantity >= count;
-                    
-                    this.updateSellBonusesSummary();
-                };
-                
-                // Événements pour les boutons + et -
-                minusBtn.addEventListener('click', () => {
-                    const currentValue = parseInt(quantityInput.value) || 0;
-                    if (currentValue > 0) {
-                        quantityInput.value = currentValue - 1;
-                        updateTotalPrice();
-                    }
-                });
-                
-                plusBtn.addEventListener('click', () => {
-                    const currentValue = parseInt(quantityInput.value) || 0;
-                    if (currentValue < count) {
-                        quantityInput.value = currentValue + 1;
-                        updateTotalPrice();
-                    }
-                });
-                
-                // Événement pour l'input direct
-                quantityInput.addEventListener('input', updateTotalPrice);
-                
-                bonusesList.appendChild(bonusElement);
-            }
-        });
-        
-        // Mettre à jour le total initial
-        totalGoldGain.textContent = '0💰';
-        
-        // Ajouter les boutons d'action
-        this.addSellBonusesActions(modal, gameState);
-        
-        // Afficher la modal
-        modal.style.display = 'block';
-        document.getElementById('modal-overlay').style.display = 'block';
-        
-        // Gérer la fermeture
-        const closeModal = () => {
-            modal.style.display = 'none';
-            document.getElementById('modal-overlay').style.display = 'none';
-        };
-        
-        modal.querySelector('.close-btn').addEventListener('click', closeModal);
-        document.getElementById('modal-overlay').addEventListener('click', closeModal);
+        gameState.uiManager.openSellBonusesModal(gameState);
     }
     
     // Mettre à jour le résumé de vente
-    updateSellBonusesSummary() {
-        const quantityInputs = document.querySelectorAll('.sell-quantity-input');
-        const totalGoldGain = document.getElementById('total-gold-gain');
-        
-        let totalGain = 0;
-        quantityInputs.forEach(input => {
-            const quantity = parseInt(input.value) || 0;
-            const price = parseInt(input.dataset.price);
-            totalGain += price * quantity;
-        });
-        
-        totalGoldGain.textContent = `${totalGain}💰`;
+    updateSellBonusesSummary(gameState) {
+        gameState.uiManager.updateSellBonusesSummary();
     }
     
     // Ajouter les boutons d'action à la modal
     addSellBonusesActions(modal, gameState) {
-        // Supprimer les anciens boutons s'ils existent
-        const existingActions = modal.querySelector('.sell-bonuses-actions');
-        if (existingActions) {
-            existingActions.remove();
-        }
-        
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'sell-bonuses-actions';
-        actionsDiv.innerHTML = `
-            <button class="btn secondary" id="cancel-sell-all">Annuler</button>
-            <button class="btn primary" id="confirm-sell-all">Vendre Sélectionnés</button>
-        `;
-        
-        modal.querySelector('.modal-body').appendChild(actionsDiv);
-        
-        // Gérer les événements
-        actionsDiv.querySelector('#cancel-sell-all').addEventListener('click', () => {
-            modal.style.display = 'none';
-            document.getElementById('modal-overlay').style.display = 'none';
-        });
-        
-        actionsDiv.querySelector('#confirm-sell-all').addEventListener('click', () => {
-            this.executeSellBonuses(gameState);
-        });
+        gameState.uiManager.addSellBonusesActions(modal, gameState);
     }
     
     // Exécuter la vente des bonus sélectionnés
@@ -619,8 +316,7 @@ export class ShopManager {
             const message = soldItems.length > 0 ? soldItems.join(', ') : `${soldCount} bonus vendus`;
             gameState.notificationManager.showBonusSold(message, totalGain);
             // Fermer la modal
-            document.getElementById('sell-bonuses-modal').style.display = 'none';
-            document.getElementById('modal-overlay').style.display = 'none';
+            ModalManager.hideModal('sell-bonuses-modal');
         }
     }
     
@@ -636,10 +332,8 @@ export class ShopManager {
         const buyPrice = calculateBonusPrice(bonusId);
         const sellPrice = Math.floor(buyPrice / 2);
         
-        // Créer une modal de confirmation
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
+        // Créer le contenu de la modal
+        const modalContent = `
             <div class="modal-content">
                 <div class="modal-header">
                     <h3>Confirmer la vente</h3>
@@ -663,29 +357,34 @@ export class ShopManager {
                 </div>
             </div>
         `;
+
+        // Créer la modal si elle n'existe pas
+        let modal = document.getElementById('sell-confirmation-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'sell-confirmation-modal';
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
         
-        // Ajouter la modal au DOM
-        document.body.appendChild(modal);
-        document.getElementById('modal-overlay').style.display = 'block';
+        modal.innerHTML = modalContent;
         
-        // Gérer la fermeture
-        const closeModal = () => {
-            document.body.removeChild(modal);
-            document.getElementById('modal-overlay').style.display = 'none';
-        };
+        // Ajouter les gestionnaires d'événements
+        const closeBtn = modal.querySelector('.close-btn');
+        const cancelBtn = modal.querySelector('#cancel-sell');
+        const confirmBtn = modal.querySelector('#confirm-sell');
         
-        modal.querySelector('.close-btn').addEventListener('click', closeModal);
-        modal.querySelector('#cancel-sell').addEventListener('click', closeModal);
+        closeBtn.addEventListener('click', () => ModalManager.hideModal('sell-confirmation-modal'));
+        cancelBtn.addEventListener('click', () => ModalManager.hideModal('sell-confirmation-modal'));
         
-        // Gérer la confirmation
-        modal.querySelector('#confirm-sell').addEventListener('click', () => {
+        confirmBtn.addEventListener('click', () => {
             if (this.sellBonus(bonusId, gameState)) {
-                closeModal();
+                ModalManager.hideModal('sell-confirmation-modal');
             }
         });
         
-        // Fermer en cliquant sur l'overlay
-        document.getElementById('modal-overlay').addEventListener('click', closeModal);
+        // Afficher la modal via ModalManager
+        ModalManager.showModal('sell-confirmation-modal');
     }
 
     // Vendre un bonus (prix d'achat / 2)
@@ -711,18 +410,17 @@ export class ShopManager {
                 if (gameState.currentCombat && gameState.currentCombat.isBossFight && 
                     gameState.currentCombat.bossName === 'Quilegan') {
                     gameState.bossManager.markBonusSold();
-                    console.log('🐛 Quilegan: Bonus vendu, malus désactivé');
                 }
                 
                 gameState.notificationManager.showBonusSold(bonus.name, sellPrice);
                 gameState.updateUI();
                 gameState.updateActiveBonuses();
-                gameState.updateCombatInfo(); // Mettre à jour l'affichage de la mécanique
+                gameState.updateUI(); // Mettre à jour l'affichage de la mécanique
                 
                 // Mettre à jour directement l'indicateur de Quilegan dans le conteneur de progression
                 if (gameState.currentCombat && gameState.currentCombat.isBossFight && 
                     gameState.currentCombat.bossName === 'Quilegan') {
-                    gameState.updateExistingCombatProgress();
+                    gameState.uiManager.updateExistingCombatProgress();
                 }
                 
                 return true;
@@ -947,11 +645,6 @@ export function updateActiveBonuses(gameState, shopManager = null) {
 
 // Afficher la modal de détail d'un bonus
 function showBonusModal(bonusId, bonus, count, gameState) {
-    // Créer la modal
-    const modal = document.createElement('div');
-    modal.className = 'modal active';
-    modal.id = 'bonus-detail-modal';
-    
     // Calculer le prix de vente
     const buyPrice = calculateBonusPrice(bonusId);
     const sellPrice = Math.floor(buyPrice / 2);
@@ -1026,7 +719,8 @@ function showBonusModal(bonusId, bonus, count, gameState) {
         dynamicDescription = `Ce bonus donne +${totalValue} d'or par combat. Il augmente de +2 d'or par combat terminé. (Actuellement : +${combatCount} combats terminés)`;
     }
     
-    modal.innerHTML = `
+    // Créer le contenu de la modal
+    const modalContent = `
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h3>${rarityIcon} ${bonus.icon} ${bonus.name}</h3>
@@ -1049,66 +743,46 @@ function showBonusModal(bonusId, bonus, count, gameState) {
                     </div>
                 </div>
                 <div class="bonus-actions">
-                    <button class="btn secondary close-modal-btn">Fermer</button>
-                    <button class="btn danger sell-bonus-btn" ${count === 0 ? 'disabled' : ''}>
+                                            <button class="btn secondary close-modal-btn">Fermer</button>
+                        <button class="btn danger sell-bonus-btn" ${count === 0 ? 'disabled' : ''}>
                         Vendre 1 exemplaire (${sellPrice}💰)
                     </button>
                 </div>
             </div>
         </div>
     `;
+
+    // Créer la modal si elle n'existe pas
+    let modal = document.getElementById('bonus-detail-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'bonus-detail-modal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
     
-    // Ajouter la modal au DOM
-    document.body.appendChild(modal);
+    modal.innerHTML = modalContent;
     
     // Gérer la fermeture
     const closeBtn = modal.querySelector('.close-btn');
     const closeModalBtn = modal.querySelector('.close-modal-btn');
     const sellBtn = modal.querySelector('.sell-bonus-btn');
     
-    const closeModal = () => {
-        modal.remove();
-    };
+    closeBtn.addEventListener('click', () => ModalManager.hideModal('bonus-detail-modal'));
+    closeModalBtn.addEventListener('click', () => ModalManager.hideModal('bonus-detail-modal'));
     
-    closeBtn.addEventListener('click', closeModal);
-    closeModalBtn.addEventListener('click', closeModal);
-    
-    // Gérer la vente
+    // Gérer la vente - utiliser la méthode sellBonus pour s'assurer que Quilegan est géré
     sellBtn.addEventListener('click', () => {
         if (count > 0) {
-            // Retirer un exemplaire du bonus
-            const bonusIndex = gameState.unlockedBonuses.indexOf(bonusId);
-            if (bonusIndex !== -1) {
-                gameState.unlockedBonuses.splice(bonusIndex, 1);
-                
-                // Ajouter l'or
-                gameState.addGold(sellPrice);
-                
-                // Mettre à jour l'affichage
-                updateActiveBonuses(gameState);
-                
+            // Utiliser la méthode sellBonus pour s'assurer que Quilegan est géré correctement
+            const shopManager = gameState.shopManager;
+            if (shopManager && shopManager.sellBonus(bonusId, gameState)) {
                 // Fermer la modal
-                closeModal();
-                
-                // Notification
-                gameState.showNotification(`Bonus vendu ! +${sellPrice} or`, 'success');
+                ModalManager.hideModal('bonus-detail-modal');
             }
         }
     });
     
-    // Fermer avec Échap
-    const handleEscape = (e) => {
-        if (e.key === 'Escape') {
-            closeModal();
-            document.removeEventListener('keydown', handleEscape);
-        }
-    };
-    document.addEventListener('keydown', handleEscape);
-    
-    // Fermer en cliquant sur l'overlay
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
-} 
+    // Afficher la modal via ModalManager
+    ModalManager.showModal('bonus-detail-modal');
+}

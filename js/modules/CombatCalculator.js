@@ -14,14 +14,12 @@ export class CombatCalculator {
      * @returns {number} - Les dégâts totaux du tour
      */
     calculateTurnDamage(troops) {
-        console.log(`🐛 calculateTurnDamage appelé avec ${troops.length} troupes`);
         let totalDamage = 0;
         let totalMultiplier = 0;
         
         for (const troop of troops) {
             // Vérifier si la troupe a déjà été utilisée dans ce rang
-            if (this.gameState.usedTroopsThisRank.includes(troop.id)) {
-                console.log(`🐛 Troupe ${troop.name} déjà utilisée, skip`);
+            if (this.gameState.usedTroopsThisCombat.includes(troop.id)) {
                 continue; // Passer cette troupe
             }
 
@@ -64,7 +62,7 @@ export class CombatCalculator {
             totalMultiplier += unitMultiplier;
             
             // Marquer la troupe comme utilisée dans ce rang
-            this.gameState.usedTroopsThisRank.push(troop.id);
+            this.gameState.usedTroopsThisCombat.push(troop.id);
         }
         
         // Retirer les troupes utilisées du pool de combat
@@ -77,13 +75,8 @@ export class CombatCalculator {
         if (this.gameState.currentCombat && this.gameState.currentCombat.isBossFight && 
             this.gameState.currentCombat.bossMechanic.includes('Bloque les relances, les bonus, les synergies et les dégâts des unités tant qu\'aucun bonus n\'est vendu')) {
             
-            console.log(`🐛 Quilegan Debug: bonusSoldThisCombat = ${this.gameState.bossManager.isBossMalusDisabled()}, finalDamage = ${finalDamage}`);
-            
             if (!this.gameState.bossManager.isBossMalusDisabled()) {
-                console.log(`🐛 Quilegan: Bonus non vendu, dégâts mis à 0 (était ${finalDamage})`);
                 finalDamage = 0;
-            } else {
-                console.log(`🐛 Quilegan: Bonus vendu, dégâts normaux (${finalDamage})`);
             }
         }
         
@@ -91,36 +84,60 @@ export class CombatCalculator {
     }
 
     /**
-     * Calculer les dégâts d'une unité individuelle
+     * Calculer les dégâts d'une unité individuelle avec tous les bonus et malus
      * @param {Object} troop - L'unité à calculer
-     * @param {Array} troopsList - Liste des troupes pour les bonus (optionnel)
-     * @returns {number} - Les dégâts de l'unité
+     * @param {Array} troopsList - Liste des troupes pour les synergies
+     * @returns {Object} - Les dégâts et multiplicateur de l'unité avec tous les bonus
      */
-    calculateTroopDamage(troop, troopsList = null) {
+    calculateTroopDamageWithBonuses(troop, troopsList = null) {
         let damage = troop.damage;
         let multiplier = troop.multiplier;
         
-        // BONUS SOIGNEUR : chaque soigneur sélectionné donne +1 dégâts à tous
-        const selectedTroops = troopsList || this.gameState.selectedTroops || [];
-        const healerCount = selectedTroops.filter(t => Array.isArray(t.type) ? t.type.includes('Soigneur') : t.type === 'Soigneur').length;
-        if (healerCount > 0) {
-            damage += healerCount;
-        }
-        
-        // Appliquer les synergies d'équipe
-        const synergies = this.calculateSynergies();
-        synergies.forEach(synergy => {
-            if (synergy.bonus.target === troop.type || !synergy.bonus.target) {
-                if (synergy.bonus.damage) {
-                    damage += synergy.bonus.damage;
-                }
-                if (synergy.bonus.multiplier) {
-                    multiplier += synergy.bonus.multiplier;
-                }
+        // Appliquer les bonus d'équipement
+        const equipmentBonuses = this.calculateEquipmentBonuses();
+        equipmentBonuses.forEach(bonus => {
+            if (bonus.target === 'all' || this.gameState.hasTroopType(troop, bonus.target)) {
+                if (bonus.damage) damage += bonus.damage;
+                if (bonus.multiplier) multiplier += bonus.multiplier;
             }
         });
         
-        return damage * multiplier;
+        // Appliquer les synergies
+        const synergies = this.calculateSynergies(troopsList);
+        synergies.forEach(synergy => {
+            if (synergy.bonus.target === 'all' || this.gameState.hasTroopType(troop, synergy.bonus.target)) {
+                if (synergy.bonus.damage) damage += synergy.bonus.damage;
+                if (synergy.bonus.multiplier) multiplier += synergy.bonus.multiplier;
+            }
+        });
+        
+        // Appliquer les mécaniques de boss
+        if (this.gameState.currentCombat.isBossFight) {
+            damage = this.applyBossMechanics(damage, troop);
+            multiplier = this.applyBossMechanicsToMultiplier(multiplier, troop);
+        }
+        
+        return { damage, multiplier };
+    }
+
+    /**
+     * Appliquer les mécaniques de boss sur les multiplicateurs
+     * @param {number} multiplier - Le multiplicateur de base
+     * @param {Object} troop - L'unité
+     * @returns {number} - Le multiplicateur modifié
+     */
+    applyBossMechanicsToMultiplier(multiplier, troop) {
+        if (!this.gameState.currentCombat.isBossFight) {
+            return multiplier;
+        }
+        
+        const mechanic = this.gameState.currentCombat.bossMechanic;
+        
+        if (mechanic.includes('multiplicateurs')) {
+            return Math.floor(multiplier * 0.5);
+        }
+        
+        return multiplier;
     }
 
     /**
@@ -191,15 +208,9 @@ export class CombatCalculator {
                 this.gameState.combatTroops.splice(combatIndex, 1);
             }
             
-            // Si c'est une unité achetée/transformée (permanente), la remettre seulement dans availableTroops
-            if (this.isPermanentUnit(usedTroop)) {
-                // Vérifier qu'elle n'est pas déjà dans availableTroops
-                const existingAvailableIndex = this.gameState.availableTroops.findIndex(troop => troop.id === usedTroop.id);
-                if (existingAvailableIndex === -1) {
-                    this.gameState.availableTroops.push(usedTroop);
-                }
-                // NE PAS remettre dans combatTroops pour éviter qu'elle apparaisse automatiquement
-            }
+            // Si c'est une unité achetée/transformée (permanente), NE PAS la remettre dans availableTroops
+            // pour éviter la duplication. Elle sera retirée du pool de combat et ne réapparaîtra pas automatiquement.
+            // Les unités transformées doivent être retirées définitivement du pool après utilisation.
         });
     }
 
@@ -218,44 +229,14 @@ export class CombatCalculator {
      * @returns {Object} - Résultat du calcul avec détails
      */
     calculateCombatDamageForSimulator(troops) {
-        console.log(`⚔️ Calcul des dégâts pour ${troops.length} troupes`);
-        
-        // Afficher les troupes utilisées
-        console.log(`🎯 Troupes utilisées dans ce tour:`);
-        troops.forEach((troop, index) => {
-            console.log(`  ${index + 1}. ${troop.name} - 💥${troop.damage} ×⚡${troop.multiplier} = ${troop.damage * troop.multiplier} puissance`);
-        });
-        
         // Calculer les synergies actives
         const synergies = this.calculateSynergies(troops);
-        if (synergies && synergies.length > 0) {
-            console.log(`🔗 Synergies actives:`);
-            synergies.forEach(synergy => {
-                console.log(`  • ${synergy.name}: ${synergy.description}`);
-            });
-        } else {
-            console.log(`❌ Aucune synergie active`);
-        }
         
         // Calculer les bonus d'équipement
         const equipmentBonuses = this.calculateEquipmentBonuses();
-        if (equipmentBonuses && equipmentBonuses.length > 0) {
-            console.log(`🎁 Bonus d'équipement actifs:`);
-            equipmentBonuses.forEach(bonus => {
-                let bonusText = `${bonus.name}: `;
-                if (bonus.damage) bonusText += `+${bonus.damage} dégâts `;
-                if (bonus.multiplier) bonusText += `+${bonus.multiplier} multiplicateur `;
-                if (bonus.target !== 'all') bonusText += `(${bonus.target})`;
-                console.log(`  • ${bonusText}`);
-            });
-        } else {
-            console.log(`❌ Aucun bonus d'équipement actif`);
-        }
         
         // Utiliser la fonction du jeu de base
         const turnDamage = this.calculateTurnDamage(troops);
-        
-        console.log(`💥 DÉGÂTS FINAUX: ${turnDamage}`);
         
         return {
             damage: turnDamage,

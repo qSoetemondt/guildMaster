@@ -1,0 +1,51 @@
+{
+  "name": "guild-master",
+  "version": "1.0.0",
+  "description": "Guild Master - Jeu de gestion de guilde",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "windowed": "electron . --windowed",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "guild",
+    "game",
+    "rpg",
+    "electron"
+  ],
+  "author": "Guild Master Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.guildmaster.app",
+    "productName": "Guild Master",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!dist/**/*",
+      "!.git/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/guildMaster.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/guildMaster.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/guildMaster.png"
+    }
+  }
+} 

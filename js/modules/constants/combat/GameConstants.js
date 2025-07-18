@@ -1,4 +1,4 @@
-// Constantes générales du jeu
+// Constantes de combat et progression
 export const RANKS = ['F-', 'F', 'F+', 'E-', 'E', 'E+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S'];
 
 // Rangs qui déclenchent des combats de boss

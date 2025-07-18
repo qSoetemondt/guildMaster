@@ -7,7 +7,7 @@ export class SaveManager {
     }
 
     // Sauvegarder l'état du jeu
-    save(gameState) {
+    async save(gameState) {
         const saveData = {
             rank: gameState.rank,
             rankProgress: gameState.rankProgress,
@@ -17,7 +17,7 @@ export class SaveManager {
             availableTroops: gameState.availableTroops,
             selectedTroops: gameState.selectedTroops,
             combatTroops: gameState.combatTroops,
-            usedTroopsThisRank: gameState.usedTroopsThisRank,
+            usedTroopsThisCombat: gameState.usedTroopsThisCombat,
             combatHistory: gameState.combatHistory,
             isFirstTime: gameState.isFirstTime,
             unlockedBonuses: gameState.unlockedBonuses,
@@ -30,42 +30,77 @@ export class SaveManager {
             shopRefreshCount: gameState.shopManager.shopRefreshCount,
             shopRefreshCost: gameState.shopManager.shopRefreshCost,
             bossState: gameState.bossManager.saveState(),
-            gameStats: gameState.gameStats,
+            gameStats: gameState.statisticsManager.getStatsForSave(),
             consumables: gameState.consumableManager.consumables,
-            transformedBaseUnits: gameState.transformedBaseUnits,
+    
             synergyLevels: gameState.synergyLevels,
             ownedUnits: gameState.getOwnedUnits() // Sauvegarder les unités possédées
         };
         
-        localStorage.setItem(this.saveKey, JSON.stringify(saveData));
-        gameState.notificationManager.showGameSaved();
+        // Utiliser Electron API si disponible, sinon localStorage
+        if (window.electronAPI) {
+            try {
+                const result = await window.electronAPI.saveGameData(saveData);
+                if (result.success) {
+                    gameState.notificationManager.showGameSaved();
+                } else {
+                    console.error('Erreur de sauvegarde Electron:', result.error);
+                    // Fallback vers localStorage
+                    localStorage.setItem(this.saveKey, JSON.stringify(saveData));
+                    gameState.notificationManager.showGameSaved();
+                }
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde Electron:', error);
+                // Fallback vers localStorage
+                localStorage.setItem(this.saveKey, JSON.stringify(saveData));
+                gameState.notificationManager.showGameSaved();
+            }
+        } else {
+            // Fallback pour le navigateur
+            localStorage.setItem(this.saveKey, JSON.stringify(saveData));
+            gameState.notificationManager.showGameSaved();
+        }
     }
 
     // Charger l'état du jeu
-    load(gameState) {
-        const saveData = localStorage.getItem(this.saveKey);
+    async load(gameState) {
+        let saveData = null;
+        
+        // Utiliser Electron API si disponible, sinon localStorage
+        if (window.electronAPI) {
+            try {
+                const result = await window.electronAPI.loadGameData();
+                if (result.success) {
+                    saveData = JSON.stringify(result.data);
+                } else {
+                    console.error('Erreur de chargement Electron:', result.error);
+                    // Fallback vers localStorage
+                    saveData = localStorage.getItem(this.saveKey);
+                }
+            } catch (error) {
+                console.error('Erreur lors du chargement Electron:', error);
+                // Fallback vers localStorage
+                saveData = localStorage.getItem(this.saveKey);
+            }
+        } else {
+            // Fallback pour le navigateur
+            saveData = localStorage.getItem(this.saveKey);
+        }
+        
         if (saveData) {
             const data = JSON.parse(saveData);
-            Object.assign(gameState, data);
             
-            // Initialiser les statistiques si pas présentes
-            if (!gameState.gameStats) {
-                gameState.gameStats = {
-                    combatsPlayed: 0,
-                    combatsWon: 0,
-                    combatsLost: 0,
-                    goldSpent: 0,
-                    goldEarned: 0,
-                    unitsPurchased: 0,
-                    bonusesPurchased: 0,
-                    unitsUsed: {},
-                    maxDamageInTurn: 0,
-                    bestTurnDamage: 0,
-                    bestTurnRound: 0,
-                    totalDamageDealt: 0,
-                    highestRank: 'F-',
-                    startTime: Date.now()
-                };
+            // Extraire gameStats pour éviter le conflit avec le getter
+            const { gameStats, ...otherData } = data;
+            
+            // Assigner toutes les autres propriétés
+            Object.assign(gameState, otherData);
+            
+            // Charger les statistiques depuis la sauvegarde
+            if (gameStats) {
+                gameState.statisticsManager.loadStatsFromSave(gameStats);
+            } else {
+                gameState.statisticsManager.resetStats();
             }
             
             // Initialiser les bonus si pas présents
@@ -147,9 +182,7 @@ export class SaveManager {
             }
             
             // Initialiser les unités de base transformées si pas présentes
-            if (!gameState.transformedBaseUnits) {
-                gameState.transformedBaseUnits = {};
-            }
+            
             
             // Initialiser les niveaux de synergies si pas présents
             if (!gameState.synergyLevels) {
@@ -205,12 +238,13 @@ export class SaveManager {
         gameState.availableTroops = [];
         gameState.selectedTroops = [];
         gameState.combatTroops = [];
-        gameState.usedTroopsThisRank = [];
+        gameState.usedTroopsThisCombat = [];
         gameState.combatHistory = [];
         gameState.isFirstTime = true;
         gameState.unlockedBonuses = [];
         gameState.consumableManager.consumables = [];
-        gameState.transformedBaseUnits = {};
+        gameState.transformedBaseUnits = {}; // Initialiser les unités transformées
+
         gameState.synergyLevels = {
             'Formation Corps à Corps': 1,
             'Formation Distance': 1,
@@ -230,22 +264,7 @@ export class SaveManager {
         gameState.currentShopPurchasedConsumables = [];
         
         // Réinitialiser les statistiques
-        gameState.gameStats = {
-            combatsPlayed: 0,
-            combatsWon: 0,
-            combatsLost: 0,
-            goldSpent: 0,
-            goldEarned: 0,
-            unitsPurchased: 0,
-            bonusesPurchased: 0,
-            unitsUsed: {},
-            maxDamageInTurn: 0,
-            bestTurnDamage: 0,
-            bestTurnRound: 0,
-            totalDamageDealt: 0,
-            highestRank: 'F-',
-            startTime: Date.now()
-        };
+        gameState.statisticsManager.resetStats();
         
         // Réinitialiser le combat
         gameState.currentCombat = {
@@ -267,8 +286,18 @@ export class SaveManager {
     }
 
     // Vérifier si une sauvegarde existe
-    hasSave() {
-        return localStorage.getItem(this.saveKey) !== null;
+    async hasSave() {
+        if (window.electronAPI) {
+            try {
+                const result = await window.electronAPI.loadGameData();
+                return result.success;
+            } catch (error) {
+                console.error('Erreur lors de la vérification de sauvegarde Electron:', error);
+                return localStorage.getItem(this.saveKey) !== null;
+            }
+        } else {
+            return localStorage.getItem(this.saveKey) !== null;
+        }
     }
 
     // Supprimer la sauvegarde

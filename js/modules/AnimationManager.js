@@ -8,6 +8,20 @@ export class AnimationManager {
         this.animationSpeed = 1; // Vitesse d'animation par défaut
     }
 
+    // === MÉTHODES DE GESTION D'ANIMATION DE COMBAT (DÉPLACÉES DEPUIS COMBATMANAGER) ===
+
+    // Gestion de l'animation de combat
+    handleCombatAnimation(troopsUsed, turnDamage) {
+        // Jouer l'animation de combat
+        this.playCombatAnimation(troopsUsed, turnDamage).then(() => {
+            // Mettre à jour l'UI après l'animation
+            this.gameState.updateUIAfterAnimation();
+            
+            // Vérifier si le combat est terminé
+            this.gameState.checkCombatEnd();
+        });
+    }
+
     // === ANIMATIONS DE COMBAT ===
 
     /**
@@ -642,8 +656,11 @@ export class AnimationManager {
         let progressionTotal = previousDamage;
 
         for (const troop of troopsUsed) {
-            let currentDamage = troop.damage;
-            let currentMultiplier = troop.multiplier;
+            // Utiliser CombatCalculator pour obtenir les dégâts et multiplicateur de base
+            const baseStats = this.gameState.combatCalculator.calculateTroopDamageWithBonuses(troop, troopsUsed);
+            let currentDamage = baseStats.damage;
+            let currentMultiplier = baseStats.multiplier;
+            
             // Création de l'élément d'unité avec l'ID correct
             const unitElement = document.createElement('div');
             unitElement.className = 'unit-slide';
@@ -651,22 +668,28 @@ export class AnimationManager {
             
             // Créer le contenu HTML de l'unité
             const typeDisplay = getTypeDisplayString(troop.type);
+            
+                    // Nom de l'unité et labels
+            const translatedName = troop.name;
+            const translatedDamageLabel = 'Dégâts';
+            const translatedMultiplierLabel = 'Multiplicateur';
+            
             unitElement.innerHTML = `
                 <div class="unit-slide-info">
                     <div class="unit-slide-icon">${troop.icon}</div>
                     <div class="unit-slide-details">
-                        <div class="unit-slide-name">${troop.name}</div>
+                        <div class="unit-slide-name">${translatedName}</div>
                         <div class="unit-slide-types">${typeDisplay}</div>
                     </div>
                 </div>
                 <div class="unit-stats-animated">
                     <div class="unit-stat-item">
                         <div class="unit-stat-value" id="unit-${troop.id}-damage">${troop.damage}</div>
-                        <div class="unit-stat-label">Dégâts</div>
+                        <div class="unit-stat-label">${translatedDamageLabel}</div>
                     </div>
                     <div class="unit-stat-item">
                         <div class="unit-stat-value" id="unit-${troop.id}-multiplier">${troop.multiplier}</div>
-                        <div class="unit-stat-label">Multiplicateur</div>
+                        <div class="unit-stat-label">${translatedMultiplierLabel}</div>
                     </div>
                 </div>
             `;
@@ -685,18 +708,18 @@ export class AnimationManager {
                     <div class="unit-slide-info">
                         <div class="unit-slide-icon">${troop.icon}</div>
                         <div class="unit-slide-details">
-                            <div class="unit-slide-name">${troop.name}</div>
+                            <div class="unit-slide-name">${translatedName}</div>
                             <div class="unit-slide-types">${typeDisplay}</div>
                         </div>
                     </div>
                     <div class="unit-stats-animated">
                         <div class="unit-stat-item">
                             <div class="unit-stat-value" id="unit-${troop.id}-damage-mobile">${troop.damage}</div>
-                            <div class="unit-stat-label">Dégâts</div>
+                            <div class="unit-stat-label">${translatedDamageLabel}</div>
                         </div>
                         <div class="unit-stat-item">
                             <div class="unit-stat-value" id="unit-${troop.id}-multiplier-mobile">${troop.multiplier}</div>
-                            <div class="unit-stat-label">Multiplicateur</div>
+                            <div class="unit-stat-label">${translatedMultiplierLabel}</div>
                         </div>
                     </div>
                 `;
@@ -707,57 +730,53 @@ export class AnimationManager {
             await this.sleep(200);
             unitElement.classList.add('active');
             
-            // Appliquer les bonus d'équipement avec les valeurs mises à jour
-            const updatedEquipmentBonuses = this.gameState.calculateEquipmentBonuses();
-            for (const bonus of updatedEquipmentBonuses) {
+            // Animer les bonus d'équipement si ils ont été appliqués
+            const equipmentBonuses = this.gameState.calculateEquipmentBonuses();
+            for (const bonus of equipmentBonuses) {
                 if (bonus.target === 'all' || this.gameState.hasTroopType(troop, bonus.target)) {
-                    if (bonus.damage) {
+                    if (bonus.damage && bonus.damage > 0) {
                         await this.sleep(150);
-                        currentDamage += bonus.damage;
                         this.showBonusAnimation(unitElement, `+${bonus.damage}`, 'damage', currentDamage);
                         this.updateUnitStat(unitElement, 'damage', currentDamage);
                     }
-                    if (bonus.multiplier) {
+                    if (bonus.multiplier && bonus.multiplier > 0) {
                         await this.sleep(150);
-                        currentMultiplier += bonus.multiplier;
                         this.showBonusAnimation(unitElement, `+${bonus.multiplier}`, 'multiplier', currentMultiplier);
                         this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
                     }
                 }
             }
 
-            // Appliquer les synergies avec les bonus dynamiques mis à jour
-            const updatedSynergies = this.gameState.calculateSynergies(troopsUsed);
-            for (const synergy of updatedSynergies) {
+            // Animer les synergies si elles ont été appliquées
+            const synergies = this.gameState.calculateSynergies(troopsUsed);
+            for (const synergy of synergies) {
                 if (synergy.bonus.target === 'all' || this.gameState.hasTroopType(troop, synergy.bonus.target)) {
-                    if (synergy.bonus.damage) {
+                    if (synergy.bonus.damage && synergy.bonus.damage > 0) {
                         await this.sleep(150);
-                        currentDamage += synergy.bonus.damage;
                         this.showBonusAnimation(unitElement, `+${synergy.bonus.damage}`, 'damage', currentDamage);
                         this.updateUnitStat(unitElement, 'damage', currentDamage);
                     }
-                    if (synergy.bonus.multiplier) {
+                    if (synergy.bonus.multiplier && synergy.bonus.multiplier > 0) {
                         await this.sleep(150);
-                        currentMultiplier += synergy.bonus.multiplier;
                         this.showBonusAnimation(unitElement, `+${synergy.bonus.multiplier}`, 'multiplier', currentMultiplier);
                         this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
                     }
                 }
             }
 
-            // Appliquer les mécaniques de boss
+            // Animer les mécaniques de boss si elles ont été appliquées
             if (this.gameState.currentCombat.isBossFight) {
                 const mechanic = this.gameState.currentCombat.bossMechanic;
+                
+                // Animer les malus de boss
                 if (mechanic.includes('corps à corps') && this.gameState.hasTroopType(troop, 'Corps à corps')) {
                     if (mechanic.includes('-50%')) {
                         await this.sleep(150);
-                        currentDamage = Math.floor(currentDamage * 0.5);
                         this.showMalusAnimation(unitElement, '-50%', 'damage', currentDamage);
                         this.updateUnitStat(unitElement, 'damage', currentDamage);
                     }
                     if (mechanic.includes('-2')) {
                         await this.sleep(150);
-                        currentDamage = Math.max(0, currentDamage - 2);
                         this.showMalusAnimation(unitElement, '-2', 'damage', currentDamage);
                         this.updateUnitStat(unitElement, 'damage', currentDamage);
                     }
@@ -765,23 +784,21 @@ export class AnimationManager {
                 if (mechanic.includes('distance') && this.gameState.hasTroopType(troop, 'Distance')) {
                     if (mechanic.includes('-30%')) {
                         await this.sleep(150);
-                        currentDamage = Math.floor(currentDamage * 0.7);
                         this.showMalusAnimation(unitElement, '-30%', 'damage', currentDamage);
                         this.updateUnitStat(unitElement, 'damage', currentDamage);
                     }
                 }
                 if (mechanic.includes('multiplicateurs')) {
                     await this.sleep(150);
-                    currentMultiplier = Math.floor(currentMultiplier * 0.5);
                     this.showMalusAnimation(unitElement, '-50%', 'multiplier', currentMultiplier);
                     this.updateUnitStat(unitElement, 'multiplier', currentMultiplier);
                 }
                 if (mechanic.includes('magiques') && this.gameState.hasTroopType(troop, 'Magique')) {
                     await this.sleep(150);
-                    currentDamage = Math.floor(currentDamage * 1.5);
                     this.showBonusAnimation(unitElement, '+50%', 'damage', currentDamage);
                     this.updateUnitStat(unitElement, 'damage', currentDamage);
                 }
+                
                 // Effet spécial de Quilegan
                 if (mechanic.includes("Bloque les relances, les bonus, les synergies et les dégâts des unités tant qu'aucun bonus n'est vendu")) {
                     if (!this.gameState.bossManager.isBossMalusDisabled()) {
@@ -820,7 +837,8 @@ export class AnimationManager {
             // Mise à jour des compteurs intermédiaires
             if (damageCounter) damageCounter.textContent = cumulativeDamage;
             if (multiplierCounter) multiplierCounter.textContent = cumulativeMultiplier;
-            if (finalResult) finalResult.textContent = `= ${cumulativeDamage * cumulativeMultiplier} dégâts`;
+            const damageText = 'dégâts';
+            if (finalResult) finalResult.textContent = `= ${cumulativeDamage * cumulativeMultiplier} ${damageText}`;
 
             await this.sleep(500);
         }
@@ -828,7 +846,8 @@ export class AnimationManager {
         // Animation finale : afficher le résultat correct avec les valeurs calculées pendant l'animation
         await this.sleep(300);
         const finalCalculatedDamage = cumulativeDamage * cumulativeMultiplier;
-        if (finalResult) finalResult.textContent = `= ${finalCalculatedDamage} dégâts`;
+        const damageText = 'dégâts';
+        if (finalResult) finalResult.textContent = `= ${finalCalculatedDamage} ${damageText}`;
 
         // Mettre à jour les dégâts totaux avec les valeurs calculées pendant l'animation
         this.gameState.currentCombat.totalDamage = previousDamage + finalCalculatedDamage;
@@ -862,6 +881,8 @@ export class AnimationManager {
         if (this.gameState.currentCombat.totalDamage >= this.gameState.currentCombat.targetDamage) {
             this.playVictoryAnimation();
         }
+        
+        // Ne pas masquer les informations de boss ici - elles seront masquées lors du changement de combat
     }
 
     // === ANIMATIONS DE VICTOIRE ===
@@ -942,13 +963,10 @@ export class AnimationManager {
     updateUnitStat(unitElement, type, newValue) {
         // Récupérer l'ID de l'unité depuis l'élément
         const troopId = unitElement.id.replace('unit-', '');
-        console.log(`🐛 updateUnitStat: troopId=${troopId}, type=${type}, newValue=${newValue}`);
         
         // Sélectionner les éléments par ID spécifique
         const damageElement = document.getElementById(`unit-${troopId}-damage`);
         const multiplierElement = document.getElementById(`unit-${troopId}-multiplier`);
-        
-        console.log(`🐛 updateUnitStat: damageElement=${damageElement}, multiplierElement=${multiplierElement}`);
         
         let targetElement = null;
         if (type === 'damage' && damageElement) {
@@ -974,9 +992,6 @@ export class AnimationManager {
         
         if (targetElement) {
             targetElement.textContent = newValue;
-            console.log(`🐛 updateUnitStat: Mise à jour réussie - ${type}: ${newValue}`);
-        } else {
-            console.log(`🐛 updateUnitStat: Élément non trouvé pour ${type}`);
         }
         
         // Mettre à jour aussi la version mobile
@@ -1028,8 +1043,6 @@ export class AnimationManager {
                 }
             }
         }
-        
-        console.log(`🐛 showBonusAnimation: targetElement=${targetElement}, bonusText=${bonusText}, type=${type}`);
         
         if (targetElement) {
             // Mettre à jour la valeur si fournie
@@ -1098,9 +1111,6 @@ export class AnimationManager {
             unitElement.style.position = 'relative';
             unitElement.appendChild(bonusElement);
             
-            console.log(`🐛 showBonusAnimation: Bulle créée et ajoutée au DOM`);
-            console.log(`🐛 showBonusAnimation: Position calculée - left: ${relativeLeft}px, top: ${relativeTop}px`);
-            
             // Ajouter l'effet de brillance à l'unité
             unitElement.classList.add('bonus-applied');
             setTimeout(() => {
@@ -1111,11 +1121,8 @@ export class AnimationManager {
             setTimeout(() => {
                 if (bonusElement.parentNode) {
                     bonusElement.parentNode.removeChild(bonusElement);
-                    console.log(`🐛 showBonusAnimation: Bulle supprimée`);
                 }
             }, 1000);
-        } else {
-            console.log(`🐛 showBonusAnimation: Aucun élément cible trouvé`);
         }
     }
 
@@ -1157,8 +1164,6 @@ export class AnimationManager {
                 }
             }
         }
-        
-        console.log(`🐛 showMalusAnimation: targetElement=${targetElement}, malusText=${malusText}, type=${type}`);
         
         if (targetElement) {
             // Mettre à jour la valeur si fournie
@@ -1214,9 +1219,6 @@ export class AnimationManager {
             unitElement.style.position = 'relative';
             unitElement.appendChild(malusElement);
             
-            console.log(`🐛 showMalusAnimation: Bulle créée et ajoutée au DOM`);
-            console.log(`🐛 showMalusAnimation: Position calculée - left: ${relativeLeft}px, top: ${relativeTop}px`);
-            
             // Ajouter l'effet de tremblement à l'unité
             unitElement.classList.add('malus-applied');
             setTimeout(() => {
@@ -1227,11 +1229,8 @@ export class AnimationManager {
             setTimeout(() => {
                 if (malusElement.parentNode) {
                     malusElement.parentNode.removeChild(malusElement);
-                    console.log(`🐛 showMalusAnimation: Bulle supprimée`);
                 }
             }, 1000);
-        } else {
-            console.log(`🐛 showMalusAnimation: Aucun élément cible trouvé`);
         }
     }
 
@@ -1263,7 +1262,7 @@ export class AnimationManager {
             activeBtn.classList.add('active');
         }
         
-        console.log(`Vitesse d'animation changée: ${speed}x`);
+
     }
 
     /**
@@ -1296,7 +1295,7 @@ export class AnimationManager {
             }
         }
         
-        console.log(`🐛 Animation: Barre mise à jour - Unité: ${unitDamage}×${unitMultiplier}=${unitContribution}, Total progressif: ${progressiveTotal}, Nouveau total: ${currentTotal}, Pourcentage: ${Math.min((currentTotal / this.gameState.currentCombat.targetDamage) * 100, 100)}%`);
+
     }
 
     /**
@@ -1306,5 +1305,50 @@ export class AnimationManager {
      */
     getAnimationDelay(baseDelay) {
         return baseDelay / this.animationSpeed;
+    }
+
+    // === ANIMATIONS DE TRANSFORMATION ===
+
+    /**
+     * Jouer l'animation de transformation d'unité
+     * @param {string} fromUnitName - Nom de l'unité de départ
+     * @param {string} toUnitName - Nom de l'unité de destination
+     * @param {GameState} gameState - L'état du jeu
+     */
+    playTransformAnimation(fromUnitName, toUnitName, gameState) {
+        // Créer l'élément d'animation
+        const animationElement = document.createElement('div');
+        animationElement.className = 'transform-animation';
+        animationElement.innerHTML = `
+            <div class="transform-content">
+                <div class="transform-from">${this.getUnitIcon(fromUnitName, gameState)} ${fromUnitName}</div>
+                <div class="transform-arrow">➜</div>
+                <div class="transform-to">${this.getUnitIcon(toUnitName, gameState)} ${toUnitName}</div>
+            </div>
+        `;
+        
+        document.body.appendChild(animationElement);
+        
+        // Animation CSS
+        setTimeout(() => {
+            animationElement.classList.add('show');
+        }, 100);
+        
+        // Supprimer après l'animation
+        setTimeout(() => {
+            animationElement.remove();
+        }, 2000);
+    }
+
+    /**
+     * Obtenir l'icône d'une unité par son nom
+     * @param {string} unitName - Nom de l'unité
+     * @param {GameState} gameState - L'état du jeu
+     * @returns {string} - L'icône de l'unité
+     */
+    getUnitIcon(unitName, gameState) {
+        const allUnits = [...gameState.getBaseUnits(), ...gameState.getAllAvailableTroops()];
+        const unit = allUnits.find(u => u.name === unitName);
+        return unit ? unit.icon : '❓';
     }
 } 

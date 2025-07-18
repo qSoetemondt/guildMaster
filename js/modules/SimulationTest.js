@@ -2,8 +2,6 @@
 import { SimulationEngine } from './SimulationEngine.js';
 
 export async function testSimulation() {
-    console.log('🧪 Test du simulateur d\'équilibrage...');
-    
     const engine = new SimulationEngine();
     
     // Configuration de test (très petite simulation)
@@ -15,13 +13,7 @@ export async function testSimulation() {
     };
     
     try {
-        console.log('Configuration de test:', testConfig);
-        
         const results = await engine.runSimulation(testConfig);
-        
-        console.log('✅ Test terminé avec succès !');
-        console.log('Résultats globaux:', results.globalStats);
-        console.log('Détail des parties:', results.results);
         
         // Afficher un résumé
         engine.displaySummary();
@@ -36,13 +28,10 @@ export async function testSimulation() {
 
 // Test d'une seule partie pour debug
 export async function testSingleGame() {
-    console.log('🔍 Test d\'une seule partie...');
-    
     const engine = new SimulationEngine();
     
     try {
         const result = await engine.simulateSingleGame(0);
-        console.log('Résultat de la partie:', result);
         return result;
     } catch (error) {
         console.error('❌ Erreur lors du test d\'une partie:', error);

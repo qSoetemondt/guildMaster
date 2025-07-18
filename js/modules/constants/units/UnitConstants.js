@@ -3,38 +3,6 @@
 // - Réduire les unités communes pour plus de rareté
 // - Augmenter les unités spécialisées pour plus de variété
 // - Équilibrer selon les besoins du gameplay
-
-
-
-// Fonction pour obtenir le nom traduit d'une unité
-export function getUnitDisplayName(unitName) {
-    const unitNames = {
-        'Épéiste': 'units.swordsman',
-        'Archer': 'units.archer',
-        'Magicien Bleu': 'units.blueMage',
-        'Lancier': 'units.lancer',
-        'Paysan': 'units.peasant',
-        'Soigneur': 'units.healer',
-        'Magicien Rouge': 'units.redMage',
-        'Barbare': 'units.barbarian',
-        'Viking': 'units.viking',
-        'Paladin': 'units.paladin',
-        'Assassin': 'units.assassin',
-        'Mage': 'units.mage',
-        'Frondeur': 'units.slinger',
-        'Chevalier': 'units.knight',
-        'Arbalétrier': 'units.crossbowman',
-        'Sorcier': 'units.sorcerer',
-        'Berserker': 'units.berserker',
-        'Archer d\'Élite': 'units.eliteArcher',
-        'Mage Suprême': 'units.supremeMage',
-        'Champion': 'units.champion'
-    };
-    
-    const translationKey = unitNames[unitName];
-    return unitName;
-}
-
 export const BASE_UNITS = [
     { name: 'Épéiste', type: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, icon: '⚔️', rarity: 'common', quantity: 5 },
     { name: 'Archer', type: ['Distance', 'Physique'], damage: 4, multiplier: 3, icon: '🏹', rarity: 'common', quantity: 5 },
