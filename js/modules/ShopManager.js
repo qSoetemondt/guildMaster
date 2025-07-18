@@ -169,13 +169,13 @@ export class ShopManager {
         const consumableItems = allItems.filter(item => item.type === 'consumable');
         const nonConsumableItems = allItems.filter(item => item.type !== 'consumable');
         
-        // Sélectionner les items avec pondération par rareté
-        const selectedItems = this.selectItemsByRarity(nonConsumableItems, 8);
+        // Sélectionner les items avec pondération par rareté (incluant les consommables)
+        const selectedItems = this.selectItemsByRarity(allItems, 8);
         
         // Si on a un consommable, l'inclure et prendre 7 autres items
         if (consumableItems.length > 0) {
             const selectedConsumable = consumableItems[0]; // Prendre le premier consommable
-            const selectedNonConsumables = selectedItems.slice(0, 7);
+            const selectedNonConsumables = selectedItems.filter(item => item.type !== 'consumable').slice(0, 7);
             return [selectedConsumable, ...selectedNonConsumables];
         } else {
             // Sinon, prendre 8 items normaux

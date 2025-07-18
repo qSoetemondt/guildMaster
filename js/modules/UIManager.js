@@ -293,10 +293,15 @@ export class UIManager {
             const { count, template } = consumableCounts[consumableType];
             
             const consumableElement = document.createElement('div');
-            consumableElement.className = 'consumable-icon-header';
+            // Ajouter la classe de rareté si disponible
+            const rarityClass = template.rarity ? `rarity-${template.rarity}` : '';
+            consumableElement.className = `consumable-icon-header ${rarityClass}`;
             consumableElement.textContent = template.icon;
             consumableElement.setAttribute('data-count', count);
-            consumableElement.title = `${template.name} (${count}) - ${template.description}`;
+            
+            // Ajouter la rareté au tooltip
+            const rarityText = template.rarity ? `\n⭐ ${getRarityDisplayName(template.rarity)}` : '';
+            consumableElement.title = `${template.name} (${count}) - ${template.description}${rarityText}`;
             
             // Ajouter l'événement de clic pour utiliser le consommable
             consumableElement.addEventListener('click', () => {

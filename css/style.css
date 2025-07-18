@@ -266,6 +266,101 @@ body {
     background: linear-gradient(45deg, #00cec9, #55a3ff);
 }
 
+/* Styles pour les consommables avec rareté */
+.consumable-item.rarity-common {
+    background: linear-gradient(45deg, #7f8c8d, #95a5a6);
+    border-color: #7f8c8d;
+    box-shadow: 0 2px 8px rgba(127, 140, 141, 0.3);
+}
+
+.consumable-item.rarity-common:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(127, 140, 141, 0.4);
+    background: linear-gradient(45deg, #95a5a6, #00b894);
+}
+
+.consumable-item.rarity-uncommon {
+    background: linear-gradient(45deg, #00b894, #00cec9);
+    border-color: #00b894;
+    box-shadow: 0 2px 8px rgba(0, 184, 148, 0.3);
+}
+
+.consumable-item.rarity-uncommon:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(0, 184, 148, 0.4);
+    background: linear-gradient(45deg, #00cec9, #55a3ff);
+}
+
+.consumable-item.rarity-rare {
+    background: linear-gradient(45deg, #74b9ff, #55a3ff);
+    border-color: #74b9ff;
+    box-shadow: 0 2px 8px rgba(116, 185, 255, 0.3);
+}
+
+.consumable-item.rarity-rare:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(116, 185, 255, 0.4);
+    background: linear-gradient(45deg, #55a3ff, #a29bfe);
+}
+
+.consumable-item.rarity-epic {
+    background: linear-gradient(45deg, #a29bfe, #6c5ce7);
+    border-color: #a29bfe;
+    box-shadow: 0 2px 8px rgba(162, 155, 254, 0.3);
+}
+
+.consumable-item.rarity-epic:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(162, 155, 254, 0.4);
+    background: linear-gradient(45deg, #6c5ce7, #fdcb6e);
+}
+
+.consumable-item.rarity-legendary {
+    background: linear-gradient(45deg, #fdcb6e, #e17055);
+    border-color: #fdcb6e;
+    box-shadow: 0 2px 8px rgba(253, 203, 110, 0.3);
+}
+
+.consumable-item.rarity-legendary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(253, 203, 110, 0.4);
+    background: linear-gradient(45deg, #e17055, #d63031);
+}
+
+/* Fallback pour les consommables sans rareté spécifiée */
+.consumable-item:not([class*="rarity-"]) {
+    background: linear-gradient(45deg, #00b894, #00cec9);
+    border-color: #00b894;
+    box-shadow: 0 2px 8px rgba(0, 184, 148, 0.3);
+}
+
+.consumable-item:not([class*="rarity-"]):hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(0, 184, 148, 0.4);
+    background: linear-gradient(45deg, #00cec9, #55a3ff);
+}
+
+/* Styles pour les icônes de consommables avec rareté */
+.consumable-icon-header.rarity-common {
+    box-shadow: 0 2px 8px rgba(102, 102, 102, 0.3);
+}
+
+.consumable-icon-header.rarity-uncommon {
+    box-shadow: 0 2px 8px rgba(0, 184, 148, 0.3);
+}
+
+.consumable-icon-header.rarity-rare {
+    box-shadow: 0 2px 8px rgba(116, 185, 255, 0.3);
+}
+
+.consumable-icon-header.rarity-epic {
+    box-shadow: 0 2px 8px rgba(162, 155, 254, 0.3);
+}
+
+.consumable-icon-header.rarity-legendary {
+    box-shadow: 0 2px 8px rgba(253, 203, 110, 0.3);
+}
+
 /* Anciens styles pour les boutons de vente individuels - supprimés car remplacés par la modal */
 
 /* Styles pour la modal de confirmation de vente */

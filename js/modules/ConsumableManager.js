@@ -54,7 +54,8 @@ export class ConsumableManager {
                 description: 'Relance le magasin gratuitement',
                 icon: '🔄',
                 price: Math.ceil(10 * 1.75), // 18
-                effect: 'refreshShop'
+                effect: 'refreshShop',
+                rarity: 'common'
             },
             transformSword: {
                 name: 'Épée',
@@ -62,7 +63,8 @@ export class ConsumableManager {
                 icon: '⚔️',
                 price: Math.ceil(15 * 1.75), // 27
                 effect: 'transformUnit',
-                targetUnit: 'Épéiste'
+                targetUnit: 'Épéiste',
+                rarity: 'common'
             },
             transformArcher: {
                 name: 'Arc',
@@ -70,7 +72,8 @@ export class ConsumableManager {
                 icon: '🏹',
                 price: Math.ceil(15 * 1.75), // 27
                 effect: 'transformUnit',
-                targetUnit: 'Archer'
+                targetUnit: 'Archer',
+                rarity: 'common'
             },
             transformLancier: {
                 name: 'Lance',
@@ -78,7 +81,8 @@ export class ConsumableManager {
                 icon: '🔱',
                 price: Math.ceil(15 * 1.75), // 27
                 effect: 'transformUnit',
-                targetUnit: 'Lancier'
+                targetUnit: 'Lancier',
+                rarity: 'common'
             },
             transformPaysan: {
                 name: 'Fourche',
@@ -86,7 +90,8 @@ export class ConsumableManager {
                 icon: '👨‍🌾',
                 price: Math.ceil(5 * 1.75), // 9
                 effect: 'transformUnit',
-                targetUnit: 'Paysan'
+                targetUnit: 'Paysan',
+                rarity: 'common'
             },
             transformMagicienBleu: {
                 name: 'Livre bleu',
@@ -94,7 +99,8 @@ export class ConsumableManager {
                 icon: '📘',
                 price: Math.ceil(15 * 1.75), // 27
                 effect: 'transformUnit',
-                targetUnit: 'Magicien Bleu'
+                targetUnit: 'Magicien Bleu',
+                rarity: 'uncommon'
             },
             transformMagicienRouge: {
                 name: 'Livre rouge',
@@ -102,7 +108,8 @@ export class ConsumableManager {
                 icon: '🔴',
                 price: Math.ceil(15 * 1.75), // 27
                 effect: 'transformUnit',
-                targetUnit: 'Magicien Rouge'
+                targetUnit: 'Magicien Rouge',
+                rarity: 'uncommon'
             },
             transformBarbare: {
                 name: 'Hache',
@@ -110,7 +117,8 @@ export class ConsumableManager {
                 icon: '👨‍🚒',
                 price: Math.ceil(25 * 1.75), // 44
                 effect: 'transformUnit',
-                targetUnit: 'Barbare'
+                targetUnit: 'Barbare',
+                rarity: 'rare'
             },
             transformSorcier: {
                 name: 'Orbe',
@@ -118,7 +126,8 @@ export class ConsumableManager {
                 icon: '🔮',
                 price: Math.ceil(50 * 1.75), // 88
                 effect: 'transformUnit',
-                targetUnit: 'Sorcier'
+                targetUnit: 'Sorcier',
+                rarity: 'epic'
             },
             transformFronde: {
                 name: 'Fronde',
@@ -126,14 +135,16 @@ export class ConsumableManager {
                 icon: '🪨',
                 price: Math.ceil(50 * 1.75), // 88
                 effect: 'transformUnit',
-                targetUnit: 'Frondeur'
+                targetUnit: 'Frondeur',
+                rarity: 'epic'
             },
             upgradeSynergy: {
                 name: 'Cristal de Synergie',
                 description: 'Améliore le niveau d\'une synergie d\'équipe de +1',
                 icon: '💎',
                 price: Math.ceil(30 * 1.75), // 53
-                effect: 'upgradeSynergy'
+                effect: 'upgradeSynergy',
+                rarity: 'rare'
             }
         };
     }
@@ -158,7 +169,8 @@ export class ConsumableManager {
             description: consumableTemplate.description,
             icon: consumableTemplate.icon,
             effect: consumableTemplate.effect,
-            targetUnit: consumableTemplate.targetUnit
+            targetUnit: consumableTemplate.targetUnit,
+            rarity: consumableTemplate.rarity || 'common'
         };
 
         this.consumables.push(consumable);
@@ -246,7 +258,8 @@ export class ConsumableManager {
                     description: consumableTemplate.description,
                     icon: consumableTemplate.icon,
                     price: consumableTemplate.price,
-                    consumableType: 'upgradeSynergy'
+                    consumableType: 'upgradeSynergy',
+                    rarity: consumableTemplate.rarity
                 };
             } else {
                 // Sinon, sélectionner aléatoirement parmi tous les autres consommables
@@ -261,7 +274,8 @@ export class ConsumableManager {
                     description: consumableTemplate.description,
                     icon: consumableTemplate.icon,
                     price: consumableTemplate.price,
-                    consumableType: randomType
+                    consumableType: randomType,
+                    rarity: consumableTemplate.rarity
                 };
             }
         }
