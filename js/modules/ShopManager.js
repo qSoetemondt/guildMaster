@@ -460,6 +460,12 @@ export class ShopManager {
             delete unitToAdd.unitType;
         }
         gameState.ownedUnits[item.name].push(unitToAdd);
+        
+        // NOUVEAU : Ajouter l'unité au pool global
+        if (gameState.addUnitToGlobalPool) {
+            gameState.addUnitToGlobalPool(unitToAdd);
+        }
+        
         // Animation d'achat
         if (gameState.uiManager && typeof gameState.uiManager.showUnitPurchaseAnimation === 'function') {
             gameState.uiManager.showUnitPurchaseAnimation(item);

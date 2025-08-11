@@ -37,6 +37,10 @@ export class GameState {
         this.selectedTroops = [];
         this.combatTroops = []; // Troupes tirées pour le combat
         this.usedTroopsThisCombat = []; // Troupes utilisées dans ce combat
+        
+        // NOUVEAU : Pool global d'unités pour tout le jeu
+        this.globalUnitPool = [];
+        
         this.combatHistory = [];
         this.isFirstTime = true;
         this.unlockedBonuses = []; // Bonus débloqués via le magasin
@@ -99,64 +103,151 @@ export class GameState {
                 }
             }
         });
-        // Log de debug : afficher toutes les unités et leur élément
-        if (typeof console !== 'undefined') {
-            console.log('--- Unités de base individuelles et leurs éléments ---');
-            Object.entries(this.ownedUnits).forEach(([name, arr]) => {
-                arr.forEach((u, idx) => {
-                    console.log(`${name} #${idx+1} : ${u.element}`);
-                });
-            });
-            console.log('-----------------------------------------------------');
-        }
         
-        // Progression des rangs
-        this.RANKS = RANKS;
-        
-        // Rangs qui déclenchent des combats de boss
-        this.BOSS_RANKS = BOSS_RANKS;
-        
-        // Rangs infinis
-        this.INFINITE_RANKS = INFINITE_RANKS;
-        this.INFINITE_BOSS_RANKS = INFINITE_BOSS_RANKS;
-        
-        // Définition des unités de base
-        this.BASE_UNITS = BASE_UNITS;
+        // NOUVEAU : Initialiser le pool global d'unités
+        this.initializeGlobalUnitPool();
+    }
 
-        // Boss disponibles
-
+    // NOUVEAU : Initialiser le pool global d'unités au début de la partie
+    initializeGlobalUnitPool() {
+        this.globalUnitPool = [];
         
-        // Fonction pour calculer les dégâts cibles selon le rang majeur
-        this.calculateTargetDamageByRank = function(rank) {
-            const rankIndex = this.RANKS.indexOf(rank);
-            if (rankIndex === -1) {
-                // Mode infini
-                if (isInfiniteRank(rank)) {
-                    const infiniteIndex = this.INFINITE_RANKS.indexOf(rank);
-                    if (infiniteIndex !== -1) {
-                        const baseDamage = BASE_DAMAGE + (infiniteIndex * DAMAGE_INCREMENT_PER_RANK * 10); // Augmentation exponentielle
-                        return baseDamage * RANK_MULTIPLIERS[rank];
-                    }
+        // Remplir le pool avec les unités de base définies
+        this.getBaseUnits().forEach(unit => {
+            if (unit.quantity > 0) {
+                for (let i = 0; i < unit.quantity; i++) {
+                    const unitInstance = {
+                        ...unit,
+                        id: `${unit.name}_base_${i}`,
+                        element: getRandomElement(),
+                        isBaseUnit: true
+                    };
+                    this.globalUnitPool.push(unitInstance);
                 }
-                return BASE_DAMAGE; // Valeur par défaut
             }
-            
-            const majorRank = getMajorRank(rank);
-            const baseDamage = BASE_DAMAGE + (rankIndex * DAMAGE_INCREMENT_PER_RANK);
-            return baseDamage * RANK_MULTIPLIERS[majorRank];
+        });
+        
+
+        
+        console.log(`Pool global initialisé avec ${this.globalUnitPool.length} unités`);
+    }
+
+
+
+    // NOUVEAU : Ajouter une unité au pool global (achat, transformation, duplication)
+    addUnitToGlobalPool(unit) {
+        // Générer un ID unique pour cette unité
+        const uniqueId = `${unit.name}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        const unitWithId = {
+            ...unit,
+            id: uniqueId
         };
         
-        // Vitesse d'animation (1x, 2x, 4x)
-        this.animationSpeed = 1;
+        this.globalUnitPool.push(unitWithId);
+        console.log(`Unité ajoutée au pool global: ${unit.name} d'${unit.element || 'élément inconnu'}`);
         
-        // Compteur de relances (limité à 3 par rang)
-        this.rerollCount = 0;
+        // Mettre à jour l'interface si nécessaire
+        if (this.updateTroopsUI) {
+            this.updateTroopsUI();
+        }
+    }
+
+    // NOUVEAU : Retirer une unité du pool global
+    removeUnitFromGlobalPool(unitId) {
+        const index = this.globalUnitPool.findIndex(unit => unit.id === unitId);
+        if (index !== -1) {
+            const removedUnit = this.globalUnitPool.splice(index, 1)[0];
+            console.log(`Unité retirée du pool global: ${removedUnit.name}`);
+            return removedUnit;
+        }
+        return null;
+    }
+
+    // NOUVEAU : Obtenir le pool de combat disponible (excluant les unités utilisées)
+    getAvailableCombatPool() {
+        return this.globalUnitPool.filter(unit => 
+            !this.usedTroopsThisCombat.includes(unit.id)
+        );
+    }
+
+    // NOUVEAU : Tirer 7 unités aléatoirement du pool global pour le combat
+    drawCombatTroopsFromGlobalPool() {
+        this.combatTroops = [];
+        const availablePool = this.getAvailableCombatPool();
         
-        // Fonction de debug pour changer le rang depuis la console
-        this.setupDebugFunctions();
+        // Tirer 7 unités aléatoirement
+        for (let i = 0; i < 7 && availablePool.length > 0; i++) {
+            const randomIndex = Math.floor(Math.random() * availablePool.length);
+            const selectedUnit = availablePool.splice(randomIndex, 1)[0];
+            this.combatTroops.push(selectedUnit);
+        }
         
-        // Tirer les premières troupes pour le combat
-        this.drawCombatTroops();
+        console.log(`7 unités tirées du pool global pour le combat: ${this.combatTroops.map(u => u.name).join(', ')}`);
+        
+        // Mettre à jour l'interface
+        if (this.updateTroopsUI) {
+            this.updateTroopsUI();
+        }
+    }
+
+    // NOUVEAU : Marquer une unité comme utilisée dans ce combat
+    markUnitAsUsed(unitId) {
+        if (!this.usedTroopsThisCombat.includes(unitId)) {
+            this.usedTroopsThisCombat.push(unitId);
+            console.log(`Unité marquée comme utilisée: ${unitId}`);
+        }
+    }
+
+    // NOUVEAU : Réinitialiser les unités utilisées pour un nouveau combat
+    resetUsedUnitsForNewCombat() {
+        this.usedTroopsThisCombat = [];
+        console.log('Liste des unités utilisées réinitialisée pour le nouveau combat');
+    }
+
+    // Progression des rangs
+    get RANKS() { return RANKS; }
+    
+    // Rangs qui déclenchent des combats de boss
+    get BOSS_RANKS() { return BOSS_RANKS; }
+    
+    // Rangs infinis
+    get INFINITE_RANKS() { return INFINITE_RANKS; }
+    get INFINITE_BOSS_RANKS() { return INFINITE_BOSS_RANKS; }
+    
+    // Définition des unités de base
+    get BASE_UNITS() { return BASE_UNITS; }
+
+    // Fonction pour calculer les dégâts cibles selon le rang majeur
+    calculateTargetDamageByRank(rank) {
+        const rankIndex = this.RANKS.indexOf(rank);
+        if (rankIndex === -1) {
+            // Mode infini
+            if (isInfiniteRank(rank)) {
+                const infiniteIndex = this.INFINITE_RANKS.indexOf(rank);
+                if (infiniteIndex !== -1) {
+                    const baseDamage = BASE_DAMAGE + (infiniteIndex * DAMAGE_INCREMENT_PER_RANK * 10); // Augmentation exponentielle
+                    return baseDamage * RANK_MULTIPLIERS[rank];
+                }
+            }
+            return BASE_DAMAGE; // Valeur par défaut
+        }
+        
+        const majorRank = getMajorRank(rank);
+        const baseDamage = BASE_DAMAGE + (rankIndex * DAMAGE_INCREMENT_PER_RANK);
+        return baseDamage * RANK_MULTIPLIERS[majorRank];
+    }
+    
+    // Vitesse d'animation (1x, 2x, 4x)
+    get animationSpeed() { return this._animationSpeed || 1; }
+    set animationSpeed(value) { this._animationSpeed = value; }
+    
+    // Compteur de relances (limité à 3 par rang)
+    get rerollCount() { return this._rerollCount || 0; }
+    set rerollCount(value) { this._rerollCount = value; }
+    
+    // Fonction de debug pour changer le rang depuis la console
+    setupDebugFunctions() {
+        // Cette méthode sera implémentée plus tard si nécessaire
     }
 
     gainRank() {
@@ -332,8 +423,11 @@ export class GameState {
             };
         }
         
-        // Toujours tirer de nouvelles troupes pour un nouveau combat
-        this.drawCombatTroops();
+        // NOUVEAU : Réinitialiser les unités utilisées pour le nouveau combat
+        this.resetUsedUnitsForNewCombat();
+        
+        // NOUVEAU : Tirer 7 unités aléatoirement du pool global pour le combat
+        this.drawCombatTroopsFromGlobalPool();
         
         // Mettre à jour la modal de combat (mais ne pas l'afficher encore)
         this.combatManager.updateCombatModal();

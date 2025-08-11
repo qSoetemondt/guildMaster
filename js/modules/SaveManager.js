@@ -39,6 +39,9 @@ export class SaveManager {
             synergyLevels: gameState.synergyLevels,
             ownedUnits: gameState.getOwnedUnits(), // Sauvegarder les unités possédées
             
+            // NOUVEAU : Sauvegarder le pool global d'unités
+            globalUnitPool: gameState.globalUnitPool || [],
+            
             // Mode infini
             infiniteModeState: gameState.saveInfiniteModeState()
         };
@@ -209,6 +212,17 @@ export class SaveManager {
                 gameState.loadOwnedUnits(data.ownedUnits);
             }
             
+            // NOUVEAU : Restaurer le pool global d'unités
+            if (data.globalUnitPool && data.globalUnitPool.length > 0) {
+                gameState.globalUnitPool = data.globalUnitPool;
+                console.log(`Pool global restauré avec ${gameState.globalUnitPool.length} unités`);
+            } else {
+                // Si pas de pool global dans la sauvegarde, l'initialiser
+                if (gameState.initializeGlobalUnitPool) {
+                    gameState.initializeGlobalUnitPool();
+                }
+            }
+            
             // Charger l'état du mode infini
             if (data.infiniteModeState) {
                 gameState.loadInfiniteModeState(data.infiniteModeState);
@@ -305,8 +319,17 @@ export class SaveManager {
             }
         });
         
+        // NOUVEAU : Réinitialiser le pool global d'unités
+        if (gameState.initializeGlobalUnitPool) {
+            gameState.initializeGlobalUnitPool();
+        }
+        
         // Tirer de nouvelles troupes pour le combat
-        gameState.drawCombatTroops();
+        if (gameState.drawCombatTroopsFromGlobalPool) {
+            gameState.drawCombatTroopsFromGlobalPool();
+        } else if (gameState.drawCombatTroops) {
+            gameState.drawCombatTroops();
+        }
         
         // Mettre à jour l'interface
         gameState.updateUI();

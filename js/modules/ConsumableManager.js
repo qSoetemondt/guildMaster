@@ -436,6 +436,12 @@ export class ConsumableManager {
         if (!gameState.ownedUnits[toUnitName]) gameState.ownedUnits[toUnitName] = [];
         if (!Array.isArray(gameState.ownedUnits[toUnitName])) gameState.ownedUnits[toUnitName] = [];
         gameState.ownedUnits[toUnitName].push(newUnitObj);
+        
+        // NOUVEAU : Ajouter l'unité transformée au pool global
+        if (gameState.addUnitToGlobalPool) {
+            gameState.addUnitToGlobalPool(newUnitObj);
+        }
+        
         clearUnitCache();
         // Consommer le consommable de transformation spécifique qui a été utilisé
         if (this.activeTransformConsumable) {
@@ -518,15 +524,15 @@ export class ConsumableManager {
         // Changer le curseur avec l'icône du consommable
         gameState.uiManager.setDuplicateCursor(consumable);
         
-        // Ajouter les événements de clic sur les troupes du header
-        gameState.uiManager.addDuplicateClickListeners(gameState);
+        // Ouvrir la modal des troupes en mode duplication (comme pour la transformation)
+        gameState.uiManager.showTroopsModal({ mode: 'duplicate', consumable });
         
         // Afficher une notification
-        gameState.notificationManager.showNotification('Cliquez sur une unité dans le header pour la dupliquer', 'info');
+        gameState.notificationManager.showNotification('Sélectionnez une unité à dupliquer dans la modal', 'info');
     }
 
     // Dupliquer une unité depuis la modal des troupes
-    duplicateUnitFromModal(unitName, gameState) {
+    async duplicateUnitFromModal(unitName, unitElement, gameState) {
         // Vérifier si l'utilisateur a un consommable de duplication
         const duplicateConsumables = this.consumables.filter(c => c.type === 'duplicateUnit');
         
@@ -535,20 +541,49 @@ export class ConsumableManager {
             return;
         }
 
-        // Vérifier si l'unité existe dans le pool global
-        const globalPool = createGlobalUnitPool(gameState);
-        const sourceUnits = globalPool.filter(unit => unit.name === unitName);
+        // Trouver l'unité source exacte à dupliquer avec l'élément spécifique
+        let sourceUnit = null;
         
-        if (sourceUnits.length === 0) {
-            gameState.notificationManager.showConsumableError(`Aucune unité "${unitName}" trouvée !`);
+        // Chercher dans le pool unifié d'unités (availableTroops + combatTroops)
+        const allUnits = [...(gameState.availableTroops || []), ...(gameState.combatTroops || [])];
+        sourceUnit = allUnits.find(unit => unit.name === unitName && unit.element === unitElement);
+        
+        // Si pas trouvée, essayer de créer depuis les constantes
+        if (!sourceUnit) {
+            try {
+                const { BASE_UNITS } = await import('./constants/units/UnitConstants.js');
+                sourceUnit = BASE_UNITS.find(unit => unit.name === unitName);
+                // Si c'est une unité de base, créer une copie avec l'élément spécifique
+                if (sourceUnit) {
+                    sourceUnit = { ...sourceUnit, element: unitElement };
+                }
+            } catch (error) {
+                console.error('Impossible de charger les constantes d\'unités:', error);
+            }
+        }
+        
+        if (!sourceUnit) {
+            gameState.notificationManager.showConsumableError(`Aucune unité "${unitName}" avec l'élément ${unitElement} trouvée !`);
             return;
         }
 
-        // Ajouter une copie de l'unité au pool global
-        gameState.ownedUnits[unitName] = (gameState.ownedUnits[unitName] || 0) + 1;
+        // Créer la nouvelle unité dupliquée
+        const newUnit = {
+            ...sourceUnit,
+            id: `${unitName}_duplicate_${Date.now()}_${Math.random()}`,
+            element: unitElement
+        };
+
+        // NOUVEAU : Ajouter l'unité dupliquée au pool global
+        if (gameState.addUnitToGlobalPool) {
+            gameState.addUnitToGlobalPool(newUnit);
+        }
         
-        // Nettoyer le cache des unités car les quantités ont changé
-        clearUnitCache();
+        // Ajouter l'unité dupliquée au pool unifié (availableTroops) - gardé pour compatibilité
+        if (!gameState.availableTroops) {
+            gameState.availableTroops = [];
+        }
+        gameState.availableTroops.push(newUnit);
 
         // Consommer le consommable de duplication
         if (this.activeDuplicateConsumable) {
@@ -566,18 +601,62 @@ export class ConsumableManager {
             }
         }
 
+        // Nettoyer l'effet visuel du mode duplication
+        this.cancelDuplicateMode(gameState);
+
         // Jouer une animation de duplication
-        gameState.animationManager.playDuplicateAnimation(unitName, gameState);
+        if (gameState.animationManager && gameState.animationManager.playDuplicateAnimation) {
+            gameState.animationManager.playDuplicateAnimation(unitName, gameState);
+        }
 
         // Mettre à jour l'affichage
         gameState.updateUI();
         this.updateConsumablesDisplay(gameState);
 
-        // Fermer la modal des troupes
+        // Forcer la mise à jour de la modal des troupes si elle est ouverte
+        this.updateTroopsModalIfOpen(gameState);
+
+        // Fermer la modal de confirmation de duplication
+        ModalManager.hideModal('duplicate-confirmation-modal');
+        
+        // Fermer aussi la modal des troupes
         ModalManager.hideModal('troops-modal');
+        
+        // Forcer la fermeture de toutes les modals et overlays
+        ModalManager.hideAllModals();
+        
+        // Supprimer manuellement l'overlay qui peut rester
+        this.forceRemoveModalOverlay();
 
         // Notification de succès
-        gameState.notificationManager.showUnitAdded(unitName);
+        if (gameState.notificationManager && gameState.notificationManager.showUnitAdded) {
+            gameState.notificationManager.showUnitAdded(unitName);
+        } else {
+            gameState.notificationManager.showNotification(`${unitName} d'${unitElement} dupliqué avec succès !`, 'success');
+        }
+        
+        console.log(`✅ ${unitName} d'${unitElement} dupliqué avec succès !`);
+        console.log(`📊 Pool d'unités mis à jour: ${gameState.availableTroops.length} unités disponibles`);
+        
+        // Forcer une mise à jour complète de l'interface après un délai
+        setTimeout(() => {
+            if (gameState.updateUI) {
+                gameState.updateUI();
+            }
+            if (gameState.uiManager && gameState.uiManager.updateTroopsUIDisplay) {
+                gameState.uiManager.updateTroopsUIDisplay();
+            }
+            // Forcer la mise à jour de l'affichage des troupes
+            if (gameState.uiManager && gameState.uiManager.updateTroopsDisplay) {
+                gameState.uiManager.updateTroopsDisplay();
+            }
+        }, 100);
+    }
+    
+    // Méthode utilitaire pour obtenir un élément aléatoire
+    getRandomElement() {
+        const elements = ['Feu', 'Eau', 'Terre', 'Air', 'Ténèbre', 'Lumière'];
+        return elements[Math.floor(Math.random() * elements.length)];
     }
 
     // Annuler le mode duplication
@@ -588,6 +667,43 @@ export class ConsumableManager {
         // Restaurer l'interface utilisateur
         if (gameState && gameState.uiManager) {
             gameState.uiManager.cancelDuplicateMode(gameState);
+        }
+        
+        // Nettoyer les notifications et overlays
+        if (gameState && gameState.notificationManager) {
+            // Fermer les notifications de duplication
+            const duplicateNotifications = document.querySelectorAll('#duplicate-notification');
+            duplicateNotifications.forEach(notification => notification.remove());
+        }
+        
+        // Restaurer le curseur normal
+        if (document.body) {
+            document.body.classList.remove('duplicate-mode');
+            document.body.style.cursor = '';
+        }
+        
+        // Supprimer les éléments visuels de duplication
+        const duplicateElements = document.querySelectorAll('.duplicate-target, .duplicate-notification');
+        duplicateElements.forEach(element => element.remove());
+        
+        console.log('🧹 Mode duplication nettoyé');
+    }
+
+    // Méthode pour forcer la mise à jour de la modal des troupes si elle est ouverte
+    updateTroopsModalIfOpen(gameState) {
+        const troopsModal = document.getElementById('troops-modal');
+        if (troopsModal && troopsModal.style.display !== 'none') {
+            if (gameState && gameState.uiManager) {
+                gameState.uiManager.showTroopsModal();
+            }
+        }
+    }
+
+    // Force remove the modal overlay if it exists
+    forceRemoveModalOverlay() {
+        const modalOverlay = document.querySelector('.modal-overlay');
+        if (modalOverlay) {
+            modalOverlay.remove();
         }
     }
 } 

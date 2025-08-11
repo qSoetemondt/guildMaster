@@ -285,29 +285,11 @@ export class UIManager {
         // Supprimé car déjà appelé dans updateUI()
     }
 
-    // Afficher les troupes dans le header
+    // Afficher les troupes dans le header (DÉSACTIVÉ - header des troupes retiré)
     updateTroopsDisplay() {
-        const troopsContainer = document.getElementById('troops-display');
-        if (!troopsContainer) return;
-
-        troopsContainer.innerHTML = '';
-
-        // Créer un pool complet de toutes les troupes disponibles
-        const allTroops = this.createFullTroopPool();
-
-        // Grouper les troupes par nom
-        const troopsByType = this.groupTroopsByType(allTroops);
-
-        // Ajuster les compteurs pour les unités de base transformées
-        this.adjustTransformedUnitsCount(troopsByType);
-
-        // Créer les icônes pour chaque type de troupe
-        const troopElements = this.createTroopIcons(troopsByType);
-        
-        // Ajouter les éléments au conteneur
-        troopElements.forEach(element => {
-            troopsContainer.appendChild(element);
-        });
+        // Cette méthode n'est plus utilisée car le header des troupes a été retiré
+        // Les troupes sont maintenant affichées uniquement dans la modal "Mes Troupes"
+        return;
     }
 
     // Mettre à jour l'affichage des consommables
@@ -1111,6 +1093,12 @@ export class UIManager {
 
     // Créer un pool complet de toutes les troupes disponibles
     createFullTroopPool() {
+        // NOUVEAU : Utiliser le pool global d'unités si disponible
+        if (this.gameState.globalUnitPool && this.gameState.globalUnitPool.length > 0) {
+            return [...this.gameState.globalUnitPool];
+        }
+        
+        // Fallback vers l'ancien système (gardé pour compatibilité)
         const fullTroopPool = [];
         
         // Utiliser ownedUnits pour les quantités réelles des unités de base
@@ -1288,20 +1276,28 @@ export class UIManager {
 
         troopsList.innerHTML = '';
 
-        // Créer un pool complet de toutes les troupes disponibles (quantité configurable)
-        const fullTroopPool = [];
-        this.gameState.getBaseUnits().forEach(unit => {
-            const quantity = unit.quantity || 5; // Valeur par défaut si non définie
-            for (let i = 0; i < quantity; i++) {
-                fullTroopPool.push({...unit, id: `${unit.name}_${i}`});
-            }
-        });
+        // NOUVEAU : Utiliser le pool global d'unités si disponible
+        let allTroops = [];
+        
+        if (this.gameState.globalUnitPool && this.gameState.globalUnitPool.length > 0) {
+            allTroops = [...this.gameState.globalUnitPool];
+        } else {
+            // Fallback vers l'ancien système (gardé pour compatibilité)
+            // Créer un pool complet de toutes les troupes disponibles (quantité configurable)
+            const fullTroopPool = [];
+            this.gameState.getBaseUnits().forEach(unit => {
+                const quantity = unit.quantity || 5; // Valeur par défaut si non définie
+                for (let i = 0; i < quantity; i++) {
+                    fullTroopPool.push({...unit, id: `${unit.name}_${i}`});
+                }
+            });
 
-        // Ajouter seulement les troupes achetées dans le magasin (pas les troupes de base)
-        const allTroops = [
-            ...fullTroopPool,
-            ...this.gameState.availableTroops
-        ];
+            // Ajouter seulement les troupes achetées dans le magasin (pas les troupes de base)
+            allTroops = [
+                ...fullTroopPool,
+                ...this.gameState.availableTroops
+            ];
+        }
 
         // Grouper les troupes par nom
         const troopsByType = {};
@@ -1518,34 +1514,16 @@ export class UIManager {
         }
     }
     
-    // Ajouter les événements de clic sur les troupes du header
+    // Ajouter les événements de clic sur les troupes du header (DÉSACTIVÉ - header des troupes retiré)
     addTransformClickListeners(gameState) {
-        const troopsContainer = document.getElementById('troops-display');
-        if (!troopsContainer) return;
-        
-        // Supprimer les anciens listeners
-        this.removeTransformClickListeners(gameState);
-        
-        // Ajouter les nouveaux listeners
-        const troopIcons = troopsContainer.querySelectorAll('.troop-icon-header');
-        troopIcons.forEach(icon => {
-            icon.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleTroopTransformClick(icon, gameState);
-            });
-        });
+        // Cette méthode n'est plus utilisée car le header des troupes a été retiré
+        return;
     }
     
-    // Supprimer les événements de clic de transformation
+    // Supprimer les événements de clic de transformation (DÉSACTIVÉ - header des troupes retiré)
     removeTransformClickListeners(gameState) {
-        const troopsContainer = document.getElementById('troops-display');
-        if (!troopsContainer) return;
-        
-        const troopIcons = troopsContainer.querySelectorAll('.troop-icon-header');
-        troopIcons.forEach(icon => {
-            icon.removeEventListener('click', this.handleTroopTransformClick);
-        });
+        // Cette méthode n'est plus utilisée car le header des troupes a été retiré
+        return;
     }
     
     // Gérer le clic sur une troupe pour la transformation
@@ -1719,34 +1697,16 @@ export class UIManager {
         }
     }
     
-    // Ajouter les événements de clic sur les troupes du header pour la duplication
+    // Ajouter les événements de clic sur les troupes du header pour la duplication (DÉSACTIVÉ - header des troupes retiré)
     addDuplicateClickListeners(gameState) {
-        const troopsContainer = document.getElementById('troops-display');
-        if (!troopsContainer) return;
-        
-        // Supprimer les anciens listeners
-        this.removeDuplicateClickListeners(gameState);
-        
-        // Ajouter les nouveaux listeners
-        const troopIcons = troopsContainer.querySelectorAll('.troop-icon-header');
-        troopIcons.forEach(icon => {
-            icon.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleTroopDuplicateClick(icon, gameState);
-            });
-        });
+        // Cette méthode n'est plus utilisée car le header des troupes a été retiré
+        return;
     }
     
-    // Supprimer les événements de clic de duplication
+    // Supprimer les événements de clic de duplication (DÉSACTIVÉ - header des troupes retiré)
     removeDuplicateClickListeners(gameState) {
-        const troopsContainer = document.getElementById('troops-display');
-        if (!troopsContainer) return;
-        
-        const troopIcons = troopsContainer.querySelectorAll('.troop-icon-header');
-        troopIcons.forEach(icon => {
-            icon.removeEventListener('click', this.handleTroopDuplicateClick);
-        });
+        // Cette méthode n'est plus utilisée car le header des troupes a été retiré
+        return;
     }
     
     // Gérer le clic sur une troupe pour la duplication
@@ -1806,13 +1766,21 @@ export class UIManager {
     }
     
     // Afficher la modal de confirmation de duplication
-    showDuplicateConfirmationModal(unitName, gameState) {
-        // Compter les unités actuelles en utilisant ownedUnits
-        const currentCount = gameState.ownedUnits[unitName] || 0;
+    showDuplicateConfirmationModal(unitName, unitElement, gameState) {
+        // Compter uniquement les unités avec l'élément spécifique dans le pool unifié
+        let currentCount = 0;
+        
+        // Compter dans le pool unifié (availableTroops + combatTroops)
+        const allUnits = [...(gameState.availableTroops || []), ...(gameState.combatTroops || [])];
+        currentCount = allUnits.filter(unit => unit.name === unitName && unit.element === unitElement).length;
+        
         const newCount = currentCount + 1;
         
         // Obtenir l'icône de l'unité
         const unitIcon = this.getUnitIcon(unitName, gameState);
+        
+        // Texte de l'élément
+        const elementText = unitElement ? ` d'${unitElement}` : '';
         
         const modalContent = `
             <div class="modal-content">
@@ -1832,18 +1800,19 @@ export class UIManager {
                         <div class="duplicate-before">
                             <span class="duplicate-count">${currentCount}</span>
                             <span class="duplicate-unit-icon">${unitIcon}</span>
-                            <span class="duplicate-unit">${unitName}</span>
+                            <span class="duplicate-unit">${unitName}${elementText}</span>
                         </div>
                         <div class="duplicate-arrow">➜</div>
                         <div class="duplicate-after">
                             <span class="duplicate-count">${newCount}</span>
                             <span class="duplicate-unit-icon">${unitIcon}</span>
-                            <span class="duplicate-unit">${unitName}</span>
+                            <span class="duplicate-unit">${unitName}${elementText}</span>
                         </div>
                     </div>
                     <div class="duplicate-confirmation-actions">
                         <button class="btn secondary" id="cancel-duplicate">Annuler</button>
                         <button class="btn primary" id="confirm-duplicate">Dupliquer</button>
+                        <input type="hidden" id="duplicate-element" value="${unitElement}">
                     </div>
                 </div>
             </div>
@@ -1871,8 +1840,8 @@ export class UIManager {
         confirmBtn.addEventListener('click', () => {
             // Fermer la modal immédiatement
             ModalManager.hideModal('duplicate-confirmation-modal');
-            // Effectuer la duplication
-            gameState.consumableManager.duplicateUnitFromModal(unitName, gameState);
+            // Effectuer la duplication avec l'élément spécifique
+            gameState.consumableManager.duplicateUnitFromModal(unitName, unitElement, gameState);
         });
         
         // Afficher la modal
@@ -2148,23 +2117,32 @@ export class UIManager {
     }
 
     showTroopsModal(options = {}) {
-        // Grouper par élément ET nom
-        const units = this.gameState.ownedUnits;
+        // NOUVEAU : Utiliser le pool global d'unités pour afficher toutes les unités disponibles
+        let allUnits = [];
+        
+        if (this.gameState.globalUnitPool && this.gameState.globalUnitPool.length > 0) {
+            // Utiliser le nouveau système de pool global
+            allUnits = [...this.gameState.globalUnitPool];
+        } else {
+            // Fallback vers l'ancien système (gardé pour compatibilité)
+            allUnits = [...(this.gameState.availableTroops || []), ...(this.gameState.combatTroops || [])];
+        }
+        
         const elementTypeMap = {};
-        Object.values(units).forEach(arr => {
-            if (!Array.isArray(arr)) return;
-            arr.forEach(u => {
-                const key = u.element + '||' + u.name;
-                if (!elementTypeMap[key]) {
-                    elementTypeMap[key] = { ...u, count: 0 };
-                }
-                elementTypeMap[key].count++;
-            });
+        
+        allUnits.forEach(u => {
+            const key = u.element + '||' + u.name;
+            if (!elementTypeMap[key]) {
+                elementTypeMap[key] = { ...u, count: 0 };
+            }
+            elementTypeMap[key].count++;
         });
+        
         // Supprimer les cartes dont le count est 0 (sécurité)
         Object.keys(elementTypeMap).forEach(key => {
             if (elementTypeMap[key].count <= 0) delete elementTypeMap[key];
         });
+        
         // Icônes d'élément
         const elementIcons = {
             'Feu': '🔥',
@@ -2174,17 +2152,19 @@ export class UIManager {
             'Ténèbre': '🌑',
             'Lumière': '✨'
         };
+        
         // Générer le HTML
         let html = '<div class="modal-content">';
         html += '<div class="modal-header"><h3>Mes troupes</h3><button class="close-btn" id="close-troops-modal">&times;</button></div>';
         html += '<div class="modal-body"><div class="troops-cards-grid">';
+        
         Object.values(elementTypeMap).sort((a, b) => a.element.localeCompare(b.element) || a.name.localeCompare(b.name)).forEach(unit => {
             // Tags courts pour les types
             let typeTags = '';
             if (unit.type && Array.isArray(unit.type)) {
                 typeTags = unit.type.map(t => `<span class='type-tag'>${getTypeDisplayName(t)}</span>`).join(' ');
             } else if (unit.type) {
-                typeTags = `<span class='type-tag'>${getTypeDisplayName(unit.type)}</span>`;
+                typeTags = `<span class='type-tag'>${getTypeDisplayName(t)}</span>`;
             }
             const rarityHTML = unit.rarity ? `<div class="unit-rarity" style="color: ${getRarityColor(unit.rarity)}; font-weight: 600; font-size: 0.8rem;">${getRarityIcon(unit.rarity)} ${getRarityDisplayName(unit.rarity)}</div>` : '';
             html += `<div class="unit-card troops-modal-card" data-unit-name="${unit.name}" data-unit-element="${unit.element}">
@@ -2197,14 +2177,17 @@ export class UIManager {
                 ${rarityHTML}
             </div>`;
         });
+        
         html += '</div></div></div>';
         const modal = document.getElementById('troops-modal');
         modal.innerHTML = html;
         modal.style.display = 'block';
+        
         // Fermer au clic sur la croix
         document.getElementById('close-troops-modal').onclick = () => { modal.style.display = 'none'; };
         // Fermer au clic hors de la modale
         modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+        
         // Si mode transformation, ajouter le handler de clic sur chaque carte
         if (options.mode === 'transform' && options.consumable) {
             const targetUnitName = options.consumable.targetUnit;
@@ -2216,6 +2199,20 @@ export class UIManager {
                     const fromUnitElement = card.getAttribute('data-unit-element');
                     // Ouvrir la modale de confirmation de transformation
                     this.showTransformConfirmationModal(fromUnitName, targetUnitName, this.gameState, fromUnitElement);
+                };
+            });
+        }
+        
+        // Si mode duplication, ajouter le handler de clic sur chaque carte
+        if (options.mode === 'duplicate' && options.consumable) {
+            const cards = modal.querySelectorAll('.unit-card.troops-modal-card');
+            cards.forEach(card => {
+                card.style.cursor = 'pointer';
+                card.onclick = (e) => {
+                    const unitName = card.getAttribute('data-unit-name');
+                    const unitElement = card.getAttribute('data-unit-element');
+                    // Ouvrir la modale de confirmation de duplication avec l'élément
+                    this.showDuplicateConfirmationModal(unitName, unitElement, this.gameState);
                 };
             });
         }

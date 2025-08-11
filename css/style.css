@@ -785,20 +785,7 @@ body {
     animation: bonusCountPulse 2s infinite;
 }
 
-/* Styles pour l'affichage des troupes dans le header */
-.troops-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-    gap: 10px;
-}
 
-.troops-header h4 {
-    margin: 0;
-    flex-shrink: 0;
-}
 
 .sort-controls {
     display: flex;
@@ -1037,134 +1024,9 @@ body {
     }
 }
 
-.troops-icons {
-    display: flex;
-    gap: 8px;
-    flex-wrap: nowrap;
-    max-width: none;
-    padding-bottom: 5px;
-}
 
-.troop-icon-header {
-    position: relative;
-    cursor: help;
-    transition: all 0.3s ease;
-    font-size: 1.2rem;
-    padding: 4px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid transparent;
-}
 
-.troop-icon-header:hover {
-    transform: scale(1.1);
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.3);
-}
 
-.troop-icon-header[data-count]:not([data-count="0"])::after {
-    content: attr(data-count);
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    background: #3498db;
-    color: white;
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    font-size: 0.6rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    border: 1px solid white;
-}
-
-.troop-tooltip {
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    pointer-events: none;
-    margin-top: 8px;
-    max-width: 200px;
-    text-align: center;
-}
-
-.troop-icon-header:hover .troop-tooltip {
-    opacity: 1;
-    visibility: visible;
-}
-
-.troop-tooltip::after {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 4px solid transparent;
-    border-bottom-color: rgba(0, 0, 0, 0.9);
-}
-
-/* Styles de rareté pour les icônes de troupes */
-.troop-icon-header.rarity-common {
-    background: rgba(102, 102, 102, 0.1);
-    border-color: rgba(102, 102, 102, 0.3);
-}
-
-.troop-icon-header.rarity-uncommon {
-    background: rgba(0, 184, 148, 0.1);
-    border-color: rgba(0, 184, 148, 0.3);
-}
-
-.troop-icon-header.rarity-rare {
-    background: rgba(116, 185, 255, 0.1);
-    border-color: rgba(116, 185, 255, 0.3);
-}
-
-.troop-icon-header.rarity-epic {
-    background: rgba(162, 155, 254, 0.1);
-    border-color: rgba(162, 155, 254, 0.3);
-}
-
-.troop-icon-header.rarity-legendary {
-    background: rgba(253, 203, 110, 0.1);
-    border-color: rgba(253, 203, 110, 0.3);
-}
-
-/* Responsive pour les troupes dans le header */
-@media (max-width: 768px) {
-    .troops-icons {
-        max-width: none;
-        gap: 6px;
-    }
-    
-    .troop-icon-header {
-        font-size: 1rem;
-        padding: 3px;
-    }
-    
-    .troop-icon-header[data-count]:not([data-count="0"])::after {
-        width: 14px;
-        height: 14px;
-        font-size: 0.5rem;
-    }
-    
-    .troop-tooltip {
-        font-size: 0.7rem;
-        max-width: 150px;
-    }
-}
 
 /* Zone principale */
 .game-main {

@@ -111,6 +111,13 @@ export function addTroop(troop, gameState) {
 
 // Tirer 7 troupes aléatoirement pour le combat
 export function drawCombatTroops(gameState) {
+    // NOUVEAU : Utiliser le système de pool global si disponible
+    if (gameState.drawCombatTroopsFromGlobalPool) {
+        gameState.drawCombatTroopsFromGlobalPool();
+        return;
+    }
+    
+    // Ancien système (gardé pour compatibilité)
     // Ne pas régénérer les troupes si elles existent déjà (pour la sauvegarde)
     if (gameState.combatTroops && gameState.combatTroops.length > 0) {
         gameState.updateTroopsUI();
@@ -133,6 +140,25 @@ export function drawCombatTroops(gameState) {
 
 // Maintenir 7 troupes disponibles en tirant de nouvelles troupes
 export function maintainCombatTroops(gameState) {
+    // NOUVEAU : Utiliser le système de pool global si disponible
+    if (gameState.getAvailableCombatPool) {
+        const availablePool = gameState.getAvailableCombatPool();
+        
+        // Retirer les troupes déjà dans le pool de combat
+        const remainingTroops = availablePool.filter(troop => 
+            !gameState.combatTroops.some(combatTroop => combatTroop.id === troop.id)
+        );
+        
+        // Ajouter des troupes jusqu'à avoir 7 disponibles
+        while (gameState.combatTroops.length < 7 && remainingTroops.length > 0) {
+            const randomIndex = Math.floor(Math.random() * remainingTroops.length);
+            const newTroop = remainingTroops.splice(randomIndex, 1)[0];
+            gameState.combatTroops.push(newTroop);
+        }
+        return;
+    }
+    
+    // Ancien système (gardé pour compatibilité)
     // Créer le pool de combat disponible
     const combatPool = createCombatPool(gameState);
     
@@ -231,17 +257,39 @@ export function rerollSelectedTroops(gameState) {
             gameState.selectedTroops.splice(selectedIndex, 1);
         }
         
-        // Ajouter la troupe relancée à la liste des troupes utilisées dans ce combat
-        gameState.usedTroopsThisCombat.push(troop.id);
+        // NOUVEAU : Marquer l'unité relancée comme utilisée dans le pool global
+        if (gameState.markUnitAsUsed) {
+            gameState.markUnitAsUsed(troop.id);
+        } else {
+            // Ancien système (gardé pour compatibilité)
+            gameState.usedTroopsThisCombat.push(troop.id);
+        }
         
-        // Tirer une nouvelle troupe au hasard
-        if (unusedTroops.length > 0) {
-            const randomIndex = Math.floor(Math.random() * unusedTroops.length);
-            const newTroop = unusedTroops.splice(randomIndex, 1)[0];
-            gameState.combatTroops.push(newTroop);
+        // NOUVEAU : Tirer une nouvelle troupe depuis le pool global
+        if (gameState.getAvailableCombatPool) {
+            const availablePool = gameState.getAvailableCombatPool();
+            const availableForReroll = availablePool.filter(t => 
+                !gameState.combatTroops.some(combatTroop => combatTroop.id === t.id)
+            );
             
-            rerolledTroops.push({ from: troop.name, to: newTroop.name });
-            rerolledCount++;
+            if (availableForReroll.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableForReroll.length);
+                const newTroop = availableForReroll.splice(randomIndex, 1)[0];
+                gameState.combatTroops.push(newTroop);
+                
+                rerolledTroops.push({ from: troop.name, to: newTroop.name });
+                rerolledCount++;
+            }
+        } else {
+            // Ancien système (gardé pour compatibilité)
+            if (unusedTroops.length > 0) {
+                const randomIndex = Math.floor(Math.random() * unusedTroops.length);
+                const newTroop = unusedTroops.splice(randomIndex, 1)[0];
+                gameState.combatTroops.push(newTroop);
+                
+                rerolledTroops.push({ from: troop.name, to: newTroop.name });
+                rerolledCount++;
+            }
         }
     });
     
@@ -319,9 +367,14 @@ export function removeUsedTroopsFromCombat(troopsUsed, gameState) {
             gameState.combatTroops.splice(combatIndex, 1);
         }
         
-        // Ajouter l'unité utilisée à la liste des unités utilisées dans ce combat
-        if (!gameState.usedTroopsThisCombat.includes(usedTroop.id)) {
-            gameState.usedTroopsThisCombat.push(usedTroop.id);
+        // NOUVEAU : Marquer l'unité comme utilisée dans le pool global
+        if (gameState.markUnitAsUsed) {
+            gameState.markUnitAsUsed(usedTroop.id);
+        } else {
+            // Ancien système (gardé pour compatibilité)
+            if (!gameState.usedTroopsThisCombat.includes(usedTroop.id)) {
+                gameState.usedTroopsThisCombat.push(usedTroop.id);
+            }
         }
     });
     
