@@ -204,7 +204,7 @@
                         <option value="aggressive">Agressif</option>
                         <option value="conservative">Conservateur</option>
                         <option value="synergy">Synergie</option>
-                        <option value="rush">Rush</option>
+                        <option value="defensive">Défensif</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -227,7 +227,7 @@
                         <option value="aggressive">Agressif</option>
                         <option value="conservative">Conservateur</option>
                         <option value="synergy">Synergie</option>
-                        <option value="rush">Rush</option>
+                        <option value="defensive">Défensif</option>
                     </select>
                 </div>
                 <button class="btn btn-success" onclick="runMultipleSimulation()">📊 Lancer Multiple</button>
@@ -248,6 +248,8 @@
                 <button class="btn" onclick="quickSimulation()">⚡ Simulation Rapide</button>
                 <button class="btn" onclick="showAvailableStrategies()">📋 Voir Stratégies</button>
                 <button class="btn" onclick="clearResults()">🗑️ Effacer Résultats</button>
+                <button class="btn btn-success" onclick="exportResults()">💾 Exporter Résultats</button>
+                <button class="btn btn-warning" onclick="generateDetailedReport()">📊 Rapport Détaillé</button>
             </div>
         </div>
         
@@ -377,6 +379,50 @@
         window.clearResults = function() {
             document.getElementById('results').style.display = 'none';
             document.getElementById('log-container').innerHTML = '<div class="log-entry log-info">Log effacé.</div>';
+        };
+        
+        window.exportResults = function() {
+            if (!autoSimulator.lastResults || autoSimulator.lastResults.length === 0) {
+                addLog('❌ Aucun résultat à exporter. Lancez d\'abord une simulation.', 'error');
+                return;
+            }
+            
+            try {
+                const results = autoSimulator.exportResults();
+                addLog('✅ Résultats exportés avec succès!', 'success');
+            } catch (error) {
+                addLog(`❌ Erreur lors de l'export: ${error.message}`, 'error');
+            }
+        };
+        
+        window.generateDetailedReport = function() {
+            if (!autoSimulator.lastResults || autoSimulator.lastResults.length === 0) {
+                addLog('❌ Aucun résultat disponible. Lancez d\'abord une simulation.', 'error');
+                return;
+            }
+            
+            try {
+                const report = autoSimulator.generateDetailedReport();
+                if (report) {
+                    addLog('✅ Rapport détaillé généré! Vérifiez la console pour les détails.', 'success');
+                    
+                    // Afficher un résumé dans le log
+                    addLog(`📊 Résumé du rapport:`, 'info');
+                    addLog(`  - Parties: ${report.summary.totalGames}`, 'info');
+                    addLog(`  - Or gagné moyen: ${report.summary.averageGoldEarned}`, 'info');
+                    addLog(`  - Or dépensé moyen: ${report.summary.averageGoldSpent}`, 'info');
+                    addLog(`  - Efficacité économique: ${(report.economyAnalysis.goldEfficiency * 100).toFixed(1)}%`, 'info');
+                    
+                    if (report.recommendations && report.recommendations.length > 0) {
+                        addLog(`  - Recommandations: ${report.recommendations.length}`, 'info');
+                        report.recommendations.forEach(rec => {
+                            addLog(`    • ${rec.issue}: ${rec.suggestion}`, 'warning');
+                        });
+                    }
+                }
+            } catch (error) {
+                addLog(`❌ Erreur lors de la génération du rapport: ${error.message}`, 'error');
+            }
         };
         
         // Fonctions utilitaires
@@ -682,9 +728,7 @@
         <div id="boss-damage-fill"></div>
         <span id="boss-damage-current">0</span>
         <span id="boss-damage-target">0</span>
-        <div id="boss-mechanic-display" style="display: none"></div>
-        <span id="boss-name">Boss</span>
-        <span id="boss-mechanic-text">Mécanique</span>
+
         
         <!-- Sections -->
         <div id="pre-combat-section"></div>
@@ -698,7 +742,6 @@
         
         <!-- Magasin -->
         <div id="pre-combat-shop"></div>
-        <div id="shop-modal" class="modal"></div>
         
         <!-- Modals -->
         <div id="modal-overlay"></div>

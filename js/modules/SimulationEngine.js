@@ -1,5 +1,7 @@
 // Moteur de simulation pour l'analyse d'équilibrage
 import { GameState } from './GameState.js';
+import { RANKS } from './constants/index.js';
+import { getDynamicBonusValue } from '../utils/DynamicBonusUtils.js';
 
 export class SimulationEngine {
     constructor() {
@@ -43,7 +45,6 @@ export class SimulationEngine {
     // Lancer une simulation complète
     async runSimulation(config = {}) {
         this.configureSimulation(config);
-        console.log(`🚀 Démarrage de la simulation: ${this.simulationConfig.numberOfGames} parties`);
         
         const startTime = Date.now();
         this.simulationResults = [];
@@ -52,7 +53,6 @@ export class SimulationEngine {
             // Mise à jour de la progression plus fréquente pour les petites simulations
             const updateInterval = this.simulationConfig.numberOfGames < 100 ? 1 : 10;
             if (i % updateInterval === 0) {
-                console.log(`📊 Simulation en cours: ${i}/${this.simulationConfig.numberOfGames}`);
                 // Appeler le callback de progression si disponible
                 if (this.progressCallback) {
                     this.progressCallback(i, this.simulationConfig.numberOfGames);
@@ -70,8 +70,6 @@ export class SimulationEngine {
         
         const endTime = Date.now();
         const simulationDuration = endTime - startTime;
-        
-        console.log(`✅ Simulation terminée en ${(simulationDuration / 1000).toFixed(2)}s`);
         
         // Analyser les résultats
         this.analyzeResults();
@@ -122,27 +120,21 @@ export class SimulationEngine {
             let roundCount = 0;
             const maxRounds = this.simulationConfig.maxRounds;
             
-            while (gameState.rank !== 'S' && roundCount < maxRounds) {
+            while (gameState.rank !== RANKS[RANKS.length - 1] && roundCount < maxRounds) {
                 roundCount++;
-                console.log(`\n=== TOUR ${roundCount} ===`);
                 
                 // Phase de recrutement automatique
-                console.log(`Recrutement - Or: ${gameState.gold}, Troupes: ${gameState.availableTroops.length}`);
                 this.simulateRecruitmentPhase(gameState, gameLog);
                 
                 // Phase de combat automatique
-                console.log(`Combat - Troupes disponibles: ${gameState.availableTroops.length}`);
                 const combatResult = this.simulateCombatPhase(gameState, gameLog);
                 
                 if (!combatResult.success) {
-                    console.log(`Échec du combat: ${combatResult.error}`);
                     break; // Échec de la partie
                 }
                 
-                        // Phase de magasin automatique
-        console.log(`Magasin - Or après combat: ${gameState.gold}`);
-        console.log(`Magasin - Troupes actuelles: ${gameState.availableTroops.length}`);
-        this.simulateShopPhase(gameState, gameLog);
+                // Phase de magasin automatique
+                this.simulateShopPhase(gameState, gameLog);
                 
                 // Vérification de sécurité pour éviter les boucles infinies
                 if (roundCount > maxRounds) {
@@ -156,7 +148,7 @@ export class SimulationEngine {
             
             const result = {
                 gameIndex,
-                success: gameState.rank === 'S',
+                success: gameState.rank === RANKS[RANKS.length - 1],
                 finalRank: gameState.rank,
                 finalRankProgress: gameState.rankProgress,
                 gold: gameState.gold,
@@ -182,8 +174,7 @@ export class SimulationEngine {
                 purchasedConsumables: { ...gameState.purchasedConsumables }
             };
             
-            console.log(`Partie ${gameIndex} terminée - Bonus débloqués:`, gameState.unlockedBonuses);
-            console.log(`Partie ${gameIndex} terminée - Bonus achetés:`, gameState.gameStats.bonusesPurchased);
+
             
             return result;
             
@@ -238,7 +229,7 @@ export class SimulationEngine {
             gameLog.push(`Recrutement de base: ${randomUnit.name}`);
         }
         
-        console.log(`Troupes disponibles après recrutement: ${gameState.availableTroops.length}`);
+
     }
 
     // Analyser les besoins de l'équipe
@@ -255,6 +246,12 @@ export class SimulationEngine {
         
         // Compter les types actuels
         troops.forEach(troop => {
+            // Vérification de sécurité
+            if (!troop || !troop.type || typeof troop.damage === 'undefined' || typeof troop.multiplier === 'undefined') {
+                console.error('Troop invalide dans analyzeTeamNeeds:', troop);
+                return;
+            }
+            
             if (troop.type.includes('Corps à corps')) needs.melee++;
             if (troop.type.includes('Distance')) needs.ranged++;
             if (troop.type.includes('Magique')) needs.magical++;
@@ -278,6 +275,7 @@ export class SimulationEngine {
 
     // Sélectionner l'unité optimale selon les besoins
     selectOptimalUnit(needs, availableGold) {
+        // Utiliser les vraies unités du jeu
         const allUnits = [
             { name: 'Épéiste', type: ['Corps à corps', 'Physique'], damage: 5, multiplier: 2, cost: 10, rarity: 'common' },
             { name: 'Archer', type: ['Distance', 'Physique'], damage: 4, multiplier: 3, cost: 12, rarity: 'common' },
@@ -285,9 +283,20 @@ export class SimulationEngine {
             { name: 'Lancier', type: ['Corps à corps', 'Physique'], damage: 4, multiplier: 3, cost: 12, rarity: 'common' },
             { name: 'Paysan', type: ['Corps à corps', 'Physique'], damage: 2, multiplier: 1, cost: 5, rarity: 'common' },
             { name: 'Soigneur', type: ['Soigneur', 'Magique'], damage: 1, multiplier: 1, cost: 8, rarity: 'common' },
+            { name: 'Magicien Rouge', type: ['Distance', 'Magique'], damage: 6, multiplier: 2, cost: 20, rarity: 'uncommon' },
             { name: 'Barbare', type: ['Corps à corps', 'Physique'], damage: 7, multiplier: 1, cost: 20, rarity: 'uncommon' },
-            { name: 'Sorcier', type: ['Distance', 'Magique'], damage: 5, multiplier: 3, cost: 25, rarity: 'rare' },
-            { name: 'Fronde', type: ['Distance', 'Physique'], damage: 2, multiplier: 5, cost: 30, rarity: 'rare' }
+            { name: 'Viking', type: ['Corps à corps', 'Physique'], damage: 6, multiplier: 2, cost: 18, rarity: 'uncommon' },
+            { name: 'Paladin', type: ['Corps à corps', 'Physique'], damage: 8, multiplier: 2, cost: 25, rarity: 'rare' },
+            { name: 'Assassin', type: ['Corps à corps', 'Physique'], damage: 3, multiplier: 6, cost: 30, rarity: 'rare' },
+            { name: 'Mage', type: ['Distance', 'Magique'], damage: 5, multiplier: 4, cost: 35, rarity: 'rare' },
+            { name: 'Frondeur', type: ['Distance', 'Physique'], damage: 2, multiplier: 5, cost: 30, rarity: 'rare' },
+            { name: 'Chevalier', type: ['Corps à corps', 'Physique'], damage: 9, multiplier: 1, cost: 40, rarity: 'epic' },
+            { name: 'Arbalétrier', type: ['Distance', 'Physique'], damage: 8, multiplier: 2, cost: 45, rarity: 'epic' },
+            { name: 'Sorcier', type: ['Distance', 'Magique'], damage: 4, multiplier: 5, cost: 50, rarity: 'epic' },
+            { name: 'Berserker', type: ['Corps à corps', 'Physique'], damage: 10, multiplier: 1, cost: 55, rarity: 'epic' },
+            { name: 'Archer d\'Élite', type: ['Distance', 'Physique'], damage: 6, multiplier: 4, cost: 80, rarity: 'legendary' },
+            { name: 'Mage Suprême', type: ['Distance', 'Magique', 'Corps à corps'], damage: 7, multiplier: 5, cost: 90, rarity: 'legendary' },
+            { name: 'Champion', type: ['Corps à corps', 'Physique', 'Magique'], damage: 12, multiplier: 2, cost: 100, rarity: 'legendary' }
         ];
         
         // Filtrer par coût
@@ -372,7 +381,7 @@ export class SimulationEngine {
             
             gameLog.push(`Combat ${gameState.combatHistory.length}: ${victory ? 'Victoire' : 'Défaite'} - Dégâts: ${gameState.currentCombat.totalDamage}/${gameState.currentCombat.targetDamage}`);
             
-            console.log(`Combat terminé: ${victory ? 'Victoire' : 'Défaite'} - ${gameState.currentCombat.totalDamage}/${gameState.currentCombat.targetDamage} dégâts`);
+
             
             return { success: true, victory };
             
@@ -393,6 +402,12 @@ export class SimulationEngine {
         
         // Calculer le score de chaque troupe
         const scoredTroops = availableTroops.map(troop => {
+            // Vérification de sécurité
+            if (!troop || typeof troop.damage === 'undefined' || typeof troop.multiplier === 'undefined') {
+                console.error('Troop invalide dans selectOptimalCombatTroops:', troop);
+                return { ...troop, score: 0 };
+            }
+            
             let score = troop.damage * troop.multiplier;
             
             // Bonus pour les synergies
@@ -417,15 +432,12 @@ export class SimulationEngine {
             gameState.combatTroops = [...selectedTroops];
             // Définir selectedTroops pour les synergies
             gameState.selectedTroops = [...selectedTroops];
-            console.log(`Simulation: ${selectedTroops.length} troupes copiées dans combatTroops et selectedTroops`);
-        } else {
+            } else {
             // Marquer les troupes comme sélectionnées pour le combat (mode normal)
             selectedTroops.forEach((troop, index) => {
                 gameState.selectTroopForCombat(index);
             });
         }
-        
-        console.log(`Sélectionné ${selectedTroops.length} troupes pour le combat:`, selectedTroops.map(t => t.name));
     }
 
     // Simuler un tour de combat
@@ -454,7 +466,7 @@ export class SimulationEngine {
             gameState.gameStats.unitsUsed[troop.name]++;
         });
         
-        console.log(`Tour ${gameState.currentCombat.round}: ${turnDamage} dégâts (${combatTroops.length} troupes)`);
+
         
         // Vérifier la victoire
         if (gameState.currentCombat.totalDamage >= gameState.currentCombat.targetDamage) {
@@ -475,126 +487,95 @@ export class SimulationEngine {
 
     // Simuler la phase de magasin
     simulateShopPhase(gameState, gameLog) {
-        console.log(`🏪 PHASE MAGASIN - Or disponible: ${gameState.gold}`);
-        
         if (gameState.gold < 10) {
-            console.log('❌ Pas assez d\'or pour le magasin (< 10)');
             gameLog.push('Pas assez d\'or pour le magasin');
             return;
         }
         
-        // Générer des items de magasin
+        // Générer des items de magasin (utilise la même logique que le shop normal)
         const shopItems = gameState.shopManager.generateShopItems(gameState);
-        console.log(`📦 Items générés:`, shopItems);
         
         let purchasesMade = false;
         
         // Acheter des bonus utiles (limiter à 2-3 bonus par partie)
         const bonusItems = shopItems.filter(item => item.type === 'bonus');
         if (bonusItems.length > 0) {
-            console.log(`🎁 Bonus disponibles (${bonusItems.length}):`, bonusItems.map(b => `${b.name} (${b.bonusId}) - ${b.price} or`));
-            
             // Limiter le nombre de bonus achetés par partie
             const maxBonusesPerGame = 3;
             const currentBonusCount = gameState.gameStats.bonusesPurchased || 0;
             
             if (currentBonusCount >= maxBonusesPerGame) {
-                console.log(`⚠️ Limite de bonus atteinte (${currentBonusCount}/${maxBonusesPerGame}), aucun achat de bonus`);
                 return;
             }
             
             bonusItems.forEach(bonus => {
-                const canAfford = gameState.gold >= bonus.price;
+                // Vérifier la disponibilité comme dans le shop normal
+                const availability = gameState.shopManager.checkItemAvailability(bonus, gameState);
                 const worthBuying = this.isBonusWorthBuying(bonus, gameState);
-                console.log(`💰 Bonus ${bonus.name} (${bonus.bonusId}): peut acheter=${canAfford}, vaut la peine=${worthBuying}, or=${gameState.gold}`);
                 
-                if (canAfford && worthBuying) {
-                    console.log(`🛒 ACHAT BONUS: ${bonus.name} (${bonus.bonusId}) pour ${bonus.price} or`);
-                    gameState.unlockBonus(bonus.bonusId);
-                    gameState.shopManager.spendGold(gameState, bonus.price);
-                    gameState.gameStats.bonusesPurchased++;
-                    gameLog.push(`Achat bonus: ${bonus.name} (${bonus.bonusId}) - ${bonus.price} or`);
-                    purchasesMade = true;
-                    console.log(`✅ Bonus acheté avec succès: ${bonus.name} (${bonus.bonusId})`);
-                } else {
-                    console.log(`❌ Bonus non acheté: ${bonus.name} - peut acheter: ${canAfford}, vaut la peine: ${worthBuying}`);
+                if (availability.isAvailable && worthBuying) {
+                    if (gameState.unlockBonus(bonus.bonusId)) {
+                        gameState.gameStats.bonusesPurchased++;
+                        gameLog.push(`Achat bonus: ${bonus.name} (${bonus.bonusId}) - ${bonus.price} or`);
+                        purchasesMade = true;
+                    }
                 }
             });
-        } else {
-            console.log(`❌ Aucun bonus disponible dans le magasin`);
         }
         
         // Acheter des consommables
         const consumableItems = shopItems.filter(item => item.type === 'consumable');
         if (consumableItems.length > 0) {
-            console.log(`🧪 Consommables disponibles (${consumableItems.length}):`, consumableItems.map(c => `${c.name} (${c.consumableType}) - ${c.price} or`));
             consumableItems.forEach(consumable => {
-                const canAfford = gameState.gold >= consumable.price;
+                // Vérifier la disponibilité comme dans le shop normal
+                const availability = gameState.shopManager.checkItemAvailability(consumable, gameState);
                 const worthBuying = this.isConsumableWorthBuying(consumable, gameState);
-                console.log(`🧪 Consommable ${consumable.name}: peut acheter=${canAfford}, vaut la peine=${worthBuying}`);
                 
-                if (canAfford && worthBuying) {
-                    console.log(`🛒 ACHAT CONSOMMABLE: ${consumable.name} pour ${consumable.price} or`);
-                    gameState.addConsumable(consumable.consumableType);
-                    gameState.shopManager.spendGold(gameState, consumable.price);
-                    gameState.gameStats.consumablesPurchased = (gameState.gameStats.consumablesPurchased || 0) + 1;
-                    
-                    // Suivre les consommables achetés
-                    if (!gameState.purchasedConsumables[consumable.consumableType]) {
-                        gameState.purchasedConsumables[consumable.consumableType] = 0;
+                if (availability.isAvailable && worthBuying) {
+                    if (gameState.addConsumable(consumable.consumableType)) {
+                        gameState.gameStats.consumablesPurchased = (gameState.gameStats.consumablesPurchased || 0) + 1;
+                        
+                        // Suivre les consommables achetés
+                        if (!gameState.purchasedConsumables[consumable.consumableType]) {
+                            gameState.purchasedConsumables[consumable.consumableType] = 0;
+                        }
+                        gameState.purchasedConsumables[consumable.consumableType]++;
+                        
+                        gameLog.push(`Achat consommable: ${consumable.name} (${consumable.price} or)`);
+                        purchasesMade = true;
                     }
-                    gameState.purchasedConsumables[consumable.consumableType]++;
-                    
-                    gameLog.push(`Achat consommable: ${consumable.name} (${consumable.price} or)`);
-                    purchasesMade = true;
-                    console.log(`✅ Consommable acheté avec succès: ${consumable.name}`);
-                } else {
-                    console.log(`❌ Consommable non acheté: ${consumable.name} - peut acheter: ${canAfford}, vaut la peine: ${worthBuying}`);
                 }
             });
-        } else {
-            console.log(`❌ Aucun consommable disponible dans le magasin`);
         }
         
         // Acheter des unités si nécessaire
         const unitItems = shopItems.filter(item => item.type === 'unit');
         if (unitItems.length > 0) {
-            console.log(`⚔️ Unités disponibles (${unitItems.length}):`, unitItems.map(u => `${u.name} (${u.price} or)`));
             unitItems.forEach(unit => {
-                const canAfford = gameState.gold >= unit.price;
-                const hasSpace = gameState.availableTroops.length < 15;
+                // Vérifier la disponibilité comme dans le shop normal
+                const availability = gameState.shopManager.checkItemAvailability(unit, gameState);
                 const worthBuying = this.isUnitWorthBuying(unit, gameState);
-                console.log(`⚔️ Unité ${unit.name}: peut acheter=${canAfford}, a de la place=${hasSpace}, vaut la peine=${worthBuying}`);
                 
-                if (canAfford && hasSpace && worthBuying) {
-                    console.log(`🛒 ACHAT UNITÉ: ${unit.name} pour ${unit.price} or`);
-                    gameState.addTroop(unit);
-                    gameState.shopManager.spendGold(gameState, unit.price);
-                    gameState.gameStats.unitsPurchased++;
-                    
-                    // Suivre les unités achetées
-                    if (!gameState.purchasedUnits[unit.name]) {
-                        gameState.purchasedUnits[unit.name] = 0;
+                if (availability.isAvailable && worthBuying) {
+                    if (gameState.addTroop(unit)) {
+                        gameState.gameStats.unitsPurchased++;
+                        
+                        // Suivre les unités achetées
+                        if (!gameState.purchasedUnits[unit.name]) {
+                            gameState.purchasedUnits[unit.name] = 0;
+                        }
+                        gameState.purchasedUnits[unit.name]++;
+                        
+                        gameLog.push(`Achat unité: ${unit.name} (${unit.price} or)`);
+                        purchasesMade = true;
                     }
-                    gameState.purchasedUnits[unit.name]++;
-                    
-                    gameLog.push(`Achat unité: ${unit.name} (${unit.price} or)`);
-                    purchasesMade = true;
-                    console.log(`✅ Unité achetée avec succès: ${unit.name}`);
-                } else {
-                    console.log(`❌ Unité non achetée: ${unit.name} - peut acheter: ${canAfford}, a de la place: ${hasSpace}, vaut la peine: ${worthBuying}`);
                 }
             });
-        } else {
-            console.log(`❌ Aucune unité disponible dans le magasin`);
         }
         
         if (!purchasesMade) {
             gameLog.push('Aucun achat effectué au magasin');
         }
-        
-        console.log(`Magasin: ${gameState.gold} or restant, ${gameState.availableTroops.length} troupes`);
-        console.log(`Magasin: ${gameState.gameStats.unitsPurchased} unités achetées, ${gameState.gameStats.bonusesPurchased} bonus achetés, ${gameState.gameStats.consumablesPurchased} consommables achetés`);
     }
 
     // Évaluer si un bonus vaut la peine d'être acheté
@@ -603,12 +584,9 @@ export class SimulationEngine {
         
         // En mode simulation, être très permissif pour les achats
         if (gameState.simulationMode) {
-            console.log(`🔍 Évaluation bonus en mode simulation: ${bonus.name} (${bonus.bonusId}) - Prix: ${bonus.price}, Or: ${gameState.gold}`);
-            
             // Toujours acheter des bonus pas chers au début
             if (currentTroops.length < 3) {
                 const shouldBuy = bonus.price <= 30; // Plus restrictif
-                console.log(`   Début de partie (${currentTroops.length} troupes): achat=${shouldBuy} (prix max: 30)`);
                 return shouldBuy;
             }
             
@@ -623,8 +601,6 @@ export class SimulationEngine {
             const finalChance = Math.min(0.8, baseChance + goldFactor + earlyGameFactor + synergyFactor); // Max 80%
             const randomValue = Math.random();
             const shouldBuy = randomValue < finalChance;
-            
-            console.log(`   Probabilité: ${(finalChance * 100).toFixed(1)}% (base: ${(baseChance * 100).toFixed(1)}% + or: ${(goldFactor * 100).toFixed(1)}% + début: ${(earlyGameFactor * 100).toFixed(1)}% + synergie: ${(synergyFactor * 100).toFixed(1)}%), random: ${(randomValue * 100).toFixed(1)}%, achat: ${shouldBuy}`);
             
             return shouldBuy;
         }
@@ -695,7 +671,7 @@ export class SimulationEngine {
         const shouldBuy = impact > bonus.price * 0.3 || 
                          (gameState.gold > bonus.price * 2 && Math.random() < 0.4);
         
-        console.log(`Évaluation bonus ${bonus.name} (${bonus.bonusId}): impact=${impact}, prix=${bonus.price}, achat=${shouldBuy}`);
+
         
         return shouldBuy;
     }
@@ -748,8 +724,6 @@ export class SimulationEngine {
     // Évaluer si un consommable vaut la peine d'être acheté
     isConsumableWorthBuying(consumable, gameState) {
         if (gameState.simulationMode) {
-            console.log(`🔍 Évaluation consommable: ${consumable.name} (${consumable.consumableType}) - Prix: ${consumable.price}`);
-            
             // Probabilité de base plus élevée pour les consommables
             let baseChance = 0.35; // 35% de chance de base (augmenté)
             
@@ -761,8 +735,6 @@ export class SimulationEngine {
             const randomValue = Math.random();
             const shouldBuy = randomValue < finalChance;
             
-            console.log(`   Probabilité: ${(finalChance * 100).toFixed(1)}% (base: ${(baseChance * 100).toFixed(1)}% + or: ${(goldFactor * 100).toFixed(1)}% + début: ${(earlyGameFactor * 100).toFixed(1)}%), random: ${(randomValue * 100).toFixed(1)}%, achat: ${shouldBuy}`);
-            
             return shouldBuy;
         }
         
@@ -772,8 +744,6 @@ export class SimulationEngine {
     // Évaluer si une unité vaut la peine d'être achetée
     isUnitWorthBuying(unit, gameState) {
         if (gameState.simulationMode) {
-            console.log(`🔍 Évaluation unité: ${unit.name} - Prix: ${unit.price}, Or: ${gameState.gold}`);
-            
             // Probabilité de base pour les unités
             let baseChance = 0.4; // 40% de chance de base
             
@@ -785,8 +755,6 @@ export class SimulationEngine {
             const finalChance = Math.min(0.9, baseChance + goldFactor + earlyGameFactor + powerFactor); // Max 90%
             const randomValue = Math.random();
             const shouldBuy = randomValue < finalChance;
-            
-            console.log(`   Probabilité: ${(finalChance * 100).toFixed(1)}% (base: ${(baseChance * 100).toFixed(1)}% + or: ${(goldFactor * 100).toFixed(1)}% + début: ${(earlyGameFactor * 100).toFixed(1)}% + puissance: ${(powerFactor * 100).toFixed(1)}%), random: ${(randomValue * 100).toFixed(1)}%, achat: ${shouldBuy}`);
             
             return shouldBuy;
         }
@@ -824,7 +792,7 @@ export class SimulationEngine {
                 // Choisir un consommable au hasard
                 const consumable = availableConsumables[Math.floor(Math.random() * availableConsumables.length)];
                 
-                console.log(`🧪 Utilisation consommable: ${consumable.name} (${consumable.type}) - Progression: ${(progress * 100).toFixed(1)}%`);
+
                 gameState.useConsumable(consumable.id);
                 gameState.gameStats.consumablesUsed = (gameState.gameStats.consumablesUsed || 0) + 1;
             }
@@ -869,7 +837,7 @@ export class SimulationEngine {
         // Économie d'or
         this.globalStats.goldEconomy = this.calculateGoldEconomy(results);
         
-        console.log('📊 Analyse des résultats terminée');
+
     }
 
     // Calculer la moyenne d'un champ
@@ -880,15 +848,13 @@ export class SimulationEngine {
 
     // Calculer le rang moyen
     calculateAverageRank(results) {
-        const rankValues = {
-            'F-': 1, 'F': 2, 'F+': 3, 'E-': 4, 'E': 5, 'E+': 6,
-            'D-': 7, 'D': 8, 'D+': 9, 'C-': 10, 'C': 11, 'C+': 12,
-            'B-': 13, 'B': 14, 'B+': 15, 'A-': 16, 'A': 17, 'A+': 18, 'S': 19
-        };
+        const rankValues = {};
+        RANKS.forEach((rank, index) => {
+            rankValues[rank] = index + 1;
+        });
         
         const averageValue = this.calculateAverage(results.map(r => rankValues[r.finalRank] || 1), '');
-        const ranks = Object.keys(rankValues);
-        return ranks[Math.floor(averageValue) - 1] || 'F-';
+        return RANKS[Math.floor(averageValue) - 1] || RANKS[0];
     }
 
     // Calculer la distribution des rangs
@@ -1228,47 +1194,28 @@ export class SimulationEngine {
     displaySummary() {
         const stats = this.globalStats;
         
-        console.log('📊 RÉSUMÉ DE LA SIMULATION');
-        console.log('========================');
-        console.log(`Parties simulées: ${stats.totalGames}`);
-        console.log(`Taux de victoire: ${(stats.winRate * 100).toFixed(1)}%`);
-        console.log(`Rang moyen atteint: ${stats.averageRankReached}`);
-        console.log(`Or moyen gagné: ${stats.averageGoldEarned.toFixed(0)}`);
-        console.log(`Combats gagnés en moyenne: ${stats.averageCombatWon.toFixed(1)}`);
-        console.log(`Combats perdus en moyenne: ${stats.averageCombatLost.toFixed(1)}`);
-        console.log(`Durée moyenne d'une partie: ${(stats.averageGameDuration / 1000).toFixed(1)}s`);
-        console.log(`Efficacité économique: ${(stats.goldEconomy.goldEfficiency * 100).toFixed(1)}%`);
+        console.log('\n📊 RÉSULTATS DE LA SIMULATION');
+        console.log('===============================');
+        console.log(`🎮 Parties simulées: ${stats.totalGames}`);
+        console.log(`🏆 Taux de victoire: ${(stats.winRate * 100).toFixed(2)}%`);
+        console.log(`📈 Rang moyen: ${stats.averageRankReached}`);
+        console.log(`💰 Or gagné moyen: ${Math.floor(stats.averageGoldEarned)}`);
+        console.log(`⚔️ Combats gagnés moyens: ${Math.floor(stats.averageCombatWon)}`);
+        console.log(`💀 Combats perdus moyens: ${Math.floor(stats.averageCombatLost)}`);
+        console.log(`⏱️ Durée moyenne: ${(stats.averageGameDuration / 1000).toFixed(2)}s`);
         
-        console.log('\n🏆 DISTRIBUTION DES RANGS');
-        Object.entries(stats.rankDistribution)
-            .sort((a, b) => b[1] - a[1])
-            .forEach(([rank, count]) => {
-                const percentage = (count / stats.totalGames * 100).toFixed(1);
-                console.log(`${rank}: ${count} parties (${percentage}%)`);
-            });
+        // Afficher tous les rangs atteints
+        console.log('\n📊 DISTRIBUTION DES RANGS:');
+        const allRanks = RANKS;
+        allRanks.forEach(rank => {
+            const count = stats.rankDistribution[rank] || 0;
+            if (count > 0) {
+                const percentage = ((count / stats.totalGames) * 100).toFixed(1);
+                const bar = '█'.repeat(Math.floor(count / stats.totalGames * 20));
+                console.log(`  ${rank}: ${count} parties (${percentage}%) ${bar}`);
+            }
+        });
         
-        console.log('\n⚔️ UNITÉS LES PLUS UTILISÉES');
-        Object.entries(stats.unitUsageStats)
-            .sort((a, b) => b[1].totalUses - a[1].totalUses)
-            .slice(0, 5)
-            .forEach(([unit, stat]) => {
-                console.log(`${unit}: ${stat.totalUses} utilisations (${stat.averageUsesPerGame.toFixed(1)}/partie)`);
-            });
-        
-        console.log('\n🔗 SYNERGIES LES PLUS UTILISÉES');
-        Object.entries(stats.synergyEffectiveness)
-            .sort((a, b) => b[1].averageLevel - a[1].averageLevel)
-            .slice(0, 5)
-            .forEach(([synergy, stat]) => {
-                console.log(`${synergy}: Niveau ${stat.averageLevel.toFixed(1)} (${stat.gamesUsed} parties, ${stat.activeRate}% active)`);
-            });
-        
-        console.log('\n🎁 BONUS LES PLUS UTILISÉS');
-        Object.entries(stats.bonusUsageStats)
-            .sort((a, b) => parseFloat(b[1].usageRate) - parseFloat(a[1].usageRate))
-            .slice(0, 5)
-            .forEach(([bonus, stat]) => {
-                console.log(`${bonus}: ${stat.usageRate}% des parties (${stat.gamesUsed} parties)`);
-            });
+        console.log('\n===============================');
     }
 } 

@@ -1,6 +1,8 @@
 // Simulateur automatique pour GuildMaster
-import { RANKS } from './GameConstants.js';
+import { RANKS } from './constants/combat/GameConstants.js';
 import { removeUsedTroopsFromCombat, drawCombatTroops, calculateSynergies } from './UnitManager.js';
+import { BASE_UNITS } from './constants/units/UnitConstants.js';
+import { BONUS_DESCRIPTIONS } from './constants/shop/BonusConstants.js';
 
 export class AutoSimulator {
     constructor() {
@@ -33,6 +35,7 @@ export class AutoSimulator {
         const gameStats = {
             goldSpent: 0,
             goldEarned: 0,
+            totalDamage: 0,
             unitsPurchased: [],
             bonusesPurchased: [],
             synergiesUsed: [],
@@ -51,15 +54,15 @@ export class AutoSimulator {
             round++;
             console.log(`📊 Round ${round} - Rang: ${gameState.rank} - Or: ${gameState.gold}`);
 
-            // Phase 1: Achat au magasin
-            this.simulateShopPhase(gameState, gameStats, strategyName);
-
-            // Phase 2: Combat
+            // Phase 1: Combat (pour gagner de l'or)
             const combatResult = this.simulateCombatPhase(gameState, gameStats, round);
             if (!combatResult) {
                 console.log(`❌ Défaite au round ${round}`);
                 break;
             }
+
+            // Phase 2: Achat au magasin (avec l'or gagné)
+            this.simulateShopPhase(gameState, gameStats, strategyName);
 
             // Vérifier si on a atteint le rang S
             if (gameState.rank === 'S') {
@@ -74,7 +77,15 @@ export class AutoSimulator {
         gameStats.duration = Date.now() - startTime;
         gameStats.goldEarned = gameState.gameStats.goldEarned;
 
-        console.log(`✅ Simulation terminée - Rang final: ${gameStats.finalRank}, Rounds: ${gameStats.rounds}`);
+        // Calculer les dégâts totaux à partir des détails des rounds
+        gameStats.totalDamage = gameStats.roundDetails.reduce((sum, round) => sum + round.damage, 0);
+
+        console.log(`✅ Simulation terminée - Rang final: ${gameStats.finalRank}, Rounds: ${gameStats.rounds}, Dégâts totaux: ${gameStats.totalDamage}, Or gagné: ${gameStats.goldEarned}, Or dépensé: ${gameStats.goldSpent}`);
+        
+        // Vérification de cohérence
+        if (gameStats.goldSpent > gameStats.goldEarned) {
+            console.warn(`⚠️ ATTENTION: Or dépensé (${gameStats.goldSpent}) > Or gagné (${gameStats.goldEarned})`);
+        }
         
         return gameStats;
     }
@@ -83,7 +94,16 @@ export class AutoSimulator {
     async createGameState() {
         // Importer dynamiquement pour éviter les dépendances circulaires
         const { GameState } = await import('./GameState.js');
-        return new GameState();
+        const gameState = new GameState();
+        
+        // S'assurer que le ShopManager est correctement initialisé pour les simulations
+        if (gameState.shopManager) {
+            gameState.shopManager.currentShopPurchasedBonuses = [];
+            gameState.shopManager.currentShopPurchasedUnits = [];
+            gameState.shopManager.currentShopPurchasedConsumables = [];
+        }
+        
+        return gameState;
     }
 
     // Simuler la phase d'achat
@@ -113,16 +133,16 @@ export class AutoSimulator {
     balancedStrategy(shopItems, gameState, gameStats) {
         // Priorité: unités rares > bonus d'équipement > unités communes
         const priorities = [
-            { type: 'unit', rarity: 'legendary' },
-            { type: 'unit', rarity: 'epic' },
-            { type: 'bonus', rarity: 'legendary' },
-            { type: 'unit', rarity: 'rare' },
-            { type: 'bonus', rarity: 'epic' },
-            { type: 'bonus', rarity: 'rare' },
-            { type: 'unit', rarity: 'uncommon' },
-            { type: 'bonus', rarity: 'uncommon' },
-            { type: 'unit', rarity: 'common' },
-            { type: 'bonus', rarity: 'common' }
+          { type: "unit", rarity: "legendary" },
+          { type: "bonus", rarity: "legendary" },
+          { type: "unit", rarity: "epic" },
+          { type: "bonus", rarity: "epic" },
+          { type: "unit", rarity: "rare" },
+          { type: "bonus", rarity: "rare" },
+          { type: "unit", rarity: "uncommon" },
+          { type: "bonus", rarity: "uncommon" },
+          { type: "unit", rarity: "common" },
+          { type: "bonus", rarity: "common" },
         ];
 
         this.buyByPriority(shopItems, priorities, gameState, gameStats);
@@ -188,6 +208,11 @@ export class AutoSimulator {
 
     // Acheter selon les priorités
     buyByPriority(shopItems, priorities, gameState, gameStats) {
+        let purchasesThisRound = 0;
+        const maxPurchasesPerRound = 2; // Réduire la limite d'achats par round
+        
+        console.log(`🛒 Or disponible au début: ${gameState.gold}`);
+        
         for (const priority of priorities) {
             const matchingItems = shopItems.filter(item => {
                 if (priority.type !== item.type) return false;
@@ -197,122 +222,120 @@ export class AutoSimulator {
             });
 
             for (const item of matchingItems) {
+                // Arrêter si on a atteint la limite d'achats
+                if (purchasesThisRound >= maxPurchasesPerRound) {
+                    console.log(`🛑 Limite d'achats atteinte (${maxPurchasesPerRound})`);
+                    return;
+                }
+                
+                // Vérifier l'or disponible avant chaque achat
+                if (gameState.gold < item.price) {
+                    console.log(`💰 Pas assez d'or pour ${item.name} (${item.price} or requis, ${gameState.gold} disponible)`);
+                    continue;
+                }
+                
+                // Vérification supplémentaire: ne pas dépenser plus que ce qu'on a gagné
+                const totalGoldEarned = gameState.gameStats.goldEarned || 0;
+                const totalGoldSpent = gameStats.goldSpent || 0;
+                const remainingEarnedGold = totalGoldEarned - totalGoldSpent;
+                
+                if (item.price > remainingEarnedGold) {
+                    console.log(`💰 Pas assez d'or gagné pour ${item.name} (${item.price} or requis, ${remainingEarnedGold} or gagné disponible)`);
+                    continue;
+                }
+                
                 if (this.purchaseItem(item, gameState, gameStats)) {
-                    console.log(`💰 Achat: ${item.name} (${item.price} or)`);
+                    purchasesThisRound++;
+                    console.log(`💰 Achat: ${item.name} (${item.price} or) - Achat ${purchasesThisRound}/${maxPurchasesPerRound} - Or restant: ${gameState.gold}`);
                 }
             }
         }
+        
+        console.log(`🛒 Or restant à la fin: ${gameState.gold}`);
     }
 
     // Générer les items du magasin
     generateShopItems(gameState) {
-        const items = [];
+        // Utiliser la même logique que le shop normal
+        return gameState.shopManager.generateShopItems(gameState);
+        }
+
+    // Obtenir le prix d'une unité (utilise la même logique que le shop normal)
+    getUnitPrice(unit) {
+        // Copier la logique de calculateUnitPrice du ShopManager
+        let basePrice = 25; // Prix de base
         
-        // Générer des unités aléatoires
-        const unitPool = this.getUnitPool();
-        for (let i = 0; i < 3; i++) {
-            const unit = unitPool[Math.floor(Math.random() * unitPool.length)];
-            items.push({
-                type: 'unit',
-                name: unit.name,
-                price: unit.price || 30,
-                rarity: unit.rarity || 'common',
-                damage: unit.damage,
-                multiplier: unit.multiplier
-            });
+        // Ajuster le prix selon la rareté
+        switch (unit.rarity) {
+            case 'common': basePrice = 25; break;
+            case 'uncommon': basePrice = 30; break;
+            case 'rare': basePrice = 50; break;
+            case 'epic': basePrice = 60; break;
+            case 'legendary': basePrice = 100; break;
         }
-
-        // Générer des bonus aléatoires
-        const bonusPool = this.getBonusPool();
-        for (let i = 0; i < 2; i++) {
-            const bonus = bonusPool[Math.floor(Math.random() * bonusPool.length)];
-            items.push({
-                type: 'bonus',
-                bonusId: bonus.id,
-                name: bonus.name,
-                price: bonus.price,
-                rarity: bonus.rarity
-            });
-        }
-
-        return items;
+        
+        // Ajuster selon les stats (dégâts + multiplicateur)
+        const statBonus = Math.floor((unit.damage + unit.multiplier) / 2);
+        basePrice += statBonus;
+        
+        // Prix augmentés de 75% pour équilibrer l'économie
+        return Math.ceil(basePrice * 1.75);
     }
 
-    // Pool d'unités pour le magasin
-    getUnitPool() {
-        return [
-            { name: 'Guerrier', damage: 8, multiplier: 2, price: 25, rarity: 'common' },
-            { name: 'Archer', damage: 6, multiplier: 3, price: 30, rarity: 'common' },
-            { name: 'Mage', damage: 10, multiplier: 1, price: 35, rarity: 'common' },
-            { name: 'Paladin', damage: 12, multiplier: 2, price: 50, rarity: 'uncommon' },
-            { name: 'Ranger', damage: 8, multiplier: 4, price: 55, rarity: 'uncommon' },
-            { name: 'Sorcier', damage: 15, multiplier: 1, price: 60, rarity: 'uncommon' },
-            { name: 'Chevalier', damage: 18, multiplier: 2, price: 80, rarity: 'rare' },
-            { name: 'Assassin', damage: 12, multiplier: 5, price: 85, rarity: 'rare' },
-            { name: 'Archimage', damage: 25, multiplier: 1, price: 90, rarity: 'rare' },
-            { name: 'Dragon Knight', damage: 30, multiplier: 3, price: 150, rarity: 'epic' },
-            { name: 'Shadow Walker', damage: 20, multiplier: 6, price: 160, rarity: 'epic' },
-            { name: 'Grand Mage', damage: 40, multiplier: 2, price: 170, rarity: 'epic' },
-            { name: 'Titan', damage: 50, multiplier: 4, price: 300, rarity: 'legendary' },
-            { name: 'Void Walker', damage: 35, multiplier: 8, price: 320, rarity: 'legendary' },
-            { name: 'Archmage Supreme', damage: 60, multiplier: 3, price: 350, rarity: 'legendary' }
-        ];
+    // Obtenir le coût d'une unité (alias pour compatibilité)
+    getUnitCost(unit) {
+        return this.getUnitPrice(unit);
     }
 
-    // Pool de bonus pour le magasin
-    getBonusPool() {
-        return [
-            { id: 'gold_bonus', name: 'Bonus Or', price: 30, rarity: 'common' },
-            { id: 'corps_a_corps_bonus', name: 'Bonus Corps à corps', price: 30, rarity: 'common' },
-            { id: 'distance_bonus', name: 'Bonus Distance', price: 30, rarity: 'common' },
-            { id: 'magique_bonus', name: 'Bonus Magique', price: 30, rarity: 'common' },
-            { id: 'epee_aiguisee', name: 'Épée Aiguisée', price: 25, rarity: 'common' },
-            { id: 'arc_renforce', name: 'Arc Renforcé', price: 25, rarity: 'common' },
-            { id: 'grimoire_magique', name: 'Grimoire Magique', price: 25, rarity: 'common' },
-            { id: 'amulette_force', name: 'Amulette de Force', price: 40, rarity: 'uncommon' },
-            { id: 'cristal_precision', name: 'Cristal de Précision', price: 40, rarity: 'uncommon' },
-            { id: 'orbe_mystique', name: 'Orbe Mystique', price: 40, rarity: 'uncommon' },
-            { id: 'potion_force', name: 'Potion de Force', price: 40, rarity: 'uncommon' },
-            { id: 'elixir_puissance', name: 'Élixir de Puissance', price: 40, rarity: 'uncommon' },
-            { id: 'armure_legendaire', name: 'Armure Légendaire', price: 60, rarity: 'rare' },
-            { id: 'arc_divin', name: 'Arc Divin', price: 60, rarity: 'rare' },
-            { id: 'baguette_supreme', name: 'Baguette Suprême', price: 60, rarity: 'rare' },
-            { id: 'relique_ancienne', name: 'Relique Ancienne', price: 100, rarity: 'legendary' }
-        ];
-    }
-
-    // Acheter un item
+    // Acheter un item (utilise la même logique que le shop normal)
     purchaseItem(item, gameState, gameStats) {
+        // Vérifications manuelles pour les simulations
+        const canAfford = gameState.gold >= item.price;
+        
+        // Vérifier si l'item a déjà été acheté dans cette session de shop
+        const isBonusAlreadyPurchased = item.type === 'bonus' && 
+            gameState.shopManager.currentShopPurchasedBonuses.includes(item.bonusId);
+        const isUnitAlreadyPurchased = item.type === 'unit' && 
+            gameState.shopManager.currentShopPurchasedUnits.includes(item.name);
+        
+        if (!canAfford || isBonusAlreadyPurchased || isUnitAlreadyPurchased) {
+            return false;
+        }
+        
         // Ne jamais acheter de consommables dans les simulations
         if (item.type === 'consumable') {
             return false;
         }
         
-        if (gameState.gold < item.price) return false;
-        
-        gameState.spendGold(item.price);
-        gameStats.goldSpent += item.price;
-        
+        // Utiliser la même logique d'achat que le shop normal
         switch (item.type) {
             case 'unit':
-                gameState.shopManager.purchaseUnit(item.name, gameState);
+                if (gameState.shopManager.purchaseUnit(item.name, gameState)) {
+                    // Mettre à jour les statistiques d'or dépensé
+                    gameStats.goldSpent += item.price;
                 gameStats.unitsPurchased.push({
                     name: item.name,
                     price: item.price,
                     rarity: item.rarity
                 });
+                    return true;
+                }
                 break;
             case 'bonus':
-                gameState.unlockBonus(item.bonusId);
+                if (gameState.unlockBonus(item.bonusId)) {
+                    // Mettre à jour les statistiques d'or dépensé
+                    gameStats.goldSpent += item.price;
                 gameStats.bonusesPurchased.push({
                     id: item.bonusId,
                     price: item.price,
                     rarity: item.rarity
                 });
+                    return true;
+                }
                 break;
         }
         
-        return true;
+        return false;
     }
 
     // Simuler la phase de combat
@@ -412,7 +435,7 @@ export class AutoSimulator {
         }
         
         // Utiliser la fonction du jeu de base
-        const turnDamage = gameState.calculateTurnDamage(troops);
+        const turnDamage = gameState.combatManager.calculateTurnDamage(troops);
         
         console.log(`💥 DÉGÂTS FINAUX: ${turnDamage}`);
         
@@ -426,7 +449,7 @@ export class AutoSimulator {
 
     // Calculer la récompense de victoire
     calculateVictoryReward(gameState) {
-        const baseReward = 50;
+        const baseReward = 59; // Augmenté de 18% (50 * 1.18 = 59)
         const wealthBonus = gameState.calculateWealthBonus();
         const equipmentGoldBonus = gameState.calculateEquipmentGoldBonus();
         
@@ -494,7 +517,12 @@ export class AutoSimulator {
         const totalTime = Date.now() - startTime;
         console.log(`✅ Simulation terminée en ${(totalTime / 1000).toFixed(2)}s`);
         
-        return this.analyzeResults(results);
+        // Sauvegarder les résultats pour l'export
+        this.lastResults = results;
+        const analysis = this.analyzeResults(results);
+        this.lastAnalysis = analysis;
+        
+        return analysis;
     }
 
     // Analyser les résultats
@@ -525,8 +553,8 @@ export class AutoSimulator {
         analysis.averageRank = this.numberToRank(averageRankValue);
         
         // Or dépensé et gagné moyens
-        analysis.averageGoldSpent = results.reduce((sum, r) => sum + r.goldSpent, 0) / results.length;
-        analysis.averageGoldEarned = results.reduce((sum, r) => sum + r.goldEarned, 0) / results.length;
+        analysis.averageGoldSpent = results.reduce((sum, r) => sum + (r.goldSpent || 0), 0) / results.length;
+        analysis.averageGoldEarned = results.reduce((sum, r) => sum + (r.goldEarned || 0), 0) / results.length;
         
         // Rounds moyens
         analysis.averageRounds = results.reduce((sum, r) => sum + r.rounds, 0) / results.length;
@@ -633,10 +661,13 @@ export class AutoSimulator {
         console.log(`⏱️ Durée moyenne: ${report.summary.averageDuration}`);
         
         console.log('\n📊 DISTRIBUTION DES RANGS:');
-        Object.entries(report.rankDistribution)
-            .sort((a, b) => this.rankToNumber(b[0]) - this.rankToNumber(a[0]))
-            .forEach(([rank, count]) => {
-                console.log(`  ${rank}: ${count} parties`);
+        // Afficher tous les rangs possibles, même ceux avec 0 parties
+        const allRanks = ['F-', 'F', 'F+', 'E-', 'E', 'E+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S'];
+        allRanks.forEach(rank => {
+            const count = report.rankDistribution[rank] || 0;
+            const percentage = ((count / report.summary.totalGames) * 100).toFixed(1);
+            const bar = '█'.repeat(Math.floor(count / report.summary.totalGames * 20));
+            console.log(`  ${rank}: ${count} parties (${percentage}%) ${bar}`);
             });
         
         console.log('\n⚔️ UNITÉS LES PLUS UTILISÉES:');
@@ -691,6 +722,250 @@ export class AutoSimulator {
         }
         
         console.log('\n========================');
+        
+        // Ajouter un bouton d'export des résultats
+        console.log('\n💾 Pour exporter les résultats, utilisez:');
+        console.log('simulator.exportResults()');
+    }
+
+    // Exporter les résultats en JSON
+    exportResults() {
+        const results = {
+            timestamp: new Date().toISOString(),
+            simulationResults: this.lastResults || [],
+            globalStats: this.lastAnalysis || {},
+            exportInfo: {
+                totalGames: this.lastResults ? this.lastResults.length : 0,
+                isComparison: this.lastAnalysis && this.lastAnalysis.comparison,
+                strategies: this.lastAnalysis && this.lastAnalysis.strategies ? Object.keys(this.lastAnalysis.strategies) : []
+            }
+        };
+        
+        const dataStr = JSON.stringify(results, null, 2);
+        const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        
+        // Nom de fichier plus descriptif
+        let filename = 'simulation_results';
+        if (this.lastAnalysis && this.lastAnalysis.comparison) {
+            filename = 'comparison_results';
+        }
+        filename += `_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+        
+        link.download = filename;
+        link.click();
+        
+        console.log(`📁 Résultats exportés en JSON: ${filename}`);
+        console.log(`📊 ${results.exportInfo.totalGames} parties exportées`);
+        if (results.exportInfo.isComparison) {
+            console.log(`🔬 Comparaison de ${results.exportInfo.strategies.length} stratégies`);
+        }
+        
+        return results;
+    }
+
+    // Générer un rapport détaillé pour analyse
+    generateDetailedReport() {
+        if (!this.lastResults || this.lastResults.length === 0) {
+            console.log('❌ Aucun résultat de simulation disponible');
+            return null;
+        }
+
+        // Vérifier si c'est une comparaison
+        if (this.lastAnalysis && this.lastAnalysis.comparison) {
+            return this.generateComparisonReport();
+        }
+
+        const report = {
+            summary: {
+                totalGames: this.lastResults.length,
+                averageGoldSpent: this.lastAnalysis.averageGoldSpent,
+                averageGoldEarned: this.lastAnalysis.averageGoldEarned,
+                averageRounds: this.lastAnalysis.averageRounds,
+                winRate: this.lastAnalysis.winRate,
+                averageRank: this.lastAnalysis.averageRank
+            },
+            economyAnalysis: {
+                goldEfficiency: this.lastAnalysis.averageGoldEarned / this.lastAnalysis.averageGoldSpent,
+                averageGoldPerRound: this.lastAnalysis.averageGoldEarned / this.lastAnalysis.averageRounds,
+                spendingPattern: this.analyzeSpendingPattern()
+            },
+            performanceAnalysis: {
+                rankDistribution: this.lastAnalysis.rankDistribution,
+                topUnits: this.lastAnalysis.topUnits,
+                topBonuses: this.lastAnalysis.topBonuses,
+                topSynergies: this.lastAnalysis.topSynergies
+            },
+            recommendations: this.generateRecommendations()
+        };
+
+        console.log('\n📊 RAPPORT DÉTAILLÉ POUR ANALYSE');
+        console.log('==================================');
+        console.log(JSON.stringify(report, null, 2));
+        
+        return report;
+    }
+
+    // Générer un rapport de comparaison
+    generateComparisonReport() {
+        const report = {
+            summary: {
+                totalGames: this.lastResults.length,
+                isComparison: true,
+                strategies: Object.keys(this.lastAnalysis.strategies)
+            },
+            strategyAnalysis: {},
+            overallAnalysis: {
+                bestStrategy: null,
+                worstStrategy: null,
+                averageWinRate: 0,
+                averageGoldEfficiency: 0
+            },
+            recommendations: this.generateComparisonRecommendations()
+        };
+
+        // Analyser chaque stratégie
+        Object.entries(this.lastAnalysis.strategies).forEach(([strategyKey, strategyData]) => {
+            const strategyResults = this.lastResults.filter(result => result.strategy === strategyKey);
+            
+            report.strategyAnalysis[strategyKey] = {
+                name: this.strategies[strategyKey].name,
+                totalGames: strategyResults.length,
+                winRate: parseFloat(strategyData.summary.winRate),
+                averageRank: strategyData.summary.averageRank,
+                averageGoldSpent: strategyData.summary.averageGoldSpent,
+                averageGoldEarned: strategyData.summary.averageGoldEarned,
+                averageRounds: strategyData.summary.averageRounds,
+                goldEfficiency: strategyData.summary.averageGoldEarned / strategyData.summary.averageGoldSpent,
+                rankDistribution: strategyData.rankDistribution
+            };
+        });
+
+        // Trouver la meilleure et la pire stratégie
+        const strategies = Object.entries(report.strategyAnalysis);
+        const bestStrategy = strategies.reduce((best, current) => 
+            current[1].winRate > best[1].winRate ? current : best
+        );
+        const worstStrategy = strategies.reduce((worst, current) => 
+            current[1].winRate < worst[1].winRate ? current : worst
+        );
+
+        report.overallAnalysis.bestStrategy = bestStrategy[0];
+        report.overallAnalysis.worstStrategy = worstStrategy[0];
+        report.overallAnalysis.averageWinRate = strategies.reduce((sum, [, data]) => sum + data.winRate, 0) / strategies.length;
+        report.overallAnalysis.averageGoldEfficiency = strategies.reduce((sum, [, data]) => sum + data.goldEfficiency, 0) / strategies.length;
+
+        console.log('\n🔬 RAPPORT DE COMPARAISON DÉTAILLÉ');
+        console.log('==================================');
+        console.log(JSON.stringify(report, null, 2));
+        
+        return report;
+    }
+
+    // Générer des recommandations pour les comparaisons
+    generateComparisonRecommendations() {
+        const recommendations = [];
+        
+        if (!this.lastAnalysis || !this.lastAnalysis.comparison) return recommendations;
+
+        const strategies = Object.entries(this.lastAnalysis.strategies);
+        const bestStrategy = strategies.reduce((best, current) => 
+            parseFloat(current[1].summary.winRate) > parseFloat(best[1].summary.winRate) ? current : best
+        );
+        const worstStrategy = strategies.reduce((worst, current) => 
+            parseFloat(current[1].summary.winRate) < parseFloat(worst[1].summary.winRate) ? current : worst
+        );
+
+        recommendations.push({
+            type: 'performance',
+            issue: 'Meilleure stratégie identifiée',
+            description: `${this.strategies[bestStrategy[0]].name} avec ${bestStrategy[1].summary.winRate}% de victoires`,
+            suggestion: 'Utiliser cette stratégie comme référence pour l\'équilibrage'
+        });
+
+        recommendations.push({
+            type: 'improvement',
+            issue: 'Stratégie à améliorer',
+            description: `${this.strategies[worstStrategy[0]].name} avec ${worstStrategy[1].summary.winRate}% de victoires`,
+            suggestion: 'Analyser pourquoi cette stratégie performe moins bien'
+        });
+
+        // Analyser l'écart de performance
+        const winRateGap = parseFloat(bestStrategy[1].summary.winRate) - parseFloat(worstStrategy[1].summary.winRate);
+        if (winRateGap > 20) {
+            recommendations.push({
+                type: 'balance',
+                issue: 'Écart de performance important',
+                description: `${winRateGap.toFixed(1)}% d\'écart entre la meilleure et la pire stratégie`,
+                suggestion: 'Réduire l\'écart pour un meilleur équilibrage'
+            });
+        }
+
+        return recommendations;
+    }
+
+    // Analyser les patterns de dépenses
+    analyzeSpendingPattern() {
+        if (!this.lastResults) return {};
+        
+        const patterns = {
+            averageSpendingPerRound: 0,
+            spendingByRound: {},
+            mostExpensiveRounds: [],
+            roundsWithNoSpending: 0
+        };
+
+        this.lastResults.forEach(result => {
+            if (result.rounds > 0) {
+                patterns.averageSpendingPerRound += result.goldSpent / result.rounds;
+            }
+        });
+
+        patterns.averageSpendingPerRound /= this.lastResults.length;
+        return patterns;
+    }
+
+    // Générer des recommandations basées sur les résultats
+    generateRecommendations() {
+        const recommendations = [];
+        
+        if (!this.lastAnalysis) return recommendations;
+
+        // Analyser l'efficacité économique
+        const goldEfficiency = this.lastAnalysis.averageGoldEarned / this.lastAnalysis.averageGoldSpent;
+        if (goldEfficiency < 1) {
+            recommendations.push({
+                type: 'economy',
+                issue: 'Efficacité économique faible',
+                description: `Or dépensé (${this.lastAnalysis.averageGoldSpent}) > Or gagné (${this.lastAnalysis.averageGoldEarned})`,
+                suggestion: 'Réduire les achats ou améliorer les stratégies de combat'
+            });
+        }
+
+        // Analyser le taux de victoire
+        if (this.lastAnalysis.winRate < 50) {
+            recommendations.push({
+                type: 'performance',
+                issue: 'Taux de victoire faible',
+                description: `Seulement ${this.lastAnalysis.winRate.toFixed(1)}% de victoires`,
+                suggestion: 'Améliorer les stratégies d\'achat ou équilibrer les unités'
+            });
+        }
+
+        // Analyser les rangs moyens
+        const rankValue = this.rankToNumber(this.lastAnalysis.averageRank);
+        if (rankValue < 5) { // Moins que E
+            recommendations.push({
+                type: 'progression',
+                issue: 'Progression lente',
+                description: `Rang moyen: ${this.lastAnalysis.averageRank}`,
+                suggestion: 'Optimiser les achats pour améliorer la puissance de combat'
+            });
+        }
+
+        return recommendations;
     }
 
     // Comparer plusieurs stratégies
@@ -699,12 +974,32 @@ export class AutoSimulator {
         
         const strategies = Object.keys(this.strategies);
         const results = {};
+        const allSimulationResults = []; // Stocker tous les résultats individuels
         
         for (const strategy of strategies) {
             console.log(`\n📊 Test de la stratégie: ${this.strategies[strategy].name}`);
             const analysis = await this.simulateMultipleGames(gamesPerStrategy, strategy);
             results[strategy] = this.generateReport(analysis);
+            
+            // Ajouter tous les résultats de cette stratégie
+            if (this.lastResults) {
+                this.lastResults.forEach(result => {
+                    allSimulationResults.push({
+                        ...result,
+                        strategy: strategy,
+                        strategyName: this.strategies[strategy].name
+                    });
+                });
+            }
         }
+        
+        // Sauvegarder tous les résultats pour l'export
+        this.lastResults = allSimulationResults;
+        this.lastAnalysis = {
+            totalGames: allSimulationResults.length,
+            strategies: results,
+            comparison: true
+        };
         
         this.displayStrategyComparison(results);
         return results;
@@ -721,6 +1016,18 @@ export class AutoSimulator {
             console.log(`  Rang moyen: ${report.summary.averageRank}`);
             console.log(`  Or dépensé moyen: ${report.summary.averageGoldSpent}`);
             console.log(`  Rounds moyens: ${report.summary.averageRounds}`);
+            
+            // Afficher la distribution des rangs pour cette stratégie
+            console.log(`  📊 Distribution des rangs:`);
+            const allRanks = ['F-', 'F', 'F+', 'E-', 'E', 'E+', 'D-', 'D', 'D+', 'C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S'];
+            allRanks.forEach(rank => {
+                const count = report.rankDistribution[rank] || 0;
+                if (count > 0) {
+                    const percentage = ((count / report.summary.totalGames) * 100).toFixed(1);
+                    const bar = '█'.repeat(Math.floor(count / report.summary.totalGames * 15));
+                    console.log(`    ${rank}: ${count} parties (${percentage}%) ${bar}`);
+                }
+            });
         });
         
         console.log('\n=============================');
@@ -760,8 +1067,10 @@ export class AutoSimulator {
         const troopsCopy = selectedTroops.map(troop => ({...troop}));
         
         // Calculer les dégâts et collecter les infos comme dans la console
+        const roundDamage = gameState.combatManager.calculateTurnDamage(troopsCopy);
+        tourInfo.damage = roundDamage;
+        // Pour la cohérence, on peut aussi récupérer synergies/bonus si besoin :
         const combatResult = this.calculateCombatDamage(gameState, troopsCopy);
-        tourInfo.damage = combatResult.damage;
         
         // Collecter les unités avec leur puissance (comme dans la console)
         // Utiliser les mêmes troupes que celles utilisées dans calculateCombatDamage
@@ -794,15 +1103,21 @@ export class AutoSimulator {
         }));
         
         // Appliquer les dégâts au combat
-        gameState.currentCombat.totalDamage += damage;
+        gameState.currentCombat.totalDamage += combatResult.damage;
         gameState.currentCombat.round++;
         
-        console.log(`💥 Dégâts infligés: ${damage}`);
+        console.log(`💥 Dégâts infligés: ${combatResult.damage}`);
         console.log(`📈 Nouvelle progression: ${gameState.currentCombat.totalDamage}/${gameState.currentCombat.targetDamage} (${((gameState.currentCombat.totalDamage / gameState.currentCombat.targetDamage) * 100).toFixed(1)}%)`);
         
         // === CORRECTION : Retirer les troupes utilisées après chaque tour ===
         if (selectedTroops.length > 0) {
-            removeUsedTroopsFromCombat(selectedTroops, gameState);
+            // Retirer les troupes utilisées du combat
+            selectedTroops.forEach(troop => {
+                const index = gameState.combatTroops.findIndex(t => t.name === troop.name);
+                if (index !== -1) {
+                    gameState.combatTroops.splice(index, 1);
+                }
+            });
             // Re-sélectionner les meilleures troupes pour le prochain tour
             this.selectBestTroops(gameState);
         }

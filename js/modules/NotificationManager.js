@@ -25,19 +25,31 @@ export class NotificationManager {
     
     // Notifications de combat
     showBossFight(bossName, mechanic) {
-        this.showNotification(`BOSS: ${bossName} ! ${mechanic}`, 'error');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('combat.bossFight', { bossName, mechanic }) : 
+            `BOSS: ${bossName} ! ${mechanic}`;
+        this.showNotification(message, 'error');
     }
     
     showVictory() {
-        this.showNotification('🎉 Victoire !', 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('combat.victory') : 
+            '🎉 Victoire !';
+        this.showNotification(message, 'success');
     }
     
     showDefeat() {
-        this.showNotification('💀 Défaite !', 'error');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('combat.defeat') : 
+            '💀 Défaite !';
+        this.showNotification(message, 'error');
     }
     
     showRankGained(newRank) {
-        this.showNotification(`Rang gagné ! Nouveau rang: ${newRank}`, 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.rankGained', { rank: newRank }) : 
+            `Rang gagné ! Nouveau rang: ${newRank}`;
+        this.showNotification(message, 'success');
     }
     
     showCombatError(message) {
@@ -46,20 +58,32 @@ export class NotificationManager {
     
     // Notifications d'or et économie
     showGoldAdded(amount) {
-        this.showNotification(`+${amount} or ajouté !`, 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.goldAdded', { amount }) : 
+            `+${amount} or ajouté !`;
+        this.showNotification(message, 'success');
     }
     
     showGoldSet(amount) {
-        this.showNotification(`Or défini à ${amount} !`, 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.goldSet', { amount }) : 
+            `Or défini à ${amount} !`;
+        this.showNotification(message, 'success');
     }
     
     showInsufficientGold(cost) {
-        this.showNotification(`Or insuffisant ! Coût : ${cost}💰`, 'error');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.insufficientGold', { cost }) : 
+            `Or insuffisant ! Coût : ${cost}💰`;
+        this.showNotification(message, 'error');
     }
     
     // Notifications d'unités
     showUnitAdded(unitName) {
-        this.showNotification(`+1 ${unitName} ajouté à votre collection !`, 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.unitAdded', { unitName }) : 
+            `+1 ${unitName} ajouté à votre collection !`;
+        this.showNotification(message, 'success');
     }
     
     showUnitError(message) {
@@ -76,7 +100,10 @@ export class NotificationManager {
     
     // Notifications de magasin
     showShopRefreshed() {
-        this.showNotification('Magasin rafraîchi !', 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.shopRefreshed') : 
+            'Magasin rafraîchi !';
+        this.showNotification(message, 'success');
     }
     
     showShopError(message) {
@@ -85,19 +112,31 @@ export class NotificationManager {
     
     // Notifications de bonus
     showBonusUnlocked() {
-        this.showNotification('Bonus débloqué !', 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.bonusUnlocked') : 
+            'Bonus débloqué !';
+        this.showNotification(message, 'success');
     }
     
     showBonusSold(bonusName, sellPrice) {
-        this.showNotification(`${bonusName} vendu pour ${sellPrice}💰 !`, 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.bonusSold', { bonusName, sellPrice }) : 
+            `${bonusName} vendu pour ${sellPrice}💰 !`;
+        this.showNotification(message, 'success');
     }
     
     showAllBonusesUnlocked() {
-        this.showNotification('Tous les bonus débloqués !', 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.allBonusesUnlocked') : 
+            'Tous les bonus débloqués !';
+        this.showNotification(message, 'success');
     }
     
     showSynergyUpgraded(synergyName, level) {
-        this.showNotification(`${synergyName} améliorée au niveau ${level} !`, 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.synergyUpgraded', { synergyName, level }) : 
+            `${synergyName} améliorée au niveau ${level} !`;
+        this.showNotification(message, 'success');
     }
     
     // Notifications de consommables
@@ -106,33 +145,54 @@ export class NotificationManager {
     }
     
     showConsumableAdded(consumableName) {
-        this.showNotification(`${consumableName} ajouté à l'inventaire !`, 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.consumableAdded', { consumableName }) : 
+            `${consumableName} ajouté à l'inventaire !`;
+        this.showNotification(message, 'success');
     }
     
     showConsumableUsed(consumableName) {
-        this.showNotification(`${consumableName} utilisé !`, 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.consumableUsed', { consumableName }) : 
+            `${consumableName} utilisé !`;
+        this.showNotification(message, 'success');
     }
     
     // Notifications de sauvegarde
     showGameSaved() {
-        this.showNotification('Partie sauvegardée !', 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.gameSaved') : 
+            'Partie sauvegardée !';
+        this.showNotification(message, 'success');
     }
     
     showGameLoaded() {
-        this.showNotification('Partie chargée !', 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.gameLoaded') : 
+            'Partie chargée !';
+        this.showNotification(message, 'success');
     }
     
     showNewGameCreated(guildName) {
-        this.showNotification(`Nouvelle partie créée : ${guildName}`, 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.newGameCreated', { guildName }) : 
+            `Nouvelle partie créée : ${guildName}`;
+        this.showNotification(message, 'success');
     }
     
     showNoSaveFound() {
-        this.showNotification('Aucune sauvegarde trouvée', 'error');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.noSaveFound') : 
+            'Aucune sauvegarde trouvée';
+        this.showNotification(message, 'error');
     }
     
     // Notifications de tutoriel
     showTutorialCompleted() {
-        this.showNotification('Tutoriel terminé ! Bonne chance !', 'success');
+        const message = window.gameState && window.gameState.t ? 
+            window.gameState.t('message.tutorialCompleted') : 
+            'Tutoriel terminé ! Bonne chance !';
+        this.showNotification(message, 'success');
     }
     
     // Notifications d'interface
@@ -164,40 +224,22 @@ export class NotificationManager {
         const combatSection = document.getElementById('combat-section');
         const preCombatSection = document.getElementById('pre-combat-section');
         
-        let targetSection = null;
-        if (combatSection && combatSection.style.display !== 'none') {
-            targetSection = combatSection;
-        } else if (preCombatSection && preCombatSection.style.display !== 'none') {
-            targetSection = preCombatSection;
-        }
-        
         let topPosition = '20px';
-        if (targetSection) {
-            const rect = targetSection.getBoundingClientRect();
+        if (combatSection && combatSection.style.display !== 'none') {
+            const rect = combatSection.getBoundingClientRect();
+            topPosition = `${rect.top + 20}px`;
+        } else if (preCombatSection && preCombatSection.style.display !== 'none') {
+            const rect = preCombatSection.getBoundingClientRect();
             topPosition = `${rect.top + 20}px`;
         }
+        notification.style.top = topPosition;
         
-        notification.style.cssText = `
-            position: fixed;
-            top: ${topPosition};
-            right: 20px;
-            background: ${type === 'success' ? '#00b894' : type === 'error' ? '#d63031' : '#74b9ff'};
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-            max-width: 300px;
-            word-wrap: break-word;
-        `;
-
         document.body.appendChild(notification);
 
         // Attendre 3 secondes puis faire disparaître la notification
         await new Promise(resolve => setTimeout(resolve, 3000));
         
-        notification.style.animation = 'slideOut 0.3s ease';
+        notification.classList.add('slide-out');
         await new Promise(resolve => setTimeout(resolve, 300));
         
         if (notification.parentNode) {

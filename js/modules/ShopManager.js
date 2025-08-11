@@ -1,8 +1,12 @@
 // Gestionnaire de magasin pour GuildMaster
-import { BASE_UNITS } from './UnitConstants.js';
-import { BONUS_DESCRIPTIONS, calculateBonusPrice, getBonusRarity } from './BonusConstants.js';
-import { getRarityIcon, getRarityColor, getRarityDisplayName } from './RarityUtils.js';
+import { BASE_UNITS } from './constants/units/UnitConstants.js';
+import { BONUS_DESCRIPTIONS, calculateBonusPrice, getBonusRarity } from './constants/shop/BonusConstants.js';
+import { getRarityIcon, getRarityColor, getRarityDisplayName, RARITY_LEVELS, RARITY_BASE_PRICES, RARITY_CHANCES } from './constants/game/RarityUtils.js';
 import { getTypeDisplayString } from '../utils/TypeUtils.js';
+import { ModalManager } from './ModalManager.js';
+import { clearUnitCache } from './UnitManager.js';
+import { getRandomElement } from './constants/units/UnitConstants.js';
+import { getDynamicBonusValue, incrementDynamicBonus } from '../utils/DynamicBonusUtils.js';
 
 export class ShopManager {
     constructor() {
@@ -55,108 +59,24 @@ export class ShopManager {
         };
     }
 
-    // Extraire la détermination du tag de type
+    // Obtenir le tag de type d'item
     getItemTypeTag(itemType) {
         switch (itemType) {
-            case 'unit': return 'Unité';
-            case 'consumable': return 'Cons.';
-            case 'bonus': return 'Bonus';
-            default: return '';
+            case 'unit': return '⚔️';
+            case 'bonus': return '🎁';
+            case 'consumable': return '🧪';
+            default: return '❓';
         }
-    }
-
-    // Extraire la création du HTML pour un item d'unité
-    createUnitItemHTML(item) {
-        const typeDisplay = getTypeDisplayString(item.unitType);
-        const rarityHTML = item.rarity ? 
-            `<div style="margin-bottom: 10px; font-weight: 600; color: ${getRarityColor(item.rarity)}; font-size: 0.8rem;">
-                ${getRarityIcon(item.rarity)} ${getRarityDisplayName(item.rarity)}
-            </div>` : '';
-        
-        return `
-            <div class="item-type-tag" data-type="${item.type}">${this.getItemTypeTag(item.type)}</div>
-            <div style="font-size: 2rem; margin-bottom: 10px;">${item.icon}</div>
-            <div style="font-weight: 600; margin-bottom: 5px;">${item.name}</div>
-            <div style="font-size: 0.9rem; color: #666; margin-bottom: 5px;">${typeDisplay}</div>
-            <div style="font-size: 0.8rem; margin-bottom: 10px;"><span class="shop-damage">${item.damage}</span> × <span class="shop-multiplier">${item.multiplier}</span></div>
-            ${rarityHTML}
-            <div class="item-price">${item.price}💰</div>
-        `;
-    }
-
-    // Extraire la création du HTML pour un item de bonus/consommable
-    createBonusConsumableItemHTML(item) {
-        const rarityHTML = item.rarity ? 
-            `<div style="margin-bottom: 10px; font-weight: 600; color: ${getRarityColor(item.rarity)}; font-size: 0.8rem;">
-                ${getRarityIcon(item.rarity)} ${getRarityDisplayName(item.rarity)}
-            </div>` : '';
-        
-        return `
-            <div class="item-type-tag" data-type="${item.type}">${this.getItemTypeTag(item.type)}</div>
-            <div style="font-size: 2rem; margin-bottom: 10px;">${item.icon}</div>
-            <div style="font-weight: 600; margin-bottom: 5px;">${item.name}</div>
-            <div style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">${item.description}</div>
-            ${rarityHTML}
-            <div class="item-price">${item.price}💰</div>
-        `;
     }
 
     // Extraire la création d'un élément d'item
     createShopItemElement(item, gameState) {
-        const itemElement = document.createElement('div');
-        
-        // Ajouter la classe de rareté
-        const rarityClass = item.rarity ? `rarity-${item.rarity}` : '';
-        itemElement.className = `shop-item ${rarityClass}`;
-        
-        // Vérifier la disponibilité
-        const availability = this.checkItemAvailability(item, gameState);
-        
-        // Griser si pas disponible
-        if (!availability.isAvailable) {
-            itemElement.style.opacity = '0.5';
-        }
-        
-        // Créer le HTML selon le type d'item
-        if (item.type === 'unit') {
-            itemElement.innerHTML = this.createUnitItemHTML(item);
-        } else {
-            itemElement.innerHTML = this.createBonusConsumableItemHTML(item);
-        }
-        
-        // Ajouter l'événement d'achat si disponible
-        if (availability.isAvailable) {
-            this.attachPurchaseEvent(itemElement, item, gameState);
-        }
-        
-        return itemElement;
+        return gameState.uiManager.createShopItemElement(item, gameState);
     }
 
     // Extraire l'attachement de l'événement d'achat
     attachPurchaseEvent(itemElement, item, gameState) {
-        itemElement.addEventListener('click', () => {
-            if (this.spendGold(gameState, item.price)) {
-                if (item.type === 'unit') {
-                    // Utiliser la nouvelle méthode pour acheter l'unité
-                    const success = this.purchaseUnit(item.name, gameState);
-                    if (success) {
-                        // Ajouter à la liste des unités achetées dans cette session
-                        this.currentShopPurchasedUnits.push(item.name);
-                    }
-                } else if (item.type === 'consumable') {
-                    // Ajouter le consommable à l'inventaire
-                    gameState.addConsumable(item.consumableType);
-                    // Ajouter à la liste des consomables achetés dans cette session
-                    this.currentShopPurchasedConsumables.push(item.consumableType);
-                } else {
-                    gameState.unlockBonus(item.bonusId);
-                    // Ajouter le bonus à la liste des bonus achetés dans cette session
-                    this.currentShopPurchasedBonuses.push(item.bonusId);
-                }
-                gameState.updateUI();
-                gameState.updateActiveBonuses(); // Forcer la mise à jour des bonus actifs
-            }
-        });
+        gameState.uiManager.attachPurchaseEvent(itemElement, item, gameState);
     }
 
     updatePreCombatShop(gameState) {
@@ -175,25 +95,57 @@ export class ShopManager {
         }
         const shopItems = this.currentShopItems;
         
-        // Créer et ajouter chaque item
-        shopItems.forEach(item => {
+        // Séparer les items par type
+        const unitItems = shopItems.filter(item => item.type === 'unit');
+        const bonusItems = shopItems.filter(item => item.type === 'bonus');
+        const consumableItems = shopItems.filter(item => item.type === 'consumable');
+        
+        // Créer les sections du shop
+        this.createShopSection(shopContainer, 'unit', 'Unités', unitItems, gameState);
+        this.createShopSection(shopContainer, 'bonus', 'Bonus d\'Équipement', bonusItems, gameState);
+        this.createShopSection(shopContainer, 'consumable', 'Consommables', consumableItems, gameState);
+    }
+
+    // Créer une section du shop
+    createShopSection(container, type, title, items, gameState) {
+        if (items.length === 0) return;
+        
+        const section = document.createElement('div');
+        section.className = `shop-section shop-section-${type}`;
+        
+        const sectionHeader = document.createElement('div');
+        sectionHeader.className = 'shop-section-header';
+        
+        // Icônes spécifiques pour chaque type
+        const typeIcons = {
+            'unit': '⚔️',
+            'bonus': '🎁',
+            'consumable': '🧪'
+        };
+        
+        sectionHeader.innerHTML = `
+            <h5 class="shop-section-title">
+                ${typeIcons[type] || ''} ${title}
+            </h5>
+            <span class="shop-section-count">${items.length} item${items.length > 1 ? 's' : ''}</span>
+        `;
+        section.appendChild(sectionHeader);
+        
+        const sectionGrid = document.createElement('div');
+        sectionGrid.className = 'shop-section-grid';
+        
+        items.forEach(item => {
             const itemElement = this.createShopItemElement(item, gameState);
-            shopContainer.appendChild(itemElement);
+            sectionGrid.appendChild(itemElement);
         });
+        
+        section.appendChild(sectionGrid);
+        container.appendChild(section);
     }
 
     // Extraire le calcul du prix des unités
     calculateUnitPrice(unit) {
-        let basePrice = 25; // Prix de base
-        
-        // Ajuster le prix selon la rareté
-        switch (unit.rarity) {
-            case 'common': basePrice = 25; break;
-            case 'uncommon': basePrice = 30; break;
-            case 'rare': basePrice = 50; break;
-            case 'epic': basePrice = 60; break;
-            case 'legendary': basePrice = 100; break;
-        }
+        let basePrice = RARITY_BASE_PRICES[unit.rarity] || RARITY_BASE_PRICES[RARITY_LEVELS.COMMON]; // Prix de base selon la rareté
         
         // Ajuster selon les stats (dégâts + multiplicateur)
         const statBonus = Math.floor((unit.damage + unit.multiplier) / 2);
@@ -207,13 +159,14 @@ export class ShopManager {
     createUnitItems(gameState) {
         return gameState.getShopUnits().map(unit => ({
             type: 'unit',
-            name: unit.name,
             icon: unit.icon,
             unitType: unit.type,
             damage: unit.damage,
             multiplier: unit.multiplier,
             price: this.calculateUnitPrice(unit),
-            rarity: unit.rarity
+            rarity: unit.rarity,
+            name: unit.name,
+            element: getRandomElement()
         }));
     }
 
@@ -238,51 +191,216 @@ export class ShopManager {
 
     // Extraire la gestion des consommables
     addConsumableItems(gameState, allItems) {
-        const consumableItem = gameState.addConsumableToShop();
-        if (consumableItem) {
-            allItems.push(consumableItem);
+        // Garantir qu'il y ait toujours au moins 2-3 consommables disponibles
+        const consumableCount = Math.floor(Math.random() * 2) + 2; // 2-3 consommables
+        
+        for (let i = 0; i < consumableCount; i++) {
+            const consumableItem = gameState.addConsumableToShop();
+            if (consumableItem) {
+                allItems.push(consumableItem);
+            }
         }
         return allItems;
     }
 
-    // Extraire la sélection et mélange des items
+    // Extraire la sélection et mélange des items avec équilibre entre types
     selectAndShuffleItems(allItems) {
-        // Garantir qu'un consommable soit inclus s'il a été généré
+        // Séparer les items par type
+        const unitItems = allItems.filter(item => item.type === 'unit');
+        const bonusItems = allItems.filter(item => item.type === 'bonus');
         const consumableItems = allItems.filter(item => item.type === 'consumable');
-        const nonConsumableItems = allItems.filter(item => item.type !== 'consumable');
         
-        // Mélanger les items non-consommables
-        const shuffledNonConsumables = nonConsumableItems.sort(() => Math.random() - 0.5);
+        const selectedItems = [];
+        const maxItems = 5;
         
-        // Si on a un consommable, l'inclure et prendre 7 autres items
-        if (consumableItems.length > 0) {
-            const selectedConsumable = consumableItems[0]; // Prendre le premier consommable
-            const selectedNonConsumables = shuffledNonConsumables.slice(0, 7);
-            return [selectedConsumable, ...selectedNonConsumables];
-        } else {
-            // Sinon, prendre 8 items normaux
-            return shuffledNonConsumables.slice(0, 8);
+        // Fonction pour sélectionner des items d'une catégorie
+        const selectFromCategory = (items, count) => {
+            return this.selectItemsByRarity(items, Math.min(count, items.length));
+        };
+        
+        // Fonction pour compléter avec des items d'autres catégories
+        const fillRemainingSlots = (targetCount) => {
+            const remaining = targetCount - selectedItems.length;
+            if (remaining <= 0) return;
+            // Créer un pool d'items disponibles non encore sélectionnés
+            // Pool complet sans filtrer les doublons
+            const availableItems = [...unitItems, ...bonusItems, ...consumableItems];
+            const additionalItems = this.selectItemsByRarity(availableItems, remaining);
+            selectedItems.push(...additionalItems);
+        };
+        
+        // Créer un pool d'items disponibles avec pondération par type
+        const availableItems = [];
+        const typeWeights = {
+            'unit': unitItems.length,
+            'bonus': bonusItems.length,
+            'consumable': consumableItems.length * 4 // Quadrupler le poids des consommables
+        };
+        
+        // Ajouter tous les items avec leur poids
+        unitItems.forEach(item => availableItems.push({ item, weight: typeWeights.unit }));
+        bonusItems.forEach(item => availableItems.push({ item, weight: typeWeights.bonus }));
+        consumableItems.forEach(item => availableItems.push({ item, weight: typeWeights.consumable }));
+        
+        // Sélectionner 5 items avec pondération par type
+        for (let i = 0; i < maxItems; i++) {
+            if (availableItems.length === 0) break;
+            
+            // Calculer le poids total
+            const totalWeight = availableItems.reduce((sum, { weight }) => sum + weight, 0);
+            
+            // Sélectionner un item selon le poids
+            let random = Math.random() * totalWeight;
+            let selectedIndex = 0;
+            
+            for (let j = 0; j < availableItems.length; j++) {
+                random -= availableItems[j].weight;
+                if (random <= 0) {
+                    selectedIndex = j;
+                    break;
+                }
+            }
+            
+            // Ajouter l'item sélectionné
+            const selected = availableItems[selectedIndex].item;
+            selectedItems.push(selected);
+            
+            // LOG DEBUG : afficher le type et la rareté de l'item sélectionné
+            console.log(`[SHOP] Slot ${i+1} : type=${selected.type}, rareté=${selected.rarity}, nom=${selected.name||selected.bonusId||selected.consumableType}`);
+            
+            // Retirer l'item sélectionné et ajuster les poids
+            availableItems.splice(selectedIndex, 1);
+            
+            // Réduire les poids pour éviter de sur-représenter un type
+            const selectedType = selectedItems[selectedItems.length - 1].type;
+            availableItems.forEach(({ item }) => {
+                if (item.type === selectedType) {
+                    item.weight = Math.max(1, item.weight * 0.7); // Réduire le poids de 30%
+                }
+            });
         }
+        
+        // Compléter jusqu'à 5 items si nécessaire
+        fillRemainingSlots(maxItems);
+        
+        // S'assurer qu'on a exactement 5 items
+        return selectedItems.slice(0, maxItems);
+    }
+
+    // Sélectionner les items avec pondération par rareté
+    selectItemsByRarity(items, count) {
+        // Utiliser les pourcentages de chance par rareté depuis les constantes
+        const rarityChances = RARITY_CHANCES;
+
+        const selectedItems = [];
+        const itemsByRarity = {};
+
+        // Grouper les items par rareté
+        items.forEach(item => {
+            const rarity = item.rarity || 'common';
+            if (!itemsByRarity[rarity]) {
+                itemsByRarity[rarity] = [];
+            }
+            itemsByRarity[rarity].push(item);
+        });
+
+        // Sélectionner les items selon les pourcentages
+        for (let i = 0; i < count; i++) {
+            const random = Math.random();
+            let selectedRarity = 'common'; // Par défaut
+            let cumulativeChance = 0;
+
+            // Déterminer la rareté selon les pourcentages
+            for (const [rarity, chance] of Object.entries(rarityChances)) {
+                cumulativeChance += chance;
+                if (random <= cumulativeChance) {
+                    selectedRarity = rarity;
+                    break;
+                }
+            }
+            // LOG DEBUG : afficher la rareté tirée
+            console.log(`[SHOP] Slot ${i+1} : random=${random.toFixed(4)} => rareté tirée = ${selectedRarity}`);
+
+            // Sélectionner un item de cette rareté
+            if (itemsByRarity[selectedRarity] && itemsByRarity[selectedRarity].length > 0) {
+                const randomIndex = Math.floor(Math.random() * itemsByRarity[selectedRarity].length);
+                const selectedItem = itemsByRarity[selectedRarity][randomIndex];
+                selectedItems.push(selectedItem);
+                // (ne plus retirer l'item du pool)
+            } else {
+                // Si pas d'item de cette rareté, prendre un item commun
+                if (itemsByRarity[RARITY_LEVELS.COMMON] && itemsByRarity[RARITY_LEVELS.COMMON].length > 0) {
+                    const randomIndex = Math.floor(Math.random() * itemsByRarity[RARITY_LEVELS.COMMON].length);
+                    const selectedItem = itemsByRarity[RARITY_LEVELS.COMMON][randomIndex];
+                    selectedItems.push(selectedItem);
+                    // (ne plus retirer l'item du pool)
+                } else {
+                    // Fallback : prendre le premier item disponible
+                    for (const rarity in itemsByRarity) {
+                        if (itemsByRarity[rarity] && itemsByRarity[rarity].length > 0) {
+                            const selectedItem = itemsByRarity[rarity][0];
+                            selectedItems.push(selectedItem);
+                            // (ne plus retirer l'item du pool)
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return selectedItems;
     }
 
     generateShopItems(gameState) {
         const bonusDescriptions = gameState.getBonusDescriptions();
-        
-        // Créer les items d'unités à partir des unités spéciales (quantity = 0)
         const unitItems = this.createUnitItems(gameState);
-        
-        // Créer tous les items disponibles
+        const bonusItems = this.createBonusItems(bonusDescriptions);
+        const consumableItems = [];
+        this.addConsumableItems(gameState, consumableItems);
         const allItems = [
             ...unitItems,
-            // Bonus - générés dynamiquement à partir des définitions centralisées
-            ...this.createBonusItems(bonusDescriptions)
+            ...bonusItems,
+            ...consumableItems
         ];
-        
-        // Ajouter un consommable potentiellement
-        this.addConsumableItems(gameState, allItems);
-        
-        // Sélectionner et mélanger les items finaux
-        return this.selectAndShuffleItems(allItems);
+        // Grouper tous les items par rareté
+        const itemsByRarity = {};
+        allItems.forEach(item => {
+            const rarity = item.rarity || 'common';
+            if (!itemsByRarity[rarity]) itemsByRarity[rarity] = [];
+            itemsByRarity[rarity].push(item);
+        });
+        // Générer 5 slots indépendants
+        const shopItems = [];
+        for (let i = 0; i < 5; i++) {
+            // Tirer la rareté selon RARITY_CHANCES
+            const random = Math.random();
+            let selectedRarity = 'common';
+            let cumulativeChance = 0;
+            for (const [rarity, chance] of Object.entries(RARITY_CHANCES)) {
+                cumulativeChance += chance;
+                if (random <= cumulativeChance) {
+                    selectedRarity = rarity;
+                    break;
+                }
+            }
+            // Prendre un item au hasard de cette rareté
+            const pool = itemsByRarity[selectedRarity] || itemsByRarity['common'];
+            if (pool && pool.length > 0) {
+                const idx = Math.floor(Math.random() * pool.length);
+                const item = pool[idx];
+                shopItems.push(item);
+                // LOG DEBUG
+                console.log(`[SHOP] Slot ${i+1} : rareté=${selectedRarity}, nom=${item.name||item.bonusId||item.consumableType}`);
+            } else {
+                // Fallback : prendre n'importe quel item
+                const all = Object.values(itemsByRarity).flat();
+                if (all.length > 0) {
+                    const idx = Math.floor(Math.random() * all.length);
+                    shopItems.push(all[idx]);
+                }
+            }
+        }
+        return shopItems;
     }
 
     // Réinitialiser le magasin
@@ -330,259 +448,39 @@ export class ShopManager {
         return false;
     }
 
-    // Acheter une unité (déplacé depuis GameState)
-    purchaseUnit(unitName, gameState) {
-        // Chercher d'abord dans les unités de base
-        let unit = gameState.getBaseUnits().find(u => u.name === unitName);
-        
-        if (unit) {
-            // Si c'est une unité de base, augmenter sa quantité dans ownedUnits seulement
-            gameState.ownedUnits[unitName] = (gameState.ownedUnits[unitName] || 0) + 1;
-            gameState.notificationManager.showUnitAdded(unitName);
-            return true;
-        } else {
-            // Si c'est une unité spéciale, l'ajouter à ownedUnits
-            unit = gameState.getShopUnits().find(u => u.name === unitName);
-            if (unit) {
-                // Mettre à jour ownedUnits seulement (pas de modification de BASE_UNITS)
-                gameState.ownedUnits[unitName] = (gameState.ownedUnits[unitName] || 0) + 1;
-                gameState.notificationManager.showUnitAdded(unitName);
-                return true;
-            }
+    // Acheter une unité (version modale)
+    purchaseUnit(item, gameState) {
+        // item est l'objet complet du shop (avec élément, etc.)
+        if (!item || !item.name) return false;
+        if (!gameState.ownedUnits[item.name]) gameState.ownedUnits[item.name] = [];
+        // Ajouter l'objet complet (avec élément, type, etc.)
+        const unitToAdd = { ...item };
+        if (unitToAdd.unitType) {
+            unitToAdd.type = unitToAdd.unitType;
+            delete unitToAdd.unitType;
         }
-        
-        gameState.notificationManager.showUnitError(`Erreur: Unité ${unitName} non trouvée !`);
-        return false;
+        gameState.ownedUnits[item.name].push(unitToAdd);
+        // Animation d'achat
+        if (gameState.uiManager && typeof gameState.uiManager.showUnitPurchaseAnimation === 'function') {
+            gameState.uiManager.showUnitPurchaseAnimation(item);
+        }
+        // Notification
+        gameState.notificationManager.showUnitAdded(item.name);
+        return true;
     }
 
-    // Ouvrir la modal de vente de bonus
     openSellBonusesModal(gameState) {
-        const modal = document.getElementById('sell-bonuses-modal');
-        const bonusesList = document.getElementById('sell-bonuses-list');
-        const totalGoldGain = document.getElementById('total-gold-gain');
-        
-        if (!modal || !bonusesList) {
-            console.error('Modal de vente de bonus non trouvée');
-            return;
-        }
-        
-        // Vider la liste
-        bonusesList.innerHTML = '';
-        
-        // Compter les occurrences de chaque bonus
-        const bonusCounts = {};
-        gameState.unlockedBonuses.forEach(bonusId => {
-            bonusCounts[bonusId] = (bonusCounts[bonusId] || 0) + 1;
-        });
-        
-        const bonusDescriptions = getBonusDescriptions();
-        let totalGain = 0;
-        
-        // Créer les éléments pour chaque bonus
-        Object.keys(bonusCounts).forEach(bonusId => {
-            const bonus = bonusDescriptions[bonusId];
-            if (bonus) {
-                const count = bonusCounts[bonusId];
-                const buyPrice = calculateBonusPrice(bonusId);
-                const sellPrice = Math.floor(buyPrice / 2);
-                const totalPrice = sellPrice * count;
-                totalGain += totalPrice;
-                
-                // Calculer la description dynamique pour les bonus dynamiques
-                let dynamicDescription = bonus.description;
-                if (bonusId === 'cac_cest_la_vie' && bonus.effects) {
-                    let totalValue = 0;
-                    let triggerCount = 0;
-                    let baseValue = 0;
-                    
-                    bonus.effects.forEach(effect => {
-                        if (effect.condition === 'base') {
-                            // Valeur de base + améliorations d'achat
-                            baseValue = effect.value;
-                            if (gameState.dynamicBonusStates && 
-                                gameState.dynamicBonusStates[bonusId] && 
-                                gameState.dynamicBonusStates[bonusId]['base']) {
-                                baseValue += gameState.dynamicBonusStates[bonusId]['base'];
-                            }
-                            totalValue += baseValue;
-                        }
-                        else if (effect.condition === 'synergy_trigger') {
-                            // Récupérer le compteur depuis les états sauvegardés
-                            if (gameState.dynamicBonusStates && 
-                                gameState.dynamicBonusStates[bonusId] && 
-                                gameState.dynamicBonusStates[bonusId][effect.triggerSynergy]) {
-                                triggerCount = gameState.dynamicBonusStates[bonusId][effect.triggerSynergy];
-                            } else {
-                                triggerCount = effect.triggerCount || 0;
-                            }
-                            totalValue += effect.value * triggerCount;
-                        }
-                    });
-                    
-                    dynamicDescription = `Augmente les multiplicateurs de +${totalValue} des unités de corps à corps. +1 bonus supplémentaire à chaque activation de Formation Corps à Corps. (Actuellement : +${triggerCount} activations)`;
-                }
-                else if (bonusId === 'economie_dune_vie' && bonus.effects) {
-                    let totalValue = 0;
-                    let combatCount = 0;
-                    let baseValue = 0;
-                    
-                    bonus.effects.forEach(effect => {
-                        if (effect.condition === 'base') {
-                            // Valeur de base + améliorations d'achat
-                            baseValue = effect.value;
-                            if (gameState.dynamicBonusStates && 
-                                gameState.dynamicBonusStates[bonusId] && 
-                                gameState.dynamicBonusStates[bonusId]['base']) {
-                                baseValue += gameState.dynamicBonusStates[bonusId]['base'];
-                            }
-                            totalValue += baseValue;
-                        }
-                        else if (effect.condition === 'end_of_combat') {
-                            // Récupérer le compteur depuis les états sauvegardés
-                            if (gameState.dynamicBonusStates && 
-                                gameState.dynamicBonusStates[bonusId] && 
-                                gameState.dynamicBonusStates[bonusId]['end_of_combat']) {
-                                combatCount = gameState.dynamicBonusStates[bonusId]['end_of_combat'];
-                            } else {
-                                combatCount = effect.triggerCount || 0;
-                            }
-                            totalValue += effect.value * combatCount;
-                        }
-                    });
-                    
-                    dynamicDescription = `Ce bonus donne +${totalValue} d'or par combat. Il augmente de +2 d'or par combat terminé. (Actuellement : +${combatCount} combats terminés)`;
-                }
-                
-                const bonusElement = document.createElement('div');
-                bonusElement.className = 'sell-bonus-item';
-                bonusElement.innerHTML = `
-                    <div class="sell-bonus-info">
-                        <div class="sell-bonus-name">
-                            ${bonus.icon} ${bonus.name}
-                        </div>
-                        <div class="sell-bonus-description">${dynamicDescription}</div>
-                        <div class="sell-bonus-count">Quantité disponible : ${count}</div>
-                    </div>
-                    <div class="sell-bonus-controls">
-                        <div class="sell-quantity-controls">
-                            <button class="quantity-btn minus" data-bonus-id="${bonusId}" title="Diminuer">-</button>
-                            <input type="number" class="sell-quantity-input" value="0" min="0" max="${count}" data-bonus-id="${bonusId}" data-price="${sellPrice}">
-                            <button class="quantity-btn plus" data-bonus-id="${bonusId}" title="Augmenter">+</button>
-                        </div>
-                        <div class="sell-bonus-price">
-                            <div class="sell-bonus-price-value">${sellPrice}💰 par unité</div>
-                            <div class="sell-bonus-price-total">Total : <span class="total-price">0💰</span></div>
-                        </div>
-                    </div>
-                `;
-                
-                // Ajouter les événements pour les contrôles de quantité
-                const minusBtn = bonusElement.querySelector('.quantity-btn.minus');
-                const plusBtn = bonusElement.querySelector('.quantity-btn.plus');
-                const quantityInput = bonusElement.querySelector('.sell-quantity-input');
-                const totalPriceSpan = bonusElement.querySelector('.total-price');
-                
-                // Fonction pour mettre à jour le prix total
-                const updateTotalPrice = () => {
-                    const quantity = parseInt(quantityInput.value) || 0;
-                    const totalPrice = quantity * sellPrice;
-                    totalPriceSpan.textContent = `${totalPrice}💰`;
-                    
-                    // Mettre à jour l'apparence de l'élément
-                    bonusElement.classList.toggle('has-quantity', quantity > 0);
-                    
-                    // Mettre à jour l'état des boutons
-                    minusBtn.disabled = quantity <= 0;
-                    plusBtn.disabled = quantity >= count;
-                    
-                    this.updateSellBonusesSummary();
-                };
-                
-                // Événements pour les boutons + et -
-                minusBtn.addEventListener('click', () => {
-                    const currentValue = parseInt(quantityInput.value) || 0;
-                    if (currentValue > 0) {
-                        quantityInput.value = currentValue - 1;
-                        updateTotalPrice();
-                    }
-                });
-                
-                plusBtn.addEventListener('click', () => {
-                    const currentValue = parseInt(quantityInput.value) || 0;
-                    if (currentValue < count) {
-                        quantityInput.value = currentValue + 1;
-                        updateTotalPrice();
-                    }
-                });
-                
-                // Événement pour l'input direct
-                quantityInput.addEventListener('input', updateTotalPrice);
-                
-                bonusesList.appendChild(bonusElement);
-            }
-        });
-        
-        // Mettre à jour le total initial
-        totalGoldGain.textContent = '0💰';
-        
-        // Ajouter les boutons d'action
-        this.addSellBonusesActions(modal, gameState);
-        
-        // Afficher la modal
-        modal.style.display = 'block';
-        document.getElementById('modal-overlay').style.display = 'block';
-        
-        // Gérer la fermeture
-        const closeModal = () => {
-            modal.style.display = 'none';
-            document.getElementById('modal-overlay').style.display = 'none';
-        };
-        
-        modal.querySelector('.close-btn').addEventListener('click', closeModal);
-        document.getElementById('modal-overlay').addEventListener('click', closeModal);
+        gameState.uiManager.openSellBonusesModal(gameState);
     }
     
     // Mettre à jour le résumé de vente
-    updateSellBonusesSummary() {
-        const quantityInputs = document.querySelectorAll('.sell-quantity-input');
-        const totalGoldGain = document.getElementById('total-gold-gain');
-        
-        let totalGain = 0;
-        quantityInputs.forEach(input => {
-            const quantity = parseInt(input.value) || 0;
-            const price = parseInt(input.dataset.price);
-            totalGain += price * quantity;
-        });
-        
-        totalGoldGain.textContent = `${totalGain}💰`;
+    updateSellBonusesSummary(gameState) {
+        gameState.uiManager.updateSellBonusesSummary();
     }
     
     // Ajouter les boutons d'action à la modal
     addSellBonusesActions(modal, gameState) {
-        // Supprimer les anciens boutons s'ils existent
-        const existingActions = modal.querySelector('.sell-bonuses-actions');
-        if (existingActions) {
-            existingActions.remove();
-        }
-        
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'sell-bonuses-actions';
-        actionsDiv.innerHTML = `
-            <button class="btn secondary" id="cancel-sell-all">Annuler</button>
-            <button class="btn primary" id="confirm-sell-all">Vendre Sélectionnés</button>
-        `;
-        
-        modal.querySelector('.modal-body').appendChild(actionsDiv);
-        
-        // Gérer les événements
-        actionsDiv.querySelector('#cancel-sell-all').addEventListener('click', () => {
-            modal.style.display = 'none';
-            document.getElementById('modal-overlay').style.display = 'none';
-        });
-        
-        actionsDiv.querySelector('#confirm-sell-all').addEventListener('click', () => {
-            this.executeSellBonuses(gameState);
-        });
+        gameState.uiManager.addSellBonusesActions(modal, gameState);
     }
     
     // Exécuter la vente des bonus sélectionnés
@@ -619,8 +517,7 @@ export class ShopManager {
             const message = soldItems.length > 0 ? soldItems.join(', ') : `${soldCount} bonus vendus`;
             gameState.notificationManager.showBonusSold(message, totalGain);
             // Fermer la modal
-            document.getElementById('sell-bonuses-modal').style.display = 'none';
-            document.getElementById('modal-overlay').style.display = 'none';
+            ModalManager.hideModal('sell-bonuses-modal');
         }
     }
     
@@ -636,10 +533,8 @@ export class ShopManager {
         const buyPrice = calculateBonusPrice(bonusId);
         const sellPrice = Math.floor(buyPrice / 2);
         
-        // Créer une modal de confirmation
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
+        // Créer le contenu de la modal
+        const modalContent = `
             <div class="modal-content">
                 <div class="modal-header">
                     <h3>Confirmer la vente</h3>
@@ -663,29 +558,34 @@ export class ShopManager {
                 </div>
             </div>
         `;
+
+        // Créer la modal si elle n'existe pas
+        let modal = document.getElementById('sell-confirmation-modal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'sell-confirmation-modal';
+            modal.className = 'modal';
+            document.body.appendChild(modal);
+        }
         
-        // Ajouter la modal au DOM
-        document.body.appendChild(modal);
-        document.getElementById('modal-overlay').style.display = 'block';
+        modal.innerHTML = modalContent;
         
-        // Gérer la fermeture
-        const closeModal = () => {
-            document.body.removeChild(modal);
-            document.getElementById('modal-overlay').style.display = 'none';
-        };
+        // Ajouter les gestionnaires d'événements
+        const closeBtn = modal.querySelector('.close-btn');
+        const cancelBtn = modal.querySelector('#cancel-sell');
+        const confirmBtn = modal.querySelector('#confirm-sell');
         
-        modal.querySelector('.close-btn').addEventListener('click', closeModal);
-        modal.querySelector('#cancel-sell').addEventListener('click', closeModal);
+        closeBtn.addEventListener('click', () => ModalManager.hideModal('sell-confirmation-modal'));
+        cancelBtn.addEventListener('click', () => ModalManager.hideModal('sell-confirmation-modal'));
         
-        // Gérer la confirmation
-        modal.querySelector('#confirm-sell').addEventListener('click', () => {
+        confirmBtn.addEventListener('click', () => {
             if (this.sellBonus(bonusId, gameState)) {
-                closeModal();
+                ModalManager.hideModal('sell-confirmation-modal');
             }
         });
         
-        // Fermer en cliquant sur l'overlay
-        document.getElementById('modal-overlay').addEventListener('click', closeModal);
+        // Afficher la modal via ModalManager
+        ModalManager.showModal('sell-confirmation-modal');
     }
 
     // Vendre un bonus (prix d'achat / 2)
@@ -711,18 +611,17 @@ export class ShopManager {
                 if (gameState.currentCombat && gameState.currentCombat.isBossFight && 
                     gameState.currentCombat.bossName === 'Quilegan') {
                     gameState.bossManager.markBonusSold();
-                    console.log('🐛 Quilegan: Bonus vendu, malus désactivé');
                 }
                 
                 gameState.notificationManager.showBonusSold(bonus.name, sellPrice);
                 gameState.updateUI();
                 gameState.updateActiveBonuses();
-                gameState.updateCombatInfo(); // Mettre à jour l'affichage de la mécanique
+                gameState.updateUI(); // Mettre à jour l'affichage de la mécanique
                 
                 // Mettre à jour directement l'indicateur de Quilegan dans le conteneur de progression
                 if (gameState.currentCombat && gameState.currentCombat.isBossFight && 
                     gameState.currentCombat.bossName === 'Quilegan') {
-                    gameState.updateExistingCombatProgress();
+                    gameState.uiManager.updateExistingCombatProgress();
                 }
                 
                 return true;
@@ -751,50 +650,20 @@ export function unlockBonus(bonusId, gameState) {
     
     // Vérifier si c'est un bonus dynamique
     if (dynamicBonuses.includes(bonusId)) {
-        // Vérifier si le bonus existe déjà
         const existingIndex = gameState.unlockedBonuses.indexOf(bonusId);
         if (existingIndex !== -1) {
             // Le bonus existe déjà, augmenter sa valeur au lieu d'ajouter un exemplaire
-            // Initialiser les états dynamiques si nécessaire
-            if (!gameState.dynamicBonusStates) {
-                gameState.dynamicBonusStates = {};
-            }
-            if (!gameState.dynamicBonusStates[bonusId]) {
-                gameState.dynamicBonusStates[bonusId] = {};
-            }
-            
-            // Augmenter le compteur approprié selon le type de bonus
             if (bonusId === 'cac_cest_la_vie') {
-                // Pour le CAC, augmenter le compteur de base
-                if (!gameState.dynamicBonusStates[bonusId]['base']) {
-                    gameState.dynamicBonusStates[bonusId]['base'] = 0;
-                }
-                gameState.dynamicBonusStates[bonusId]['base'] += 1;
+                incrementDynamicBonus(bonusId, 'base', gameState, 1);
             } else if (bonusId === 'economie_dune_vie') {
-                // Pour l'économie, augmenter le compteur de combats terminés
-                if (!gameState.dynamicBonusStates[bonusId]['end_of_combat']) {
-                    gameState.dynamicBonusStates[bonusId]['end_of_combat'] = 0;
+                incrementDynamicBonus(bonusId, 'end_of_combat', gameState, 1);
                 }
-                gameState.dynamicBonusStates[bonusId]['end_of_combat'] += 1;
-            }
-            
-            // Mettre à jour immédiatement l'affichage du bonus dynamique
             gameState.updateActiveBonuses();
-            
             gameState.showNotification('Bonus dynamique amélioré !', 'success');
         } else {
             // Premier exemplaire du bonus dynamique
             gameState.unlockedBonuses.push(bonusId);
-            
-            // Initialiser les états dynamiques
-            if (!gameState.dynamicBonusStates) {
-                gameState.dynamicBonusStates = {};
-            }
-            if (!gameState.dynamicBonusStates[bonusId]) {
-                gameState.dynamicBonusStates[bonusId] = {};
-            }
-            gameState.dynamicBonusStates[bonusId]['base'] = 0;
-            
+            incrementDynamicBonus(bonusId, 'base', gameState, 0); // Initialise à 0
             gameState.showNotification('Bonus dynamique débloqué !', 'success');
         }
     } else {
@@ -875,13 +744,9 @@ export function updateActiveBonuses(gameState, shopManager = null) {
                         bonusDesc.effects.forEach(effect => {
                             if (effect.condition === 'base') {
                                 // Valeur de base + améliorations d'achat
-                                let baseValue = effect.value;
-                                if (gameState.dynamicBonusStates && 
-                                    gameState.dynamicBonusStates[bonusId] && 
-                                    gameState.dynamicBonusStates[bonusId]['base']) {
-                                    baseValue += gameState.dynamicBonusStates[bonusId]['base'];
-                                }
-                                totalPower += baseValue;
+                                let baseValueDynamic = effect.value;
+                                baseValueDynamic += getDynamicBonusValue(bonusId, 'base', gameState);
+                                totalPower += baseValueDynamic;
                             }
                             else if (effect.condition === 'synergy_trigger') {
                                 // Bonus des synergies
@@ -908,7 +773,7 @@ export function updateActiveBonuses(gameState, shopManager = null) {
                     }
                     
                     // Toujours afficher le compteur, même s'il est à 0 (pour montrer qu'il existe)
-                    const combatText = ` <span class="bonus-count">+${combatCount}</span>`;
+                                        const combatText = ` <span class="bonus-count">+${combatCount}</span>`;
                     displayText = `${bonus.icon} ${bonus.name}${combatText}`;
                 }
             } else {
@@ -947,11 +812,6 @@ export function updateActiveBonuses(gameState, shopManager = null) {
 
 // Afficher la modal de détail d'un bonus
 function showBonusModal(bonusId, bonus, count, gameState) {
-    // Créer la modal
-    const modal = document.createElement('div');
-    modal.className = 'modal active';
-    modal.id = 'bonus-detail-modal';
-    
     // Calculer le prix de vente
     const buyPrice = calculateBonusPrice(bonusId);
     const sellPrice = Math.floor(buyPrice / 2);
@@ -966,18 +826,18 @@ function showBonusModal(bonusId, bonus, count, gameState) {
     if (bonusId === 'cac_cest_la_vie' && bonus.effects) {
         let totalValue = 0;
         let triggerCount = 0;
-        let baseValue = 0;
+        let baseValueDynamic = 0;
         
         bonus.effects.forEach(effect => {
             if (effect.condition === 'base') {
                 // Valeur de base + améliorations d'achat
-                baseValue = effect.value;
+                baseValueDynamic = effect.value;
                 if (gameState.dynamicBonusStates && 
                     gameState.dynamicBonusStates[bonusId] && 
                     gameState.dynamicBonusStates[bonusId]['base']) {
-                    baseValue += gameState.dynamicBonusStates[bonusId]['base'];
+                    baseValueDynamic += gameState.dynamicBonusStates[bonusId]['base'];
                 }
-                totalValue += baseValue;
+                totalValue += baseValueDynamic;
             }
             else if (effect.condition === 'synergy_trigger') {
                 // Récupérer le compteur depuis les états sauvegardés
@@ -997,18 +857,18 @@ function showBonusModal(bonusId, bonus, count, gameState) {
     else if (bonusId === 'economie_dune_vie' && bonus.effects) {
         let totalValue = 0;
         let combatCount = 0;
-        let baseValue = 0;
+        let baseValueDynamic = 0;
         
         bonus.effects.forEach(effect => {
             if (effect.condition === 'base') {
                 // Valeur de base + améliorations d'achat
-                baseValue = effect.value;
+                baseValueDynamic = effect.value;
                 if (gameState.dynamicBonusStates && 
                     gameState.dynamicBonusStates[bonusId] && 
                     gameState.dynamicBonusStates[bonusId]['base']) {
-                    baseValue += gameState.dynamicBonusStates[bonusId]['base'];
+                    baseValueDynamic += gameState.dynamicBonusStates[bonusId]['base'];
                 }
-                totalValue += baseValue;
+                totalValue += baseValueDynamic;
             }
             else if (effect.condition === 'end_of_combat') {
                 // Récupérer le compteur depuis les états sauvegardés
@@ -1026,7 +886,8 @@ function showBonusModal(bonusId, bonus, count, gameState) {
         dynamicDescription = `Ce bonus donne +${totalValue} d'or par combat. Il augmente de +2 d'or par combat terminé. (Actuellement : +${combatCount} combats terminés)`;
     }
     
-    modal.innerHTML = `
+    // Créer le contenu de la modal
+    const modalContent = `
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h3>${rarityIcon} ${bonus.icon} ${bonus.name}</h3>
@@ -1049,66 +910,46 @@ function showBonusModal(bonusId, bonus, count, gameState) {
                     </div>
                 </div>
                 <div class="bonus-actions">
-                    <button class="btn secondary close-modal-btn">Fermer</button>
-                    <button class="btn danger sell-bonus-btn" ${count === 0 ? 'disabled' : ''}>
+                                            <button class="btn secondary close-modal-btn">Fermer</button>
+                        <button class="btn danger sell-bonus-btn" ${count === 0 ? 'disabled' : ''}>
                         Vendre 1 exemplaire (${sellPrice}💰)
                     </button>
                 </div>
             </div>
         </div>
     `;
+
+    // Créer la modal si elle n'existe pas
+    let modal = document.getElementById('bonus-detail-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'bonus-detail-modal';
+        modal.className = 'modal';
+        document.body.appendChild(modal);
+    }
     
-    // Ajouter la modal au DOM
-    document.body.appendChild(modal);
+    modal.innerHTML = modalContent;
     
     // Gérer la fermeture
     const closeBtn = modal.querySelector('.close-btn');
     const closeModalBtn = modal.querySelector('.close-modal-btn');
     const sellBtn = modal.querySelector('.sell-bonus-btn');
     
-    const closeModal = () => {
-        modal.remove();
-    };
+    closeBtn.addEventListener('click', () => ModalManager.hideModal('bonus-detail-modal'));
+    closeModalBtn.addEventListener('click', () => ModalManager.hideModal('bonus-detail-modal'));
     
-    closeBtn.addEventListener('click', closeModal);
-    closeModalBtn.addEventListener('click', closeModal);
-    
-    // Gérer la vente
+    // Gérer la vente - utiliser la méthode sellBonus pour s'assurer que Quilegan est géré
     sellBtn.addEventListener('click', () => {
         if (count > 0) {
-            // Retirer un exemplaire du bonus
-            const bonusIndex = gameState.unlockedBonuses.indexOf(bonusId);
-            if (bonusIndex !== -1) {
-                gameState.unlockedBonuses.splice(bonusIndex, 1);
-                
-                // Ajouter l'or
-                gameState.addGold(sellPrice);
-                
-                // Mettre à jour l'affichage
-                updateActiveBonuses(gameState);
-                
+            // Utiliser la méthode sellBonus pour s'assurer que Quilegan est géré correctement
+            const shopManager = gameState.shopManager;
+            if (shopManager && shopManager.sellBonus(bonusId, gameState)) {
                 // Fermer la modal
-                closeModal();
-                
-                // Notification
-                gameState.showNotification(`Bonus vendu ! +${sellPrice} or`, 'success');
+                ModalManager.hideModal('bonus-detail-modal');
             }
         }
     });
     
-    // Fermer avec Échap
-    const handleEscape = (e) => {
-        if (e.key === 'Escape') {
-            closeModal();
-            document.removeEventListener('keydown', handleEscape);
-        }
-    };
-    document.addEventListener('keydown', handleEscape);
-    
-    // Fermer en cliquant sur l'overlay
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
-} 
+    // Afficher la modal via ModalManager
+    ModalManager.showModal('bonus-detail-modal');
+}

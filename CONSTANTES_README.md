@@ -12,7 +12,7 @@ Contient les constantes générales du jeu :
 - **BASE_DAMAGE** : Dégâts de base pour le calcul des objectifs
 - **DAMAGE_INCREMENT_PER_RANK** : Incrément de dégâts par rang
 
-### 2. `js/modules/UnitConstants.js`
+### 2. `js/modules/constants/units/UnitConstants.js`
 Contient toutes les unités du jeu :
 - **BASE_UNITS** : Définition des 6 unités de base avec leurs propriétés
 - **ALL_UNITS** : Toutes les unités disponibles dans le jeu (19 au total)
@@ -56,7 +56,7 @@ export const BOSS_RANKS = ['F+', 'E+', 'D+', 'C+', 'B+', 'A+', 'S', 'SS'];
 ### Modifier les Unités
 
 #### Ajouter une Unité de Base
-Pour ajouter une unité de base, éditez `BASE_UNITS` dans `js/modules/UnitConstants.js` :
+Pour ajouter une unité de base, éditez `BASE_UNITS` dans `js/modules/constants/units/UnitConstants.js` :
 
 ```javascript
 export const BASE_UNITS = [
