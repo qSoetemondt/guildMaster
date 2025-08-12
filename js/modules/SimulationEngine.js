@@ -454,7 +454,7 @@ export class SimulationEngine {
         this.useConsumablesIfNeeded(gameState);
         
         // Calculer les dégâts du tour
-        const turnDamage = gameState.calculateTurnDamage(combatTroops);
+        const turnDamage = gameState.combatCalculator.calculateTurnDamage(combatTroops);
         gameState.currentCombat.totalDamage += turnDamage;
         gameState.currentCombat.round++;
         

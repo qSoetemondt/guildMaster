@@ -21,7 +21,7 @@ export class CombatManager {
     prepareTroopsForTurn() {
         // Copier les troupes sélectionnées pour l'animation
         const troopsUsed = [...this.gameState.selectedTroops];
-        const turnDamage = this.gameState.calculateTurnDamage(troopsUsed);
+        const turnDamage = this.gameState.combatCalculator.calculateTurnDamage(troopsUsed);
         
         return { troopsUsed, turnDamage };
     }
@@ -439,83 +439,8 @@ export class CombatManager {
         }
     }
 
-    // Calculer les dégâts d'un tour (NOUVELLE LOGIQUE)
-    calculateTurnDamage(troops) {
-        let totalDamage = 0;
-        let totalMultiplier = 0;
-        
-        // 1. Appliquer les bonus/malus à chaque unité
-        for (let i = 0; i < troops.length; i++) {
-            const troop = troops[i];
-            
-            // Vérifier si la troupe a déjà été utilisée dans ce rang
-            if (this.gameState.usedTroopsThisCombat.includes(troop.id)) {
-                continue; // Passer cette troupe
-            }
-
-            let unitDamage = troop.damage;
-            let unitMultiplier = troop.multiplier;
-            
-            // Appliquer les bonus d'équipement (sauf les bonus de position)
-            const equipmentBonuses = this.gameState.calculateEquipmentBonuses();
-            equipmentBonuses.forEach(bonus => {
-                if (bonus.type !== 'position_bonus') {
-                    if (bonus.target === 'all' || this.gameState.hasTroopType(troop, bonus.target)) {
-                        if (bonus.damage) unitDamage += bonus.damage;
-                        if (bonus.multiplier) unitMultiplier += bonus.multiplier;
-                    }
-                }
-            });
-            
-            // Appliquer les mécaniques de boss (après les bonus)
-            if (this.gameState.currentCombat.isBossFight) {
-                unitDamage = this.gameState.bossManager.applyBossMechanics(unitDamage, troop);
-                unitMultiplier = this.gameState.bossManager.applyBossMechanicsToMultiplier(unitMultiplier, troop);
-            }
-            
-            // Appliquer le bonus "Position Quatre" si c'est la 4ème unité
-            const positionBonuses = this.gameState.calculateEquipmentBonuses().filter(bonus => bonus.type === 'position_bonus');
-            if (positionBonuses.length > 0 && i === 3) { // 4ème position (index 3)
-                positionBonuses.forEach(bonus => {
-                    if (bonus.target === 'fourth_position') {
-                        unitMultiplier = unitMultiplier * bonus.positionMultiplier;
-                    }
-                });
-            }
-            
-            // Accumuler les dégâts et multiplicateurs
-            totalDamage += unitDamage;
-            totalMultiplier += unitMultiplier;
-            
-            // Marquer la troupe comme utilisée dans ce rang
-            this.gameState.usedTroopsThisCombat.push(troop.id);
-        }
-        
-        // 2. Appliquer les synergies sur le total (une seule fois)
-        const synergies = this.gameState.calculateSynergies(troops);
-        synergies.forEach(synergy => {
-            if (synergy.bonus.target === 'all') {
-                if (synergy.bonus.damage) totalDamage += synergy.bonus.damage;
-                if (synergy.bonus.multiplier) totalMultiplier += synergy.bonus.multiplier;
-            }
-        });
-
-        // 3. Retirer les troupes utilisées du pool de combat
-        this.gameState.removeUsedTroopsFromCombat(troops);
-        
-        // 4. Calculer le total final
-        let finalDamage = totalDamage * totalMultiplier;
-        
-        // 5. Appliquer le malus de Quilegan à la fin (après tous les calculs)
-        if (this.gameState.currentCombat && this.gameState.currentCombat.isBossFight && 
-            this.gameState.currentCombat.bossMechanic.includes('Bloque les relances, les bonus, les synergies et les dégâts des unités tant qu\'aucun bonus n\'est vendu')) {
-            if (!this.gameState.bossManager.isBossMalusDisabled()) {
-                finalDamage = 0;
-            }
-        }
-        
-        return Math.round(finalDamage);
-    }
+    // La méthode calculateTurnDamage a été centralisée dans CombatCalculator
+    // pour éviter la duplication de code et centraliser la logique de calcul
 
     // Gestion des troupes de combat
     drawCombatTroops() {

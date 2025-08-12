@@ -487,9 +487,8 @@ export class GameState {
         return this.combatManager.executeCombatTurn();
     }
 
-    calculateTurnDamage(troops) {
-        return this.combatManager.calculateTurnDamage(troops);
-    }
+    // La méthode calculateTurnDamage a été centralisée dans CombatCalculator
+    // pour éviter la duplication de code et centraliser la logique de calcul
 
     initializeCombatAnimation() {
         return this.combatManager.initializeCombatAnimation();
@@ -680,19 +679,19 @@ export class GameState {
     }
 
     calculateSynergies(troops = null) {
-        return this.combatManager.calculateSynergies(troops);
+        return this.combatCalculator.calculateSynergies(troops);
     }
 
     hasTroopType(troop, targetType) {
-        return this.combatManager.hasTroopType(troop, targetType);
+        return this.combatCalculator.hasTroopType(troop, targetType);
     }
 
     calculateEquipmentBonuses() {
-        return this.combatManager.calculateEquipmentBonuses();
+        return this.combatCalculator.calculateEquipmentBonuses();
     }
 
     applyCombatBonuses() {
-        return this.combatManager.applyCombatBonuses();
+        return this.combatCalculator.applyCombatBonuses();
     }
     
     incrementEndOfCombatCounters() {

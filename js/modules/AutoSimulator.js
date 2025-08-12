@@ -435,7 +435,7 @@ export class AutoSimulator {
         }
         
         // Utiliser la fonction du jeu de base
-        const turnDamage = gameState.combatManager.calculateTurnDamage(troops);
+        const turnDamage = gameState.combatCalculator.calculateTurnDamage(troops);
         
         console.log(`💥 DÉGÂTS FINAUX: ${turnDamage}`);
         
@@ -1067,7 +1067,7 @@ export class AutoSimulator {
         const troopsCopy = selectedTroops.map(troop => ({...troop}));
         
         // Calculer les dégâts et collecter les infos comme dans la console
-        const roundDamage = gameState.combatManager.calculateTurnDamage(troopsCopy);
+        const roundDamage = gameState.combatCalculator.calculateTurnDamage(troopsCopy);
         tourInfo.damage = roundDamage;
         // Pour la cohérence, on peut aussi récupérer synergies/bonus si besoin :
         const combatResult = this.calculateCombatDamage(gameState, troopsCopy);

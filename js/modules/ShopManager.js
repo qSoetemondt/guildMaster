@@ -7,6 +7,9 @@ import { ModalManager } from './ModalManager.js';
 import { clearUnitCache } from './UnitManager.js';
 import { getRandomElement } from './constants/units/UnitConstants.js';
 import { getDynamicBonusValue, incrementDynamicBonus } from '../utils/DynamicBonusUtils.js';
+import { pricingService } from './PricingService.js';
+import { shopItemGenerator } from './ShopItemGenerator.js';
+import { shopItemSelector } from './ShopItemSelector.js';
 
 export class ShopManager {
     constructor() {
@@ -43,7 +46,7 @@ export class ShopManager {
 
     // Extraire la vérification de disponibilité d'un item
     checkItemAvailability(item, gameState) {
-        const canAfford = gameState.gold >= item.price;
+        const canAfford = pricingService.canAfford(gameState.gold, item);
         const isBonusAlreadyPurchasedInSession = item.type === 'bonus' && this.currentShopPurchasedBonuses.includes(item.bonusId);
         const isUnitAlreadyPurchasedInSession = item.type === 'unit' && this.currentShopPurchasedUnits.includes(item.name);
         const isConsumableAlreadyPurchasedInSession = item.type === 'consumable' && this.currentShopPurchasedConsumables.includes(item.consumableType);
@@ -143,269 +146,30 @@ export class ShopManager {
         container.appendChild(section);
     }
 
-    // Extraire le calcul du prix des unités
-    calculateUnitPrice(unit) {
-        let basePrice = RARITY_BASE_PRICES[unit.rarity] || RARITY_BASE_PRICES[RARITY_LEVELS.COMMON]; // Prix de base selon la rareté
-        
-        // Ajuster selon les stats (dégâts + multiplicateur)
-        const statBonus = Math.floor((unit.damage + unit.multiplier) / 2);
-        basePrice += statBonus;
-        
-        // Prix augmentés de 75% pour équilibrer l'économie
-        return Math.ceil(basePrice * 1.75);
-    }
+    // La méthode calculateUnitPrice a été déplacée vers PricingService
+    // pour centraliser la logique de calcul des prix
 
-    // Extraire la création des items d'unités
-    createUnitItems(gameState) {
-        return gameState.getShopUnits().map(unit => ({
-            type: 'unit',
-            icon: unit.icon,
-            unitType: unit.type,
-            damage: unit.damage,
-            multiplier: unit.multiplier,
-            price: this.calculateUnitPrice(unit),
-            rarity: unit.rarity,
-            name: unit.name,
-            element: getRandomElement()
-        }));
-    }
+    // La méthode createUnitItems a été déplacée vers ShopItemGenerator
+    // pour centraliser la création des items
 
-    // Extraire la création des items de bonus
-    createBonusItems(bonusDescriptions) {
-        console.log('[DEBUG] Création des items de bonus, bonusDescriptions:', Object.keys(bonusDescriptions));
-        
-        const bonusItems = Object.keys(bonusDescriptions).map(bonusId => {
-            const bonus = bonusDescriptions[bonusId];
-            const price = calculateBonusPrice(bonusId);
-            const rarity = getBonusRarity(bonusId);
-            
-            return {
-                type: 'bonus',
-                name: bonus.name,
-                icon: bonus.icon,
-                description: bonus.description,
-                bonusId: bonusId,
-                price: price,
-                rarity: rarity
-            };
-        });
-        
-        console.log('[DEBUG] Items de bonus créés:', bonusItems.length, 'items');
-        return bonusItems;
-    }
+    // La méthode createBonusItems a été déplacée vers ShopItemGenerator
+    // pour centraliser la création des items
 
-    // Extraire la gestion des consommables
-    addConsumableItems(gameState, allItems) {
-        // Garantir qu'il y ait toujours au moins 2-3 consommables disponibles
-        const consumableCount = Math.floor(Math.random() * 2) + 2; // 2-3 consommables
-        
-        for (let i = 0; i < consumableCount; i++) {
-            const consumableItem = gameState.addConsumableToShop();
-            if (consumableItem) {
-                allItems.push(consumableItem);
-            }
-        }
-        return allItems;
-    }
+    // La méthode addConsumableItems a été déplacée vers ShopItemGenerator
+    // pour centraliser la création des items
 
-    // Extraire la sélection et mélange des items avec équilibre entre types
-    selectAndShuffleItems(allItems) {
-        // Séparer les items par type
-        const unitItems = allItems.filter(item => item.type === 'unit');
-        const bonusItems = allItems.filter(item => item.type === 'bonus');
-        const consumableItems = allItems.filter(item => item.type === 'consumable');
-        
-        const selectedItems = [];
-        const maxItems = 5;
-        
-        // Fonction pour sélectionner des items d'une catégorie
-        const selectFromCategory = (items, count) => {
-            return this.selectItemsByRarity(items, Math.min(count, items.length));
-        };
-        
-        // Fonction pour compléter avec des items d'autres catégories
-        const fillRemainingSlots = (targetCount) => {
-            const remaining = targetCount - selectedItems.length;
-            if (remaining <= 0) return;
-            // Créer un pool d'items disponibles non encore sélectionnés
-            // Pool complet sans filtrer les doublons
-            const availableItems = [...unitItems, ...bonusItems, ...consumableItems];
-            const additionalItems = this.selectItemsByRarity(availableItems, remaining);
-            selectedItems.push(...additionalItems);
-        };
-        
-        // Créer un pool d'items disponibles avec pondération par type
-        const availableItems = [];
-        const typeWeights = {
-            'unit': unitItems.length,
-            'bonus': bonusItems.length,
-            'consumable': consumableItems.length * 4 // Quadrupler le poids des consommables
-        };
-        
-        // Ajouter tous les items avec leur poids
-        unitItems.forEach(item => availableItems.push({ item, weight: typeWeights.unit }));
-        bonusItems.forEach(item => availableItems.push({ item, weight: typeWeights.bonus }));
-        consumableItems.forEach(item => availableItems.push({ item, weight: typeWeights.consumable }));
-        
-        // Sélectionner 5 items avec pondération par type
-        for (let i = 0; i < maxItems; i++) {
-            if (availableItems.length === 0) break;
-            
-            // Calculer le poids total
-            const totalWeight = availableItems.reduce((sum, { weight }) => sum + weight, 0);
-            
-            // Sélectionner un item selon le poids
-            let random = Math.random() * totalWeight;
-            let selectedIndex = 0;
-            
-            for (let j = 0; j < availableItems.length; j++) {
-                random -= availableItems[j].weight;
-                if (random <= 0) {
-                    selectedIndex = j;
-                    break;
-                }
-            }
-            
-            // Ajouter l'item sélectionné
-            const selected = availableItems[selectedIndex].item;
-            selectedItems.push(selected);
-            
-            // LOG DEBUG : afficher le type et la rareté de l'item sélectionné
-            console.log(`[SHOP] Slot ${i+1} : type=${selected.type}, rareté=${selected.rarity}, nom=${selected.name||selected.bonusId||selected.consumableType}`);
-            
-            // Retirer l'item sélectionné et ajuster les poids
-            availableItems.splice(selectedIndex, 1);
-            
-            // Réduire les poids pour éviter de sur-représenter un type
-            const selectedType = selectedItems[selectedItems.length - 1].type;
-            availableItems.forEach(({ item }) => {
-                if (item.type === selectedType) {
-                    item.weight = Math.max(1, item.weight * 0.7); // Réduire le poids de 30%
-                }
-            });
-        }
-        
-        // Compléter jusqu'à 5 items si nécessaire
-        fillRemainingSlots(maxItems);
-        
-        // S'assurer qu'on a exactement 5 items
-        return selectedItems.slice(0, maxItems);
-    }
+    // La méthode selectAndShuffleItems a été déplacée vers ShopItemSelector
+    // pour centraliser la sélection et la pondération des items
 
-    // Sélectionner les items avec pondération par rareté
-    selectItemsByRarity(items, count) {
-        // Utiliser les pourcentages de chance par rareté depuis les constantes
-        const rarityChances = RARITY_CHANCES;
-
-        const selectedItems = [];
-        const itemsByRarity = {};
-
-        // Grouper les items par rareté
-        items.forEach(item => {
-            const rarity = item.rarity || 'common';
-            if (!itemsByRarity[rarity]) {
-                itemsByRarity[rarity] = [];
-            }
-            itemsByRarity[rarity].push(item);
-        });
-
-        // Sélectionner les items selon les pourcentages
-        for (let i = 0; i < count; i++) {
-            const random = Math.random();
-            let selectedRarity = 'common'; // Par défaut
-            let cumulativeChance = 0;
-
-            // Déterminer la rareté selon les pourcentages
-            for (const [rarity, chance] of Object.entries(rarityChances)) {
-                cumulativeChance += chance;
-                if (random <= cumulativeChance) {
-                    selectedRarity = rarity;
-                    break;
-                }
-            }
-            // LOG DEBUG : afficher la rareté tirée
-            console.log(`[SHOP] Slot ${i+1} : random=${random.toFixed(4)} => rareté tirée = ${selectedRarity}`);
-
-            // Sélectionner un item de cette rareté
-            if (itemsByRarity[selectedRarity] && itemsByRarity[selectedRarity].length > 0) {
-                const randomIndex = Math.floor(Math.random() * itemsByRarity[selectedRarity].length);
-                const selectedItem = itemsByRarity[selectedRarity][randomIndex];
-                selectedItems.push(selectedItem);
-                // (ne plus retirer l'item du pool)
-            } else {
-                // Si pas d'item de cette rareté, prendre un item commun
-                if (itemsByRarity[RARITY_LEVELS.COMMON] && itemsByRarity[RARITY_LEVELS.COMMON].length > 0) {
-                    const randomIndex = Math.floor(Math.random() * itemsByRarity[RARITY_LEVELS.COMMON].length);
-                    const selectedItem = itemsByRarity[RARITY_LEVELS.COMMON][randomIndex];
-                    selectedItems.push(selectedItem);
-                    // (ne plus retirer l'item du pool)
-                } else {
-                    // Fallback : prendre le premier item disponible
-                    for (const rarity in itemsByRarity) {
-                        if (itemsByRarity[rarity] && itemsByRarity[rarity].length > 0) {
-                            const selectedItem = itemsByRarity[rarity][0];
-                            selectedItems.push(selectedItem);
-                            // (ne plus retirer l'item du pool)
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        return selectedItems;
-    }
+    // La méthode selectItemsByRarity a été déplacée vers ShopItemSelector
+    // pour centraliser la sélection par rareté
 
     generateShopItems(gameState) {
-        const bonusDescriptions = gameState.getBonusDescriptions();
-        const unitItems = this.createUnitItems(gameState);
-        const bonusItems = this.createBonusItems(bonusDescriptions);
-        const consumableItems = [];
-        this.addConsumableItems(gameState, consumableItems);
-        const allItems = [
-            ...unitItems,
-            ...bonusItems,
-            ...consumableItems
-        ];
-        // Grouper tous les items par rareté
-        const itemsByRarity = {};
-        allItems.forEach(item => {
-            const rarity = item.rarity || 'common';
-            if (!itemsByRarity[rarity]) itemsByRarity[rarity] = [];
-            itemsByRarity[rarity].push(item);
-        });
-        // Générer 5 slots indépendants
-        const shopItems = [];
-        for (let i = 0; i < 5; i++) {
-            // Tirer la rareté selon RARITY_CHANCES
-            const random = Math.random();
-            let selectedRarity = 'common';
-            let cumulativeChance = 0;
-            for (const [rarity, chance] of Object.entries(RARITY_CHANCES)) {
-                cumulativeChance += chance;
-                if (random <= cumulativeChance) {
-                    selectedRarity = rarity;
-                    break;
-                }
-            }
-            // Prendre un item au hasard de cette rareté
-            const pool = itemsByRarity[selectedRarity] || itemsByRarity['common'];
-            if (pool && pool.length > 0) {
-                const idx = Math.floor(Math.random() * pool.length);
-                const item = pool[idx];
-                shopItems.push(item);
-                // LOG DEBUG
-                console.log(`[SHOP] Slot ${i+1} : rareté=${selectedRarity}, nom=${item.name||item.bonusId||item.consumableType}`);
-            } else {
-                // Fallback : prendre n'importe quel item
-                const all = Object.values(itemsByRarity).flat();
-                if (all.length > 0) {
-                    const idx = Math.floor(Math.random() * all.length);
-                    shopItems.push(all[idx]);
-                }
-            }
-        }
-        return shopItems;
+        // Utiliser les nouveaux services pour générer les items
+        const allItems = shopItemGenerator.generateAllAvailableItems(gameState);
+        
+        // Utiliser le sélecteur pour choisir les 5 items du magasin
+        return shopItemSelector.selectAndShuffleItems(allItems);
     }
 
     // Réinitialiser le magasin
