@@ -79,19 +79,9 @@
                     </div>
 
                     <div class="combat-info">
-                        <h4>Prochain Combat</h4>
-                        <div id="next-combat-info" class="combat-preview">
-                            <div class="enemy-preview">
-                                <img id="enemy-image" src="assets/gobelin.jpg" alt="Ennemi" class="enemy-image">
-                            </div>
-                            <div id="combat-objective-display">
-                                <div class="objective-target">
-                                    <span id="combat-target-display">0</span> points : <span id="combat-enemy-name">Troupes de gobelin</span>
-                                </div>
-                                <div id="pre-combat-boss-info" class="boss-info" style="display: none;">
-                                    <div class="boss-mechanic">Mécanique du boss</div>
-                                </div>
-                            </div>
+                        <h4>Combats du Rang en Cours</h4>
+                        <div id="next-combats-info" class="combats-preview">
+                            <!-- Les 3 combats du rang en cours seront générés dynamiquement -->
                         </div>
                     </div>
                 </div>
@@ -161,7 +151,7 @@
                             <button id="reroll-selected-btn" class="btn reroll-btn" title="Relancer les troupes sélectionnées">
                                 <span class="sort-icon">🔄</span>
                                 <span class="sort-label">Relancer</span>
-                                <span class="reroll-counter">(<span id="reroll-count">0</span>/3)</span>
+                                <span class="reroll-counter">(<span id="reroll-count">0/3</span>)</span>
                             </button>
                         </div>
                     </div>

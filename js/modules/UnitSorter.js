@@ -83,7 +83,8 @@ export class UnitSorter {
         }
         
         if (rerollCountElement) {
-            rerollCountElement.textContent = rerollCount;
+            const maxRerolls = window.gameState.getMaxRerolls ? window.gameState.getMaxRerolls() : 3;
+            rerollCountElement.textContent = `${rerollCount}/${maxRerolls}`;
         }
         
         // Désactiver le bouton si Quilegan est actif

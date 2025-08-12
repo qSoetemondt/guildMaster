@@ -172,7 +172,9 @@ export class ShopManager {
 
     // Extraire la création des items de bonus
     createBonusItems(bonusDescriptions) {
-        return Object.keys(bonusDescriptions).map(bonusId => {
+        console.log('[DEBUG] Création des items de bonus, bonusDescriptions:', Object.keys(bonusDescriptions));
+        
+        const bonusItems = Object.keys(bonusDescriptions).map(bonusId => {
             const bonus = bonusDescriptions[bonusId];
             const price = calculateBonusPrice(bonusId);
             const rarity = getBonusRarity(bonusId);
@@ -187,6 +189,9 @@ export class ShopManager {
                 rarity: rarity
             };
         });
+        
+        console.log('[DEBUG] Items de bonus créés:', bonusItems.length, 'items');
+        return bonusItems;
     }
 
     // Extraire la gestion des consommables

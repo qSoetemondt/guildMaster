@@ -6232,3 +6232,148 @@ body.duplicate-mode .troop-icon {
     }
 }
 
+/* NOUVEAU : Styles pour l'affichage des prochains combats */
+.combats-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.combat-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #34495e;
+    border-radius: 8px;
+    border: 2px solid #2c3e50;
+    transition: all 0.3s ease;
+}
+
+.combat-preview-item.completed {
+    opacity: 0.6;
+    background: #2c3e50;
+    border-color: #7f8c8d;
+}
+
+.combat-preview-item.completed .combat-details {
+    text-decoration: line-through;
+    color: #95a5a6;
+}
+
+.combat-preview-item.completed .enemy-image {
+    filter: grayscale(100%);
+}
+
+.combat-preview-item.current {
+    border-color: #e74c3c;
+    background: #34495e;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.3);
+}
+
+.combat-preview-item.upcoming {
+    border-color: #3498db;
+    background: #34495e;
+}
+
+.combat-preview-item .enemy-preview {
+    flex-shrink: 0;
+}
+
+.combat-preview-item .enemy-image {
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 2px solid #34495e;
+    transition: all 0.3s ease;
+}
+
+.combat-preview-item .combat-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.combat-preview-item .combat-number {
+    font-size: 0.8em;
+    color: #bdc3c7;
+    font-weight: bold;
+}
+
+.combat-preview-item .objective-target {
+    font-size: 1em;
+    color: #ecf0f1;
+}
+
+.combat-preview-item .objective-target span:first-child {
+    color: #e74c3c;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.combat-preview-item .boss-info {
+    background: #8e44ad;
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 5px;
+    font-size: 0.85em;
+}
+
+.combat-preview-item .boss-mechanic {
+    color: #ecf0f1;
+    font-size: 0.9em;
+}
+
+.combat-preview-item .combat-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8em;
+    color: #bdc3c7;
+}
+
+.combat-preview-item .status-completed {
+    color: #27ae60;
+}
+
+.combat-preview-item .status-current {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.combat-preview-item .status-upcoming {
+    color: #3498db;
+}
+
+/* Animation pour le reroll de boss */
+.combat-preview-item.boss-reroll-animation {
+    transition: all 0.5s ease;
+}
+
+.combat-preview-item.boss-reroll-animation .enemy-image {
+    transition: all 0.5s ease;
+}
+
+.combat-preview-item.boss-reroll-animation .boss-info {
+    transition: all 0.5s ease;
+}
+
+/* Effet de surbrillance pour le reroll réussi */
+@keyframes bossRerollGlow {
+    0% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+    }
+    100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    }
+}
+
+.combat-preview-item.boss-reroll-animation {
+    animation: bossRerollGlow 1s ease-in-out;
+}
+

@@ -28,7 +28,9 @@ export function getBonusDisplayName(bonusId) {
         'relique_ancienne': 'bonus.ancientRelic',
         'cac_cest_la_vie': 'bonus.meleeIsLife',
         'economie_dune_vie': 'bonus.economyOfLife',
-        'position_quatre': 'bonus.positionFour'
+        'position_quatre': 'bonus.positionFour',
+        'relance_supplementaire': 'bonus.extraReroll',
+        'attaque_par_relance': 'bonus.attackPerReroll'
     };
     
     const translationKey = bonusNames[bonusId];
@@ -56,7 +58,9 @@ export function getBonusDescription(bonusId) {
         'relique_ancienne': 'bonus.ancientRelicDesc',
         'cac_cest_la_vie': 'bonus.meleeIsLifeDesc',
         'economie_dune_vie': 'bonus.economyOfLifeDesc',
-        'position_quatre': 'bonus.positionFourDesc'
+        'position_quatre': 'bonus.positionFourDesc',
+        'relance_supplementaire': 'bonus.extraRerollDesc',
+        'attaque_par_relance': 'bonus.attackPerRerollDesc'
     };
     
     const translationKey = bonusDescriptions[bonusId];
@@ -92,6 +96,13 @@ export const BONUS_DESCRIPTIONS = {
         icon: '🔮',
         rarity: 'common',
         basePrice: 30
+    },
+    'attaque_par_relance': { 
+        name: 'Attaque par Relance', 
+        description: '+2 d\'attaque pour toutes les unités par relance restante', 
+        icon: '🔄',
+        rarity: 'common',
+        basePrice: 35
     },
     
     // Bonus d'équipement communs
@@ -335,7 +346,26 @@ export const BONUS_DESCRIPTIONS = {
         rarity: 'epic',
         basePrice: 120,
         effects: [
-            { type: 'fusion_element', elements: ['Lumière', 'Ténèbre'] }
+            {
+                type: 'fusion_element', 
+                elements: ['Lumière', 'Ténèbre']
+            }
+        ]
+    },
+    
+    // Bonus pour relances supplémentaires
+    'relance_supplementaire': {
+        name: 'Relance Supplémentaire',
+        description: '+1 relance d\'unité par combat (base: 3, avec bonus: 4)',
+        icon: '🔄',
+        rarity: 'uncommon',
+        basePrice: 50,
+        effects: [
+            {
+                type: 'reroll_bonus',
+                value: 1,
+                condition: 'base'
+            }
         ]
     }
 };

@@ -208,8 +208,10 @@ export function rerollSelectedTroops(gameState) {
         gameState.rerollCount = 0;
     }
     
-    if (gameState.rerollCount >= 3) {
-        gameState.notificationManager.showNotification('Vous avez atteint la limite de 3 relances maximum !', 'warning');
+    const maxRerolls = gameState.getMaxRerolls ? gameState.getMaxRerolls() : 3;
+    
+    if (gameState.rerollCount >= maxRerolls) {
+        gameState.notificationManager.showNotification(`Vous avez atteint la limite de ${maxRerolls} relances maximum !`, 'warning');
         return;
     }
     
@@ -299,7 +301,8 @@ export function rerollSelectedTroops(gameState) {
     // Afficher une notification avec le résumé des relances
     if (rerolledCount > 0) {
         const rerollText = rerolledTroops.map(r => `${r.from} → ${r.to}`).join(', ');
-        gameState.notificationManager.showNotification(`Relance ${gameState.rerollCount}/3 : ${rerollText}`, 'info');
+        const maxRerolls = gameState.getMaxRerolls ? gameState.getMaxRerolls() : 3;
+        gameState.notificationManager.showNotification(`Relance ${gameState.rerollCount}/${maxRerolls} : ${rerollText}`, 'info');
     } else {
         gameState.notificationManager.showNotification('Aucune troupe disponible pour le remplacement', 'warning');
     }
@@ -726,6 +729,23 @@ export function calculateEquipmentBonuses(gameState) {
                 damage: 10 * count, 
                 target: 'Magique' 
             });
+        }
+        // Bonus d'attaque globale basé sur les relances restantes
+        else if (bonusId === 'attaque_par_relance') {
+            // Calculer le nombre de relances restantes (maxRerolls - rerollCount)
+            const maxRerolls = gameState.getMaxRerolls ? gameState.getMaxRerolls() : 3;
+            const remainingRerolls = Math.max(0, maxRerolls - gameState.rerollCount);
+            const attackBonus = 2 * count * remainingRerolls;
+            
+            
+            if (attackBonus > 0) {
+                bonuses.push({ 
+                    name: bonusDesc.name,
+                    damage: attackBonus, 
+                    target: 'all' 
+                });
+                console.log(`[DEBUG] Bonus ajouté: ${bonusDesc.name} +${attackBonus} d'attaque globale`);
+            }
         }
         // Bonus multiplicateur pour chaque élément
         else if (bonusId === 'bonus_feu' || bonusId === 'bonus_eau' || bonusId === 'bonus_terre' || bonusId === 'bonus_air' || bonusId === 'bonus_lumiere' || bonusId === 'bonus_tenebre') {

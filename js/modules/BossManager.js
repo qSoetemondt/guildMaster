@@ -281,4 +281,121 @@ export class BossManager {
         if (mechanic.includes('lumière') && troop.element === 'Lumière') return true;
         return false;
     }
+
+    // Méthode pour relancer le boss (utilisée par le consommable bossReroll)
+    rerollBoss(gameState, consumableId, consumableManager) {
+        // Vérifier si le prochain combat de boss sera Quilegan (rang S)
+        if (gameState.rank === 'S') {
+            gameState.notificationManager.showConsumableError('Impossible de relancer Quilegan !');
+            return false;
+        }
+
+        // Sélectionner un nouveau boss aléatoire (en excluant Quilegan)
+        const newBoss = this.selectRandomBossExcludingQuilegan();
+        
+        // Mettre à jour le boss d'affichage pour le prochain combat
+        this.displayBoss = newBoss;
+        
+        // Si on est actuellement dans un combat de boss, mettre à jour le combat actuel
+        if (gameState.currentCombat && gameState.currentCombat.isBossFight) {
+            gameState.currentCombat.bossName = newBoss.name;
+            gameState.currentCombat.bossMechanic = newBoss.mechanic;
+            
+            // Recalculer les HP du boss selon le rang actuel
+            const targetDamage = this.calculateBossTargetDamageByRank(newBoss, gameState.rank);
+            gameState.currentCombat.targetDamage = targetDamage;
+            
+            // Mettre à jour l'affichage
+            gameState.uiManager.updateBossInfoDisplay();
+        }
+        
+        // Mettre à jour l'interface des combats à venir avec animation
+        this.updateUpcomingBossDisplay(gameState, newBoss);
+        
+        // Afficher une notification de succès
+        gameState.notificationManager.showNotification(`Boss relancé ! Nouveau boss : ${newBoss.name}`, 'success');
+        
+        // Supprimer le consommable après utilisation
+        if (consumableId && consumableManager) {
+            consumableManager.removeConsumableById(consumableId, gameState);
+        }
+        
+        return true;
+    }
+
+    // Méthode pour mettre à jour l'affichage du boss à venir avec animation
+    updateUpcomingBossDisplay(gameState, newBoss) {
+        // Trouver la carte de prévisualisation du prochain combat de boss
+        const upcomingBossCards = document.querySelectorAll('.combat-preview-item.upcoming');
+        
+        upcomingBossCards.forEach(card => {
+            // Vérifier si c'est une carte de boss
+            const bossInfo = card.querySelector('.boss-info');
+            if (bossInfo) {
+                // Créer une animation de remplacement
+                this.animateBossCardReplacement(card, newBoss, gameState);
+            }
+        });
+    }
+
+    // Méthode pour animer le remplacement de la carte de boss
+    animateBossCardReplacement(card, newBoss, gameState) {
+        // Ajouter une classe pour l'animation
+        card.classList.add('boss-reroll-animation');
+        
+        // Créer un effet de fade out
+        card.style.transition = 'all 0.5s ease';
+        card.style.opacity = '0.3';
+        card.style.transform = 'scale(0.95)';
+        
+        // Après le fade out, mettre à jour le contenu
+        setTimeout(() => {
+            // Mettre à jour le nom du boss
+            const bossNameElement = card.querySelector('.boss-info strong');
+            if (bossNameElement && bossNameElement.nextSibling) {
+                bossNameElement.nextSibling.textContent = ` ${newBoss.name}`;
+            }
+            
+            // Mettre à jour la mécanique
+            const mechanicElement = card.querySelector('.boss-info strong:last-of-type');
+            if (mechanicElement && mechanicElement.nextSibling) {
+                mechanicElement.nextSibling.textContent = ` ${newBoss.mechanic}`;
+            }
+            
+            // Mettre à jour l'image si c'est un boss
+            const enemyImage = card.querySelector('.enemy-image');
+            if (enemyImage) {
+                enemyImage.src = 'assets/orcs.jpg'; // Image par défaut pour les boss
+                enemyImage.alt = newBoss.name;
+            }
+            
+            // Mettre à jour le nom de l'ennemi dans l'objectif
+            const objectiveTarget = card.querySelector('.objective-target');
+            if (objectiveTarget) {
+                const targetText = objectiveTarget.textContent;
+                const newTargetText = targetText.replace(/points : .*/, `points : ${newBoss.name}`);
+                objectiveTarget.textContent = newTargetText;
+            }
+            
+            // Fade in avec la nouvelle information
+            card.style.opacity = '1';
+            card.style.transform = 'scale(1)';
+            
+            // Ajouter un effet de surbrillance
+            card.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.6)';
+            
+            // Retirer la surbrillance après un délai
+            setTimeout(() => {
+                card.style.boxShadow = '';
+                card.classList.remove('boss-reroll-animation');
+            }, 1000);
+            
+        }, 500);
+    }
+
+    // Méthode pour sélectionner un boss aléatoire en excluant Quilegan
+    selectRandomBossExcludingQuilegan() {
+        // Utiliser la fonction selectRandomBoss déjà importée
+        return selectRandomBoss();
+    }
 } 

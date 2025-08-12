@@ -18,11 +18,12 @@ export function getConsumableDisplayName(consumableType) {
         'transformBarbare': 'consumable.axe',
         'transformSorcier': 'consumable.orb',
         'transformFronde': 'consumable.sling',
-        'upgradeSynergy': 'consumable.synergyCrystal'
+        'upgradeSynergy': 'consumable.synergyCrystal',
+        'bossReroll': 'Relance de Boss'
     };
     
     const translationKey = consumableNames[consumableType];
-    return consumableType;
+    return consumableNames[consumableType] || consumableType;
 }
 
 // Fonction pour obtenir la description traduite d'un consommable
@@ -38,7 +39,8 @@ export function getConsumableDescription(consumableType) {
         'transformBarbare': 'consumable.axeDesc',
         'transformSorcier': 'consumable.orbDesc',
         'transformFronde': 'consumable.slingDesc',
-        'upgradeSynergy': 'consumable.synergyCrystalDesc'
+        'upgradeSynergy': 'consumable.synergyCrystalDesc',
+        'bossReroll': 'Relance le boss actuel et en tire un nouveau aléatoirement (sauf Quilegan)'
     };
     
     const translationKey = consumableDescriptions[consumableType];
@@ -155,6 +157,14 @@ export class ConsumableManager {
                 price: Math.ceil(80 * 1.27), // 102
                 effect: 'duplicateUnit',
                 rarity: RARITY_LEVELS.LEGENDARY
+            },
+            bossReroll: {
+                name: 'Relance de Boss',
+                description: 'Relance le boss actuel et en tire un nouveau aléatoirement (sauf Quilegan)',
+                icon: '🎲',
+                price: Math.ceil(100 * 1.75), // 175
+                effect: 'bossReroll',
+                rarity: RARITY_LEVELS.EPIC
             }
         };
         // Génération dynamique des consommables de transformation pour chaque unité de BASE_UNITS
@@ -225,6 +235,7 @@ export class ConsumableManager {
             // Pour l'épée de transformation, le consommable sera supprimé après la transformation effective
             // Pour le cristal de synergie, le consommable sera supprimé après la sélection de la synergie
             // Pour la duplication, le consommable sera supprimé après la duplication effective
+            // Pour le bossReroll, le consommable sera supprimé après la relance effective
            // gameState.showNotification(`${consumable.name} utilisé !`, 'success');
             return true;
         } else {
@@ -260,6 +271,11 @@ export class ConsumableManager {
             case 'duplicateUnit':
                 // Activer le mode duplication avec curseur personnalisé
                 this.activateDuplicateMode(consumable, gameState);
+                return true;
+            
+            case 'bossReroll':
+                // Ré-évaluer le Boss actuel
+                gameState.bossManager.rerollBoss(gameState, consumable.id, this);
                 return true;
             
             default:
@@ -705,5 +721,16 @@ export class ConsumableManager {
         if (modalOverlay) {
             modalOverlay.remove();
         }
+    }
+
+    // Méthode pour supprimer un consommable par son ID
+    removeConsumableById(consumableId, gameState) {
+        const consumableIndex = this.consumables.findIndex(c => c.id === consumableId);
+        if (consumableIndex !== -1) {
+            this.consumables.splice(consumableIndex, 1);
+            this.updateConsumablesDisplay(gameState);
+            return true;
+        }
+        return false;
     }
 } 

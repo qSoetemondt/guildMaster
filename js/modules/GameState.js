@@ -130,6 +130,9 @@ export class GameState {
 
         
         console.log(`Pool global initialisé avec ${this.globalUnitPool.length} unités`);
+        
+        // Initialiser les fonctions de debug
+        this.setupDebugFunctions();
     }
 
 
@@ -245,10 +248,21 @@ export class GameState {
     get rerollCount() { return this._rerollCount || 0; }
     set rerollCount(value) { this._rerollCount = value; }
     
-    // Fonction de debug pour changer le rang depuis la console
-    setupDebugFunctions() {
-        // Cette méthode sera implémentée plus tard si nécessaire
+    // Calculer le nombre maximum de relances en tenant compte des bonus
+    getMaxRerolls() {
+        const baseRerolls = 3;
+        let bonusRerolls = 0;
+        
+        // Compter les bonus de relance supplémentaire
+        this.unlockedBonuses.forEach(bonusId => {
+            if (bonusId === 'relance_supplementaire') {
+                bonusRerolls += 1;
+            }
+        });
+        
+        return baseRerolls + bonusRerolls;
     }
+
 
     gainRank() {
         return this.progressManager.gainRank();
@@ -883,6 +897,8 @@ export class GameState {
 
     // Fonction de debug pour changer le rang depuis la console
     setupDebugFunctions() {
+        console.log('🔧 Initialisation des fonctions de debug...');
+        
         // Fonction globale pour changer le rang
         window.setRank = (newRank) => {
             if (RANKS.includes(newRank)) {
@@ -912,6 +928,7 @@ export class GameState {
 
         // Fonction globale pour ajouter de l'or
         window.addGoldDebug = (amount) => {
+            console.log(`💰 Ajout de ${amount} or via addGoldDebug`);
             this.addGold(amount);
         };
 
@@ -941,5 +958,15 @@ export class GameState {
             
             this.updateUI();
         };
+        
+        console.log('✅ Fonctions de debug initialisées:', Object.keys(window).filter(key => ['setRank', 'getRank', 'listRanks', 'debugInfo', 'addGoldDebug', 'unlockAllBonuses', 'addAllTroops'].includes(key)));
+        
+        // Test de la fonction addGoldDebug
+        console.log('🧪 Test de addGoldDebug...');
+        if (typeof window.addGoldDebug === 'function') {
+            console.log('✅ addGoldDebug est bien définie sur window');
+        } else {
+            console.error('❌ addGoldDebug n\'est pas définie sur window');
+        }
     }
 } 

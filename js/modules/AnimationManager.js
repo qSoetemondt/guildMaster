@@ -336,6 +336,8 @@ export class AnimationManager {
      */
     async animateEquipmentBonuses(bonusesContent) {
         const equipmentBonuses = this.gameState.calculateEquipmentBonuses();
+        
+        console.log('[DEBUG] Bonus d\'équipement calculés:', equipmentBonuses);
 
         if (equipmentBonuses.length > 0) {
             for (let i = 0; i < equipmentBonuses.length; i++) {
@@ -372,7 +374,7 @@ export class AnimationManager {
                 
                 // Déterminer la rareté du bonus en fonction du nom
                 let rarity = 'common';
-                if (['Épée Aiguisée', 'Arc Renforcé', 'Grimoire Magique', 'Bonus Or', 'Bonus Corps à Corps', 'Bonus Distance', 'Bonus Magique'].includes(bonus.name)) {
+                if (['Épée Aiguisée', 'Arc Renforcé', 'Grimoire Magique', 'Bonus Or', 'Bonus Corps à Corps', 'Bonus Distance', 'Bonus Magique', 'Attaque par Relance'].includes(bonus.name)) {
                     rarity = 'common';
                 } else if (['Amulette de Force', 'Cristal de Précision', 'Orbe Mystique', 'Potion de Force', 'Élixir de Puissance'].includes(bonus.name)) {
                     rarity = 'uncommon';

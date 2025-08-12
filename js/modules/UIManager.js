@@ -209,80 +209,171 @@ export class UIManager {
         }
     }
     
-    // Mettre à jour l'affichage du prochain combat
+    // NOUVEAU : Mettre à jour l'affichage des prochains combats
     updateNextCombatDisplay() {
-        // Mettre à jour les informations de base du prochain combat
-        let isBossFight = false;
-        let selectedBoss = null;
+        // Générer l'affichage des 3 prochains combats du rang actuel
+        this.generateNextCombatsDisplay();
+    }
+
+    // NOUVEAU : Générer l'affichage des 3 combats du rang en cours
+    generateNextCombatsDisplay() {
+        const nextCombatsContainer = document.getElementById('next-combats-info');
+        if (!nextCombatsContainer) {
+            console.warn('Container next-combats-info non trouvé');
+            return;
+        }
+
+        // Vider le container
+        nextCombatsContainer.innerHTML = '';
+
+        // Obtenir le rang actuel et déterminer les 3 combats du rang en cours
+        const currentRank = this.gameState.rank;
+        
+        // Déterminer le rang majeur (F, E, D, C, B, A, S)
+        let majorRank = 'F';
+        if (currentRank.includes('E')) majorRank = 'E';
+        else if (currentRank.includes('D')) majorRank = 'D';
+        else if (currentRank.includes('C')) majorRank = 'C';
+        else if (currentRank.includes('B')) majorRank = 'B';
+        else if (currentRank.includes('A')) majorRank = 'A';
+        else if (currentRank === 'S') majorRank = 'S';
+
+        // Obtenir les 3 combats du rang majeur actuel
+        let rankCombats = [];
+        if (majorRank === 'F') {
+            rankCombats = ['F-', 'F', 'F+'];
+        } else if (majorRank === 'E') {
+            rankCombats = ['E-', 'E', 'E+'];
+        } else if (majorRank === 'D') {
+            rankCombats = ['D-', 'D', 'D+'];
+        } else if (majorRank === 'C') {
+            rankCombats = ['C-', 'C', 'C+'];
+        } else if (majorRank === 'B') {
+            rankCombats = ['B-', 'B', 'B+'];
+        } else if (majorRank === 'A') {
+            rankCombats = ['A-', 'A', 'A+'];
+        } else if (majorRank === 'S') {
+            rankCombats = ['S'];
+        }
+
+        // Générer l'affichage des 3 combats du rang
+        rankCombats.forEach((rank, index) => {
+            const isCompleted = this.isRankCompleted(rank, currentRank);
+            const isCurrent = rank === currentRank;
+            const combatItem = this.createCombatPreviewItem(rank, index + 1, isCurrent, isCompleted);
+            nextCombatsContainer.appendChild(combatItem);
+        });
+    }
+
+    // NOUVEAU : Vérifier si un rang est déjà terminé
+    isRankCompleted(rank, currentRank) {
+        const ranks = this.gameState.RANKS;
+        const rankIndex = ranks.indexOf(rank);
+        const currentRankIndex = ranks.indexOf(currentRank);
+        
+        // Un rang est terminé si son index est inférieur à l'index du rang actuel
+        return rankIndex < currentRankIndex;
+    }
+
+    // NOUVEAU : Créer un élément de prévisualisation de combat
+    createCombatPreviewItem(rank, combatNumber, isCurrent, isCompleted) {
+        const combatItem = document.createElement('div');
+        const isBossFight = this.gameState.BOSS_RANKS.includes(rank);
+        
+        // Déterminer les classes CSS selon le statut
+        let cssClasses = 'combat-preview-item';
+        if (isCompleted) {
+            cssClasses += ' completed';
+        } else if (isCurrent) {
+            cssClasses += ' current';
+        } else {
+            cssClasses += ' upcoming';
+        }
+
+        // Obtenir les informations du combat
+        let enemyName = 'Troupes de gobelin';
+        let enemyImage = 'assets/gobelin.jpg';
         let targetDamage = 0;
-        
-        if (this.gameState.isInfiniteMode) {
-            // Mode infini
-            isBossFight = this.gameState.isInfiniteBossFight();
-        } else {
-            // Mode normal
-            isBossFight = this.gameState.BOSS_RANKS.includes(this.gameState.rank);
-        }
-        
+        let bossInfo = '';
+
         if (isBossFight) {
-            selectedBoss = this.gameState.displayBoss || this.gameState.bossManager.selectBossForRank(this.gameState.rank);
-            targetDamage = this.gameState.bossManager.calculateBossTargetDamageByRank(selectedBoss, this.gameState.rank);
+            // Combat de boss
+            const selectedBoss = this.gameState.bossManager.selectBossForRank(rank);
+            enemyName = selectedBoss ? selectedBoss.name : 'Boss';
+            enemyImage = 'assets/orcs.jpg';
+            targetDamage = this.gameState.bossManager.calculateBossTargetDamageByRank(selectedBoss, rank);
+            bossInfo = `
+                <div class="boss-info">
+                    <strong>Boss :</strong> ${enemyName}<br>
+                    <strong>Mécanique :</strong> ${selectedBoss ? selectedBoss.mechanic : 'Mécanique inconnue'}
+                </div>
+            `;
         } else {
-            if (this.gameState.isInfiniteMode) {
-                // Mode infini : utiliser la progression exponentielle
-                targetDamage = this.gameState.calculateInfiniteTargetDamage();
-            } else {
-                // Mode normal
-                targetDamage = this.gameState.calculateTargetDamageByRank(this.gameState.rank);
-            }
+            // Combat normal
+            const enemyData = {
+                'F-': { name: 'Troupes de gobelin', image: 'assets/gobelin.jpg' },
+                'F': { name: 'Bandits', image: 'assets/orcs.jpg' },
+                'F+': { name: 'Orcs', image: 'assets/orcs.jpg' },
+                'E-': { name: 'Trolls', image: 'assets/orcs.jpg' },
+                'E': { name: 'Géants', image: 'assets/orcs.jpg' },
+                'E+': { name: 'Dragons', image: 'assets/orcs.jpg' },
+                'D-': { name: 'Démons', image: 'assets/orcs.jpg' },
+                'D': { name: 'Archidémons', image: 'assets/orcs.jpg' },
+                'D+': { name: 'Seigneurs de guerre', image: 'assets/orcs.jpg' },
+                'C-': { name: 'Gardiens anciens', image: 'assets/orcs.jpg' },
+                'C': { name: 'Légendes vivantes', image: 'assets/orcs.jpg' },
+                'C+': { name: 'Entités primordiales', image: 'assets/orcs.jpg' },
+                'B-': { name: 'Créatures mythiques', image: 'assets/orcs.jpg' },
+                'B': { name: 'Êtres divins', image: 'assets/orcs.jpg' },
+                'B+': { name: 'Anciens dieux', image: 'assets/orcs.jpg' },
+                'A-': { name: 'Entités cosmiques', image: 'assets/orcs.jpg' },
+                'A': { name: 'Créateurs de mondes', image: 'assets/orcs.jpg' },
+                'A+': { name: 'Maîtres du temps', image: 'assets/orcs.jpg' },
+                'S': { name: 'Entités absolues', image: 'assets/orcs.jpg' }
+            };
+            
+            const currentEnemyData = enemyData[rank] || enemyData['F-'];
+            enemyName = currentEnemyData.name;
+            enemyImage = currentEnemyData.image;
+            targetDamage = this.gameState.calculateTargetDamageByRank(rank);
         }
-        
+
         // Formater les dégâts pour l'affichage
         const formattedTargetDamage = this.gameState.formatDamageForDisplay(targetDamage);
-        
-        // Mettre à jour l'objectif
-        const combatTargetDisplay = document.getElementById('combat-target-display');
-        if (combatTargetDisplay) {
-            combatTargetDisplay.textContent = formattedTargetDamage;
-        }
-        
-        // Mettre à jour le nom de l'ennemi
-        let enemyNameText = 'Troupes de gobelin';
-        if (isBossFight) {
-            enemyNameText = selectedBoss ? selectedBoss.name : 'Boss';
+
+        // Déterminer le statut du combat
+        let statusText = '';
+        let statusClass = '';
+        if (isCompleted) {
+            statusText = 'Combat terminé';
+            statusClass = 'status-completed';
+        } else if (isCurrent) {
+            statusText = 'Combat actuel';
+            statusClass = 'status-current';
         } else {
-            if (this.gameState.isInfiniteMode) {
-                // Mode infini : utiliser un nom générique
-                enemyNameText = 'Hordes Infinies';
-            } else {
-                const enemyInfo = getEnemyData(this.gameState.rank);
-                enemyNameText = enemyInfo.name;
-            }
+            statusText = 'Combat à venir';
+            statusClass = 'status-upcoming';
         }
-        
-        const combatEnemyName = document.getElementById('combat-enemy-name');
-        if (combatEnemyName) {
-            combatEnemyName.textContent = enemyNameText;
-        }
-        
-        // Mettre à jour l'image de l'ennemi
-        const enemyImage = document.getElementById('enemy-image');
-        if (enemyImage) {
-            if (isBossFight) {
-                enemyImage.src = 'assets/orcs.jpg';
-            } else {
-                if (this.gameState.isInfiniteMode) {
-                    // Mode infini : utiliser l'image des gobelins
-                    enemyImage.src = 'assets/gobelin.jpg';
-                } else {
-                    const enemyInfo = getEnemyData(this.gameState.rank);
-                    enemyImage.src = enemyInfo.image;
-                }
-            }
-        }
-        
-        // Mettre à jour l'affichage des informations de boss
-        // Supprimé car déjà appelé dans updateUI()
+
+        // Créer le HTML de l'élément de combat
+        combatItem.className = cssClasses;
+        combatItem.innerHTML = `
+            <div class="enemy-preview">
+                <img src="${enemyImage}" alt="${enemyName}" class="enemy-image">
+            </div>
+            <div class="combat-details">
+                <div class="combat-number">Combat ${combatNumber}</div>
+                <div class="objective-target">
+                    <span>${formattedTargetDamage}</span> points : ${enemyName}
+                </div>
+                ${bossInfo}
+                <div class="combat-status">
+                    <span class="${statusClass}">${statusText}</span>
+                </div>
+            </div>
+        `;
+
+        return combatItem;
     }
 
     // Afficher les troupes dans le header (DÉSACTIVÉ - header des troupes retiré)
